@@ -20,7 +20,7 @@ namespace CRT
 
 	Surface::~Surface()
 	{
-		free(m_Buffer);
+		_aligned_free(m_Buffer);
 	}
 
 	void Surface::Set(const uint32_t _x, const uint32_t _y, const Pixel _p)
