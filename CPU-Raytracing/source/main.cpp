@@ -10,6 +10,8 @@
 #include "./imgui/imgui_impl_glfw.h"
 #include "./imgui/imgui_impl_opengl3.h"
 
+#include "./scene/camera_controller.h"
+
 using namespace CRT;
 
 int main(char** argc, char** argv)
@@ -42,6 +44,7 @@ int main(char** argc, char** argv)
 
 	float2 viewport(1280, 720);
 	Camera camera(viewport);
+	CameraController controller(camera);
 	// Main Loop
 	while (!window->ShouldClose())
 	{
@@ -75,7 +78,7 @@ int main(char** argc, char** argv)
 					surface->Set(x, y, 0xff000000);
 			}
 		}
-
+		
 		renderDevice->CopyFrom(surface);
 		renderDevice->Present();
 
