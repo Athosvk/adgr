@@ -5,6 +5,10 @@
 
 namespace CRT
 {
+	glm::vec3 ToGlm(float3 _value)
+	{
+		return glm::vec3(_value.x, _value.y, _value.z);
+	}
 	Camera::Camera(float2 _viewportSize) :
 		m_ViewportSize(_viewportSize)
 	{
@@ -37,19 +41,34 @@ namespace CRT
 
 	void Camera::SetDirection(float3 _direction)
 	{
-		m_Direction = _direction;
+		m_Front = _direction;
+	}
+
+	float3 Camera::GetFront() const
+	{
+		return m_Front;
+	}
+
+	float3 Camera::GetUp() const
+	{
+		return float3::Up();
+	}
+
+	float3 Camera::GetRight() const
+	{
+		return m_Front.Cross(float3::Up()).Normalize();
 	}
 
 	glm::mat4 Camera::ConstructView() const
 	{
-		glm::vec3 position = glm::vec3(m_Position.x, m_Position.y, m_Position.z);
-		glm::vec3 direction = glm::vec3(m_Direction.x, m_Direction.y, m_Direction.z);
-		return glm::lookAt(position, direction, glm::vec3(0.0, 1.0f, 0.0f));
+		glm::vec3 position = ToGlm(m_Position);
+		glm::vec3 front = ToGlm(m_Front);
+		return glm::lookAt(position, position + front, ToGlm(GetUp()));
 	}
 
 	float3 Camera::Transform(float3 _toTransform, glm::mat4 _transform) const
 	{
-		glm::vec4 toTransform = glm::vec4(_toTransform.x, _toTransform.y, _toTransform.z, 0.0f);
+		glm::vec4 toTransform = glm::vec4(ToGlm(_toTransform), 0.0f);
 		glm::vec4 transformed = _transform * toTransform;
 		return float3 { transformed.x, transformed.y, transformed.z };
 	}

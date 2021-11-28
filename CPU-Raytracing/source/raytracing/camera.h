@@ -16,6 +16,9 @@ namespace CRT
 		float3 GetPosition() const;
 		Ray ConstructRay(float2 _uv) const;
 		void SetDirection(float3 _direction);
+		float3 GetFront() const;
+		float3 GetUp() const;
+		float3 GetRight() const;
 	private:
 		glm::mat4 ConstructView() const;
 		float3 Transform(float3 _toTranform, glm::mat4 _transform) const;
@@ -23,6 +26,6 @@ namespace CRT
 		float m_FocalLength = 1.0f;
 		float2 m_ViewportSize;
 		float3 m_Position = { 0.0f, 0.0f, 0.0f };
-		float3 m_Direction = { 0.0f, 0.0f, 0.0f };
+		float3 m_Front = { 0.0f, 0.0f, -1.0f };
 	};
 }
