@@ -228,22 +228,22 @@ namespace CRT
 
 	bool float4::operator<(const float4& _o) const
 	{
-		return (x < _o.x && y < _o.y && z < _o.z && z < _o.z);
+		return (x < _o.x && y < _o.y && z < _o.z && w < _o.w);
 	}
 
 	bool float4::operator<=(const float4& _o) const
 	{
-		return (x <= _o.x && y <= _o.y && z <= _o.z && z <= _o.z);
+		return (x <= _o.x && y <= _o.y && z <= _o.z && w <= _o.w);
 	}
 
 	bool float4::operator>(const float4& _o) const
 	{
-		return (x > _o.x && y > _o.y && z > _o.z && z > _o.z);
+		return (x > _o.x && y > _o.y && z > _o.z && z > _o.w);
 	}
 
 	bool float4::operator>=(const float4& _o) const
 	{
-		return (x >= _o.x && y >= _o.y && z >= _o.z && z >= _o.z);
+		return (x >= _o.x && y >= _o.y && z >= _o.z && w >= _o.w);
 	}
 
 	float float4::Dot(const float4& _o) const
