@@ -58,9 +58,9 @@ int main(char** argc, char** argv)
 			ImGui::End();
 		}
 
-		for (uint32_t y = 0; y < viewport.x; y++)
+		for (uint32_t y = 0; y < viewport.y; y++)
 		{
-			for (uint32_t x = 0; x < viewport.y; x++)
+			for (uint32_t x = 0; x < viewport.x; x++)
 			{  
 				float u = (x / (viewport.x - 1.0f));
 				float v = (y / (viewport.y - 1.0f));
