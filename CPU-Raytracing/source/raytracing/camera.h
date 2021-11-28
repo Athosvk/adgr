@@ -3,6 +3,8 @@
 #include "core/math/float3.h"
 #include "ray.h"
 
+#include <glm/mat4x4.hpp>
+
 namespace CRT
 {
 	class Camera
@@ -10,12 +12,17 @@ namespace CRT
 	public:
 		Camera(float2 _viewportSize);
 
-		void SetPosition(float3 position);
+		void SetPosition(float3 _position);
 		float3 GetPosition() const;
-		Ray ConstructRay(float2 uv) const;
+		Ray ConstructRay(float2 _uv) const;
+		void SetDirection(float3 _direction);
 	private:
-		double m_FocalLength = 1.0f;
+		glm::mat4 ConstructView() const;
+		float3 Transform(float3 _toTranform, glm::mat4 _transform) const;
+
+		float m_FocalLength = 1.0f;
 		float2 m_ViewportSize;
-		float3 m_Position = { 0.0, 0.0, 0.0 };
+		float3 m_Position = { 0.0f, 0.0f, 0.0f };
+		float3 m_Direction = { 0.0f, 0.0f, 0.0f };
 	};
 }
