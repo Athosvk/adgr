@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\raytracing\camera.cpp" />
     <ClCompile Include="source\core\graphics\render_device.cpp" />
     <ClCompile Include="source\core\graphics\screen\surface.cpp" />
     <ClCompile Include="source\core\graphics\shader.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="source\raytracing\shapes\sphere.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\raytracing\camera.h" />
     <ClInclude Include="source\core\file_utility.h" />
     <ClInclude Include="source\core\graphics\render_device.h" />
     <ClInclude Include="source\core\graphics\screen\pixel.h" />
