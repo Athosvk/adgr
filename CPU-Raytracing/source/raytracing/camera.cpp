@@ -32,7 +32,7 @@ namespace CRT
 	Ray Camera::ConstructRay(float2 _uv) const
 	{
 		float3 focalDirection(0.0, 0.0, -1.0);
-		float3 cameraPlane = (m_FocalLength * focalDirection);
+		float3 cameraPlane = m_FocalLength * focalDirection;
 		float3 p0 = cameraPlane + float3(-1, 1, 0);
 		float3 p1 = cameraPlane + float3(1, 1, 0);
 		float3 p2 = cameraPlane + float3(-1, -1, 0);
@@ -79,9 +79,9 @@ namespace CRT
 
 	glm::mat4 Camera::ConstructView() const
 	{
-		glm::vec3 position = ToGlm(float3::Zero());
 		glm::vec3 front = ToGlm(m_Front);
-		return glm::inverse(glm::lookAt(position, position + front, ToGlm(float3::Up())));
+		// Only interested in direction, position will be used as ray origin
+		return glm::inverse(glm::lookAt(ToGlm(float3::Zero()), front, ToGlm(float3::Up())));
 	}
 
 	float3 Camera::Transform(float3 _toTransform, glm::mat4 _transform) const
