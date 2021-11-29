@@ -19,7 +19,7 @@ namespace CRT
 		float2 GetMousePositiion(GLFWwindow* _window) const;
 
 		Camera& m_Camera;
-		float m_MovementSpeed = 5.0f;
+		float m_MovementSpeed = 10.0f;
 		bool m_Rotating = false;
 		float2 m_MousePosition = { 0.0f, 0.0f };
 		float m_YawDelta = 0.f;

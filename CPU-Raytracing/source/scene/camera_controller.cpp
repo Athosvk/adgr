@@ -16,21 +16,23 @@ namespace CRT
 	void CameraController::ProcessInput(GLFWwindow* _window, float _deltaTime)
 	{
 		float3 position = m_Camera.GetPosition();
+		// Basically for debug mode, prevents movement being incredibly jumpy
+		float cappedDeltaTime = std::min(_deltaTime, 0.5f);
 		if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
 		{
-			m_Camera.SetPosition(position + m_MovementSpeed * m_Camera.GetFront() * _deltaTime);
+			m_Camera.SetPosition(position + m_MovementSpeed * m_Camera.GetFront() * cappedDeltaTime);
 		}
 		if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
 		{
-			m_Camera.SetPosition(position - m_MovementSpeed * m_Camera.GetRight() * _deltaTime);
+			m_Camera.SetPosition(position - m_MovementSpeed * m_Camera.GetRight() * cappedDeltaTime);
 		}
 		if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
 		{
-			m_Camera.SetPosition(position - m_MovementSpeed * m_Camera.GetFront() * _deltaTime);
+			m_Camera.SetPosition(position - m_MovementSpeed * m_Camera.GetFront() * cappedDeltaTime);
 		}
 		if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
 		{
-			m_Camera.SetPosition(position + m_MovementSpeed * m_Camera.GetRight() * _deltaTime);
+			m_Camera.SetPosition(position + m_MovementSpeed * m_Camera.GetRight() * cappedDeltaTime);
 		}
 
 		if (glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && !m_Rotating)
@@ -48,8 +50,8 @@ namespace CRT
 		{
 			float2 new_mouse = GetMousePositiion(_window);
 			float2 delta_mouse_position = new_mouse - m_MousePosition;
-			m_YawDelta = delta_mouse_position.x * 0.05f;
-			m_PitchDelta = delta_mouse_position.y * 0.05f;	
+			m_YawDelta = delta_mouse_position.x * cappedDeltaTime ;
+			m_PitchDelta = delta_mouse_position.y * cappedDeltaTime;
 			m_MousePosition = new_mouse;
 		}
 		m_Pitch += m_PitchDelta;
