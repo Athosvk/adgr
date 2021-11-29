@@ -27,7 +27,7 @@ namespace CRT
 
 	Window::~Window()
 	{
-
+		glfwDestroyWindow(m_Window);
 	}
 
 	void Window::PollEvents()
