@@ -46,20 +46,41 @@ int main(char** argc, char** argv)
 	Camera camera(viewport);
 	CameraController controller(camera);
 	// Main Loop
+	float previousFrame = (float)glfwGetTime();
 	while (!window->ShouldClose())
 	{
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		float currentFrame = (float)glfwGetTime();
+		float deltaTime = currentFrame - previousFrame;
+		previousFrame = currentFrame;
+
 		if (showImgui)
 		{
-			ImGui::Begin("Another Window", &showImgui);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-			float3 cameraPosition = camera.GetPosition();
-			ImGui::SliderFloat3("CameraPosition", &cameraPosition.x, -10.0f, 10.0f);
-			camera.SetPosition(cameraPosition);
+			ImGui::Begin("Window", &showImgui);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+
+			ImGui::Text("FPS: %.2f", 1.0 / deltaTime);
+			ImGui::Separator();
+			if (ImGui::CollapsingHeader("Camera"))
+			{
+				float3 cameraPosition = camera.GetPosition();
+				float3 cameraRight = camera.GetRight();
+				float3 cameraUp = camera.GetUp();
+				float3 cameraFront = camera.GetFront();
+				float focalLength = camera.GetFocalLength();
+				ImGui::SliderFloat3("CameraPosition", &cameraPosition.x, -10.0f, 10.0f);
+				ImGui::SliderFloat3("CameraRight", &cameraRight.x, -10.0f, 10.0f);
+				ImGui::SliderFloat3("CameraUp", &cameraUp.x, -10.0f, 10.0f);
+				ImGui::SliderFloat3("CameraFront", &cameraFront.x, -10.0f, 10.0f);
+				ImGui::SliderFloat("FocalLength", &focalLength, 0.5f, 5.0f);
+				camera.SetPosition(cameraPosition);
+				camera.SetFocalLength(focalLength);
+			}
 			ImGui::End();
 		}
+		controller.ProcessInput(window->GetWindow(), deltaTime);
 
 		for (uint32_t y = 0; y < viewport.y; y++)
 		{
