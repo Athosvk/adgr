@@ -158,5 +158,8 @@
     <ClInclude Include="source\scene\camera_controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\core\math\trigonometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
