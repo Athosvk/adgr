@@ -64,12 +64,12 @@ namespace CRT
 
 	float3 float3::Forward()
 	{
-		return float3(0.0f, 0.0f, 1.0f);
+		return float3(0.0f, 0.0f, -1.0f);
 	}
 
 	float3 float3::Back()
 	{
-		return float3(0.0f, 0.0f, -1.0f);
+		return float3(0.0f, 0.0f, 1.0f);
 	}
 
 	float3 float3::Zero()
