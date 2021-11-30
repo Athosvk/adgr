@@ -5,6 +5,7 @@
 #include "./raytracing/camera.h"
 #include "./core/math/trigonometry.h"
 
+#include <algorithm>
 
 namespace CRT
 {

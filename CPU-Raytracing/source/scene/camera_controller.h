@@ -16,7 +16,7 @@ namespace CRT
 		void ProcessInput(GLFWwindow* _window, float _deltaTime);
 	private:
 		void RotateCamera();
-		float2 GetMousePositiion(GLFWwindow* _window) const;
+		float2 GetMousePosition(GLFWwindow* _window) const;
 
 		Camera& m_Camera;
 		float m_MovementSpeed = 10.0f;
