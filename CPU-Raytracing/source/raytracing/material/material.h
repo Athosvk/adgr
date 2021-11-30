@@ -1,5 +1,6 @@
 #pragma once
 #include "./core/math/float3.h"
+#include "./raytracing/material/texture.h"
 
 namespace CRT
 {

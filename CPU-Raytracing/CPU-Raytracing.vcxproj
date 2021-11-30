@@ -155,6 +155,8 @@
     <ClCompile Include="source\imgui\imgui_tables.cpp" />
     <ClCompile Include="source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\raytracing\material\texture.cpp" />
+    <ClCompile Include="source\raytracing\ray.cpp" />
     <ClCompile Include="source\raytracing\scene.cpp" />
     <ClCompile Include="source\raytracing\shapes\plane.cpp" />
     <ClCompile Include="source\raytracing\shapes\sphere.cpp" />
@@ -183,6 +185,7 @@
     <ClInclude Include="source\imgui\imstb_truetype.h" />
     <ClInclude Include="source\raytracing\manifest.h" />
     <ClInclude Include="source\raytracing\material\material.h" />
+    <ClInclude Include="source\raytracing\material\texture.h" />
     <ClInclude Include="source\raytracing\ray.h" />
     <ClInclude Include="source\raytracing\scene.h" />
     <ClInclude Include="source\raytracing\shapes\plane.h" />
