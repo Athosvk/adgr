@@ -30,6 +30,8 @@ int main(char** argc, char** argv)
 	// Leaks
 	scene->AddShape(new Sphere(float3(1.0f, 0.0f, -10.0f), 1.0f), new Material(float3(0.2f, 0.2f, 0.8f), 1.0f));
 
+	Texture* texture = new Texture("./assets/test_texture.png");
+
 	// Camera
 	float aspect = float(window->GetWidth()) / float(window->GetHeight());
 	
@@ -92,7 +94,10 @@ int main(char** argc, char** argv)
 				Manifest m = scene->Intersect(camera.ConstructRay({ u, v }));
 				if (m.M != nullptr)
 				{
-					uint32_t color = (0xff000000 | (int(m.M->Color.x * 255) << 16) | (int(m.M->Color.y * 255) << 8) | int(m.M->Color.z * 255));
+					float3 col = texture->GetValue(m.UV);
+				//	float3 col = float3(m.UV, 0.0f);
+
+					uint32_t color = (0xff000000 | (int(col.x * 255) << 16) | (int(col.y * 255) << 8) | int(col.z * 255));
 					surface->Set(x, y, color);
 				}
 				else

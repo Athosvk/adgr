@@ -1,21 +1,36 @@
-#pragma once
-#include "./core/math/float4.h"
+#include "./raytracing/material/texture.h"
 
-#include <string>
+#define STB_IMAGE_IMPLEMENTATION
+#include <./stb_image.h>
 
 namespace CRT
 {
-	class Texture
+	Texture::Texture(const std::string& _filepath)
 	{
-	public:
-		Texture(const std::string& _filepath);
+		// Load image Data
+		int channels;
+		stbi_set_flip_vertically_on_load(1);
+		float* image = stbi_loadf(_filepath.c_str(), &m_Width, &m_Height, &channels, STBI_rgb_alpha);
 
-		float4 GetValue(float _u, float _v);
+		// Allign buffer to 64
+		m_Buffer = (float*)_aligned_malloc(m_Width * m_Height * sizeof(float) * 4, 64);
 
-	private:
-		int m_Width;
-		int m_Height;
+		for (uint32_t i = 0; i < m_Width * m_Height; i++)
+		{
+			m_Buffer[i * 4 + 0] = image[i * 4 + 0]; // May break if channels is only 3, but is it?
+			m_Buffer[i * 4 + 1] = image[i * 4 + 1];
+			m_Buffer[i * 4 + 2] = image[i * 4 + 2];
 
-		float* m_Buffer;
-	};
+			m_Buffer[i * 4 + 3] = channels == 4 ? image[i * 4 + 3] : 1.0f;
+		}
+	}
+
+	float4 Texture::GetValue(float2 _uv)
+	{
+		int x = int(float(m_Width - 1) * _uv.x);
+		int y = int(float(m_Height - 1) * _uv.y);
+
+		int id = (y * m_Width + x);
+		return float4(m_Buffer[id * 4 + 0], m_Buffer[id * 4 + 1], m_Buffer[id * 4 + 2], m_Buffer[id * 4 + 3]);
+	}
 }
