@@ -39,7 +39,7 @@ namespace CRT
 		{
 			m_Rotating = true;
 			glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			m_MousePosition = GetMousePositiion(_window);
+			m_MousePosition = GetMousePosition(_window);
 		}
 		else if ((glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) && m_Rotating)
 		{
@@ -48,7 +48,7 @@ namespace CRT
 		}
 		if (m_Rotating)
 		{
-			float2 new_mouse = GetMousePositiion(_window);
+			float2 new_mouse = GetMousePosition(_window);
 			float2 delta_mouse_position = new_mouse - m_MousePosition;
 			m_YawDelta = delta_mouse_position.x * cappedDeltaTime ;
 			m_PitchDelta = delta_mouse_position.y * cappedDeltaTime;
@@ -76,7 +76,7 @@ namespace CRT
 		m_Camera.SetDirection({ direction.x, direction.y, direction.z });
 	}
 
-	float2 CameraController::GetMousePositiion(GLFWwindow* _window) const
+	float2 CameraController::GetMousePosition(GLFWwindow* _window) const
 	{
 		double mouse_position[2];
 		glfwGetCursorPos(_window, mouse_position, &mouse_position[1]);
