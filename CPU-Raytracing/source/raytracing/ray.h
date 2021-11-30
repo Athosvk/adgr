@@ -11,6 +11,8 @@ namespace CRT
 			, D(_d)
 		{ }
 
+		static Ray Reflect(float3 _d, float3 _n, float3 _o);
+
 		float3 O;
 		float3 D;
 	};
