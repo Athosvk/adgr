@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\raytracing\camera.cpp" />
     <ClCompile Include="source\core\graphics\render_device.cpp" />
     <ClCompile Include="source\core\graphics\screen\surface.cpp" />
     <ClCompile Include="source\core\graphics\shader.cpp" />
@@ -157,8 +158,11 @@
     <ClCompile Include="source\raytracing\scene.cpp" />
     <ClCompile Include="source\raytracing\shapes\plane.cpp" />
     <ClCompile Include="source\raytracing\shapes\sphere.cpp" />
+    <ClCompile Include="source\scene\camera_controller.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\core\math\trigonometry.h" />
+    <ClInclude Include="source\raytracing\camera.h" />
     <ClInclude Include="source\core\file_utility.h" />
     <ClInclude Include="source\core\graphics\render_device.h" />
     <ClInclude Include="source\core\graphics\screen\pixel.h" />
@@ -184,6 +188,7 @@
     <ClInclude Include="source\raytracing\shapes\plane.h" />
     <ClInclude Include="source\raytracing\shapes\shape.h" />
     <ClInclude Include="source\raytracing\shapes\sphere.h" />
+    <ClInclude Include="source\scene\camera_controller.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

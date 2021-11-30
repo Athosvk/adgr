@@ -4,10 +4,13 @@
 #include "./core/graphics/render_device.h"
 
 #include "./raytracing/scene.h"
+#include "./raytracing/camera.h"
 
 #include "./imgui/imgui.h"
 #include "./imgui/imgui_impl_glfw.h"
 #include "./imgui/imgui_impl_opengl3.h"
+
+#include "./scene/camera_controller.h"
 
 using namespace CRT;
 
@@ -22,22 +25,14 @@ int main(char** argc, char** argv)
 	Surface* surface = new Surface(window->GetWidth(), window->GetHeight());
 
 	Scene* scene = new Scene();
+	// Leaks
 	scene->AddShape(new Plane(float3(0.0f, -2.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(float3(0.2f, 0.8f, 0.2f), 0.0f));
-	scene->AddShape(new Sphere(float3(0.0f, 0.0f, -10.0f), 1.0f), new Material(float3(0.2f, 0.2f, 0.8f), 1.0f));
+	// Leaks
+	scene->AddShape(new Sphere(float3(1.0f, 0.0f, -10.0f), 1.0f), new Material(float3(0.2f, 0.2f, 0.8f), 1.0f));
 
 	// Camera
 	float aspect = float(window->GetWidth()) / float(window->GetHeight());
 	
-	float3 E = float3(0.0f, 0.0f,  0.0f);
-	float3 V = float3(0.0f, 0.0f, -1.0f);
-	
-	float d = 1.0f; // Scales FOV
-	float3 C = E + d * V;
-	
-	float3 p0 = C + float3(-1,  1, 0);
-	float3 p1 = C + float3( 1,  1, 0);
-	float3 p2 = C + float3(-1, -1, 0);
-
 	// IMGUI
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -47,41 +42,54 @@ int main(char** argc, char** argv)
 
 	bool showImgui = true;
 
+	float2 viewport(1280, 720);
+	Camera camera(viewport);
+	CameraController controller(camera);
 	// Main Loop
+	float previousFrame = (float)glfwGetTime();
 	while (!window->ShouldClose())
 	{
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		float currentFrame = (float)glfwGetTime();
+		float deltaTime = currentFrame - previousFrame;
+		previousFrame = currentFrame;
+
 		if (showImgui)
 		{
-			ImGui::Begin("Another Window", &showImgui);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-			ImGui::SliderFloat3("CameraPosition", &E.x, -10.0f, 10.0f);
+			ImGui::Begin("Window", &showImgui);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+
+			ImGui::Text("FPS: %.2f", 1.0 / deltaTime);
+			ImGui::Separator();
+			if (ImGui::CollapsingHeader("Camera"))
+			{
+				float3 cameraPosition = camera.GetPosition();
+				float3 cameraRight = camera.GetRight();
+				float3 cameraUp = camera.GetUp();
+				float3 cameraFront = camera.GetFront();
+				float focalLength = camera.GetFocalLength();
+				ImGui::SliderFloat3("CameraPosition", &cameraPosition.x, -10.0f, 10.0f);
+				ImGui::SliderFloat3("CameraRight", &cameraRight.x, -10.0f, 10.0f);
+				ImGui::SliderFloat3("CameraUp", &cameraUp.x, -10.0f, 10.0f);
+				ImGui::SliderFloat3("CameraFront", &cameraFront.x, -10.0f, 10.0f);
+				ImGui::SliderFloat("FocalLength", &focalLength, 0.5f, 5.0f);
+				camera.SetPosition(cameraPosition);
+				camera.SetFocalLength(focalLength);
+			}
 			ImGui::End();
-
-			C = E + d * V;
-
-			p0 = C + float3(-1, 1, 0);
-			p1 = C + float3(1, 1, 0);
-			p2 = C + float3(-1, -1, 0);
-
-			std::cout << "p0x: " << p0.ToString() << std::endl;
-			std::cout << "p1x: " << p1.ToString() << std::endl;
-			std::cout << "p2x: " << p2.ToString() << std::endl;
 		}
+		controller.ProcessInput(window->GetWindow(), deltaTime);
 
-		for (uint32_t y = 0; y < 720; y++)
+		for (uint32_t y = 0; y < viewport.y; y++)
 		{
-			for (uint32_t x = 0; x < 1280; x++)
+			for (uint32_t x = 0; x < viewport.x; x++)
 			{  
-				float u = (x / (1280.0f - 1.0f));
-				float v = (y / (720.0f - 1.0f));
-				float3 uv = p0 + (u * (p1 - p0)) + (v * (p2 - p0));
-				uv.x *= aspect;
-				float3 d = (uv - E).Normalize();
+				float u = (x / (viewport.x - 1.0f));
+				float v = (y / (viewport.y - 1.0f));
 				
-				Manifest m = scene->Intersect(Ray(E, d));
+				Manifest m = scene->Intersect(camera.ConstructRay({ u, v }));
 				if (m.M != nullptr)
 				{
 					uint32_t color = (0xff000000 | (int(m.M->Color.x * 255) << 16) | (int(m.M->Color.y * 255) << 8) | int(m.M->Color.z * 255));
@@ -91,7 +99,7 @@ int main(char** argc, char** argv)
 					surface->Set(x, y, 0xff000000);
 			}
 		}
-
+		
 		renderDevice->CopyFrom(surface);
 		renderDevice->Present();
 
@@ -107,5 +115,7 @@ int main(char** argc, char** argv)
 
 	delete renderDevice;
 	delete window;
+	delete surface;
+	delete scene;
 	return 0;
 }
