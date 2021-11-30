@@ -4,17 +4,6 @@
 
 namespace CRT
 {
-	static void get_sphere_uv(const float3& p, float& u, float& v) {
-		float theta = atan2(p.x, p.z);
-		float radius = p.Magnitude();
-
-		float phi = acos(p.y / radius);
-
-		float raw_u = theta / (2.0 * M_PI);
-		u = 1.0f - (raw_u + 0.5f);
-		v = 1.0f - phi / M_PI;
-	}
-
 	Sphere::Sphere(float3 _position, float _radius)
 		: Shape(ShapeType::SHAPE_TYPE_SPHERE)
 		, Position(_position)
@@ -37,12 +26,20 @@ namespace CRT
 			float3 p = (_r.O + (_r.D * t));
 			_m.N = (p - Position).Normalize();
 
-			float u, v;
-			get_sphere_uv((p - Position), u, v);
-			_m.UV = float2(u, v);
+			_m.UV = GetUV(p - Position, _m.N);
 			return true;
 		}
 
 		return false;
+	}
+	float2 Sphere::GetUV(float3 _point, float3 _normal)
+	{
+		float theta = atan2(_point.x, _point.z);
+		float radius = _point.Magnitude();
+
+		float phi = acos(_point.y / radius);
+
+		float raw_u = theta / (2.0 * M_PI);
+		return float2(1.0f - (raw_u + 0.5f), 1.0f - phi / M_PI);
 	}
 }

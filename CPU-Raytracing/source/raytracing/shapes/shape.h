@@ -1,4 +1,5 @@
 #pragma once
+#include "./core/math/float2.h"
 #include "./raytracing/ray.h"
 #include "./raytracing/manifest.h"
 
@@ -26,6 +27,8 @@ namespace CRT
 		inline ShapeType GetType() const { return m_Type; }
 
 	protected:
+		virtual float2 GetUV(float3 _point, float3 _normal) = 0;
+
 		ShapeType m_Type;
 	};
 }
