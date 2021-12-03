@@ -84,6 +84,9 @@
     <ClCompile Include="source\raytracing\material\texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\raytracing\lights\directional_light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\core\window\window.h">

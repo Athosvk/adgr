@@ -157,6 +157,7 @@
     <ClCompile Include="source\imgui\imgui_tables.cpp" />
     <ClCompile Include="source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\raytracing\lights\directional_light.cpp" />
     <ClCompile Include="source\raytracing\lights\point_light.cpp" />
     <ClCompile Include="source\raytracing\material\texture.cpp" />
     <ClCompile Include="source\raytracing\ray.cpp" />
