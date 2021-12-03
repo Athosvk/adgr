@@ -75,10 +75,13 @@
     <ClCompile Include="source\scene\camera_controller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\raytracing\material\texture.cpp">
+    <ClCompile Include="source\raytracing\ray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\raytracing\ray.cpp">
+    <ClCompile Include="source\raytracing\lights\point_light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\raytracing\material\texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -165,6 +168,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="source\core\math\trigonometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\raytracing\lights\directional_light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\raytracing\lights\light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\raytracing\lights\point_light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="source\raytracing\material\texture.h">

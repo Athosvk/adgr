@@ -93,6 +93,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)dependencies/includes/;$(projectDir)source/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,6 +130,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)dependencies/includes/;$(projectDir)source/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,6 +157,7 @@
     <ClCompile Include="source\imgui\imgui_tables.cpp" />
     <ClCompile Include="source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\raytracing\lights\point_light.cpp" />
     <ClCompile Include="source\raytracing\material\texture.cpp" />
     <ClCompile Include="source\raytracing\ray.cpp" />
     <ClCompile Include="source\raytracing\scene.cpp" />
@@ -183,6 +186,9 @@
     <ClInclude Include="source\imgui\imstb_rectpack.h" />
     <ClInclude Include="source\imgui\imstb_textedit.h" />
     <ClInclude Include="source\imgui\imstb_truetype.h" />
+    <ClInclude Include="source\raytracing\lights\directional_light.h" />
+    <ClInclude Include="source\raytracing\lights\light.h" />
+    <ClInclude Include="source\raytracing\lights\point_light.h" />
     <ClInclude Include="source\raytracing\manifest.h" />
     <ClInclude Include="source\raytracing\material\material.h" />
     <ClInclude Include="source\raytracing\material\texture.h" />
