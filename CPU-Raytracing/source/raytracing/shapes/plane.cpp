@@ -23,6 +23,7 @@ namespace CRT
 			{
 				_m.T = t;
 				_m.N = Normal;
+				_m.IntersectionPoint = _r.Sample(t);
 				_m.UV = GetUV(_r.O+_r.D*_m.T, _m.N);
 				return true;
 			}

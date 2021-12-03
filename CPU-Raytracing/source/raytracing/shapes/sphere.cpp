@@ -20,11 +20,12 @@ namespace CRT
 			return false;
 
 		t -= sqrt(Radius2 - p2);
-		if (t > 0.0f && t < _m.T)
+		if (t > 0.0f)
 		{
 			_m.T = t;
 			float3 p = (_r.O + (_r.D * t));
 			_m.N = (p - Position).Normalize();
+			_m.IntersectionPoint = p;
 
 			_m.UV = GetUV(p - Position, _m.N);
 			return true;
@@ -32,6 +33,7 @@ namespace CRT
 
 		return false;
 	}
+
 	float2 Sphere::GetUV(float3 _point, float3 _normal)
 	{
 		float theta = atan2(_point.x, _point.z);
