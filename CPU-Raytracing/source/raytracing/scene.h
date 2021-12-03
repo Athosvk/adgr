@@ -11,6 +11,7 @@
 #include "./raytracing/lights/point_light.h"
 
 #include <vector>
+#include <optional>
 
 namespace CRT
 {
@@ -23,8 +24,9 @@ namespace CRT
 		void AddDirectionalLight(DirectionalLight _light);
 		void AddPointLight(PointLight _light);
 
-		float3 Intersect(Ray _r);
+		float3 Intersect(Ray _r) const;
 	private:
+		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;
 		float GetLightContribution(const Manifest& _manifest) const;
 
 		std::vector<Shape*>    m_Shapes;

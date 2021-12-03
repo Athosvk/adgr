@@ -20,18 +20,9 @@ namespace CRT
 		m_PointLights.emplace_back(std::move(_light));
 	}
 
-	float3 Scene::Intersect(Ray _r)
+	float3 Scene::Intersect(Ray _r) const
 	{
-		std::optional<Manifest> nearest;
-		for (uint32_t i = 0; i < m_Shapes.size(); i++)
-		{
-			Manifest manifest;
-			if (m_Shapes[i]->Intersect(_r, manifest) && (!nearest || manifest.T < nearest->T))
-			{
-				manifest.M = m_Materials[i];
-				nearest = manifest;
-			}
-		}
+		std::optional<Manifest> nearest = GetNearestIntersection(_r);
 		if (nearest)
 		{ 
 			float3 color;
@@ -39,20 +30,36 @@ namespace CRT
 				color = nearest->M->Texture->GetValue(nearest->UV) ;
 			else
 				color = nearest->M->Color;
-			return color * (GetLightContribution(*nearest) + 0.1);
+			return color * (GetLightContribution(*nearest));
 		}
 		return float3{ 0.0f, 0.0f, 0.0f };
+	}
+
+	std::optional<Manifest> Scene::GetNearestIntersection(Ray _ray) const
+	{
+		std::optional<Manifest> nearest;
+		for (uint32_t i = 0; i < m_Shapes.size(); i++)
+		{
+			Manifest manifest;
+			if (m_Shapes[i]->Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+			{
+				manifest.M = m_Materials[i];
+				nearest = manifest;
+			}
+		}
+		return nearest;
 	}
 
 	float Scene::GetLightContribution(const Manifest& _manifest) const
 	{
 		float lighting = 0.0f;
-		//for (const PointLight& pointLight : m_PointLights)
-		//{
-		//	float3 lighting_direction = (pointLight.Position - _manifest.IntersectionPoint).Normalize();
-		//	lighting = std::max(0.0f, _manifest.N.Dot(lighting_direction)) * pointLight.Intensity;
-		//}
-		lighting = std::max(0.0f, _manifest.N.Dot(m_DirectionalLight.Direction)) * m_DirectionalLight.Intensity;
-		return lighting;
+		lighting = std::max(0.0f, _manifest.N.Dot(-m_DirectionalLight.Direction)) * m_DirectionalLight.Intensity;
+		auto possible_blocker = GetNearestIntersection(m_DirectionalLight.ConstructShadowRay(_manifest));
+
+		if (possible_blocker)
+		{
+			return 0.1f;
+		}
+		return lighting + 0.1f;
 	}
 }
