@@ -7,4 +7,9 @@ namespace CRT
 		float3 r = _d - 2 * (_d.Dot(_n)) * _n;
 		return Ray(_o, r);
 	}
+
+	float3 Ray::Sample(float _t) const
+	{
+		return O + D * _t;
+	}
 }
