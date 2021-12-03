@@ -24,13 +24,14 @@ int main(char** argc, char** argv)
 
 	Surface* surface = new Surface(window->GetWidth(), window->GetHeight());
 
+	Texture* texture = new Texture("./assets/test_texture.png");
+
 	Scene* scene = new Scene();
 	// Leaks
 	scene->AddShape(new Plane(float3(0.0f, -2.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(float3(0.2f, 0.8f, 0.2f), 0.0f));
 	// Leaks
-	scene->AddShape(new Sphere(float3(1.0f, 0.0f, -10.0f), 1.0f), new Material(float3(0.2f, 0.2f, 0.8f), 1.0f));
-
-	Texture* texture = new Texture("./assets/test_texture.png");
+	scene->AddShape(new Sphere(float3(1.0f, 1.0f, -10.0f), 1.0f), new Material(float3(0.2f, 0.2f, 0.8f), 1.0f, nullptr));
+	scene->AddDirectionalLight({ float3(0.0f, 0.75f, 0.75f).Normalize(), 1.0f });
 
 	// Camera
 	float aspect = float(window->GetWidth()) / float(window->GetHeight());
@@ -91,17 +92,8 @@ int main(char** argc, char** argv)
 				float u = (x / (viewport.x - 1.0f));
 				float v = (y / (viewport.y - 1.0f));
 				
-				Manifest m = scene->Intersect(camera.ConstructRay({ u, v }));
-				if (m.M != nullptr)
-				{
-					float3 col = texture->GetValue(m.UV);
-				//	float3 col = float3(m.UV, 0.0f);
-
-					uint32_t color = (0xff000000 | (int(col.x * 255) << 16) | (int(col.y * 255) << 8) | int(col.z * 255));
-					surface->Set(x, y, color);
-				}
-				else
-					surface->Set(x, y, 0xff000000);
+				float3 color = scene->Intersect(camera.ConstructRay({ u, v }));
+				surface->Set(x, y, (0xff000000 | (int(color.x * 255) << 16) | (int(color.y * 255) << 8) | int(color.z * 255)));
 			}
 		}
 		

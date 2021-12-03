@@ -4,15 +4,19 @@
 
 namespace CRT
 {
+	class Texture;
+
 	class Material
 	{
 	public:
-		Material(float3 _color, float _specularity)
+		Material(float3 _color, float _specularity, Texture* _texture)
 			: Color(_color)
 			, Specularity(_specularity)
+			, Texture(_texture)
 		{ }
 
 		float3 Color;
 		float  Specularity;
+		Texture* Texture;
 	};
 }
