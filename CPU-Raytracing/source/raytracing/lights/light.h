@@ -7,6 +7,7 @@ namespace CRT
 
 	struct Light
 	{
+		virtual ~Light() {};
 		virtual Ray ConstructShadowRay(const Manifest& manifest) const = 0;
 	};
 }
