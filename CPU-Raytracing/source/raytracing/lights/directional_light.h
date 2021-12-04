@@ -14,6 +14,8 @@ namespace CRT
 		float Intensity = 1.0f;
 		float3 Attenuation;
 
-		virtual Ray ConstructShadowRay(const Manifest& manifest) const override;
+		virtual ShadowRay ConstructShadowRay(const Manifest& _manifest) const override;
+
+		virtual float GetLightContribution(const Manifest& _manifest) const override;
 	};
 }

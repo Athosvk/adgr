@@ -15,9 +15,9 @@ namespace CRT
 		m_DirectionalLight = _light;
 	}
 
-	void Scene::AddPointLight(PointLight _light)
+	PointLight* Scene::AddPointLight(PointLight _light)
 	{
-		m_PointLights.emplace_back(std::move(_light));
+		return m_PointLights.emplace_back(std::make_unique<PointLight>(std::move(_light))).get();
 	}
 
 	float3 Scene::Intersect(Ray _r) const
@@ -52,14 +52,25 @@ namespace CRT
 
 	float Scene::GetLightContribution(const Manifest& _manifest) const
 	{
-		float lighting = 0.0f;
-		lighting = std::max(0.0f, _manifest.N.Dot(-m_DirectionalLight.Direction)) * m_DirectionalLight.Intensity;
-		auto possible_blocker = GetNearestIntersection(m_DirectionalLight.ConstructShadowRay(_manifest));
-
-		if (possible_blocker)
+		float totalLightContribution = 0.1f;
+		if (m_DirectionalLight)
 		{
-			return 0.1f;
+			auto shadowRay = m_DirectionalLight->ConstructShadowRay(_manifest);
+			auto possible_blocker = GetNearestIntersection(shadowRay.Ray);
+			if (!possible_blocker)
+			{
+				totalLightContribution += m_DirectionalLight->GetLightContribution(_manifest);
+			}
 		}
-		return lighting + 0.1f;
+		for (const auto& pointLight : m_PointLights)
+		{
+			auto shadowRay = pointLight->ConstructShadowRay(_manifest);
+			auto possible_blocker = GetNearestIntersection(shadowRay.Ray);
+			if (!possible_blocker || possible_blocker->T >= shadowRay.MaxT)
+			{
+				totalLightContribution += pointLight->GetLightContribution(_manifest);
+			}
+		}
+		return std::min(totalLightContribution, 1.0f);
 	}
 }

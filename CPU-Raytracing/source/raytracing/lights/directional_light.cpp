@@ -1,6 +1,8 @@
 #include "directional_light.h"
 
-#include "./raytracing/manifest.h"
+#include <./raytracing/manifest.h>
+#include <algorithm>
+#include <limits>
 
 namespace CRT
 {
@@ -11,8 +13,13 @@ namespace CRT
 	{
 	}
 
-	Ray DirectionalLight::ConstructShadowRay(const Manifest& manifest) const
+	ShadowRay DirectionalLight::ConstructShadowRay(const Manifest& _manifest) const
 	{
-		return Ray(manifest.IntersectionPoint, -Direction);
+		return { Ray(OffsetOrigin(_manifest), -Direction), std::numeric_limits<float>::infinity() };
+	}
+
+	float DirectionalLight::GetLightContribution(const Manifest& _manifest) const
+	{
+		return std::max(0.0f, _manifest.N.Dot(-Direction)) * Intensity;
 	}
 }
