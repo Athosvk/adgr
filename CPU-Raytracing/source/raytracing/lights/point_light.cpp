@@ -26,7 +26,7 @@ namespace CRT
 		float distance = lightDirection.MagnitudeSquared();
 		// Light contribution scales inversely with the distance to the light, based on the area
 		// of the sphere containing the lit point
-		float contribution = Intensity / (4 * Pi<float>() * distance);
+		float contribution = Intensity / (4 * Pi<float>() * distance * distance);
 		return std::max(0.0f, manifest.N.Dot(lightDirection.Normalize())) * contribution;
 	}
 }

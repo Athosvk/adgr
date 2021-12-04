@@ -31,11 +31,12 @@ int main(char** argc, char** argv)
 	scene->AddShape(new Plane(float3(0.0f, -2.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(float3(0.2f, 0.8f, 0.2f), 0.0f, texture));
 	// Leaks
 	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -10.0f), 1.f), new Material(float3(0.2f, 0.2f, 0.8f), 1.0f, nullptr));
-	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -1.f, 0.f).Normalize(), 0.2f, float3 {0.0f} });
-	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -8.5f), 25.0f, float3 {0.0f} });
-	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -11.5f), 25.0f, float3 {0.0f} });
-	scene->AddPointLight(PointLight{ float3(0.5f, 0.5f, -8.5f), 25.0f, float3 {0.0f} });
-	scene->AddPointLight(PointLight{ float3(0.5f, 0.5f, -11.5f), 25.0f, float3 {0.0f} });
+	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, -.75f).Normalize(), 0.2f, float3 {0.0f} });
+	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, 0.75f).Normalize(), 0.2f, float3 {0.0f} });
+	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -8.5f), 125.0f, float3 {0.0f} });
+	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -11.5f), 125.0f, float3 {0.0f} });
+	scene->AddPointLight(PointLight{ float3(0.5f, 0.5f, -8.5f), 125.0f, float3 {0.0f} });
+	scene->AddPointLight(PointLight{ float3(0.5f, 0.5f, -11.5f), 125.0f, float3 {0.0f} });
 
 	// Camera
 	float aspect = float(window->GetWidth()) / float(window->GetHeight());

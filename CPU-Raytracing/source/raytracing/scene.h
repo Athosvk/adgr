@@ -23,7 +23,7 @@ namespace CRT
 
 		void AddShape(Shape* _shape, Material* _material);
 		void AddDirectionalLight(DirectionalLight _light);
-		PointLight* AddPointLight(PointLight _light);
+		void AddPointLight(PointLight _light);
 
 		float3 Intersect(Ray _r) const;
 	private:
@@ -32,7 +32,7 @@ namespace CRT
 
 		std::vector<Shape*>    m_Shapes;
 		std::vector<Material*> m_Materials;
-		std::vector<std::unique_ptr<PointLight>> m_PointLights;
-		std::optional<DirectionalLight> m_DirectionalLight;
+		std::vector<PointLight> m_PointLights;
+		std::vector<DirectionalLight> m_DirectionalLights;
 	};
 }
