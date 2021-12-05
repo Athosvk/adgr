@@ -2,6 +2,7 @@
 
 #include "./core/window/window.h"
 #include "./core/graphics/render_device.h"
+#include "./core/graphics/color3.h"
 
 #include "./raytracing/scene.h"
 #include "./raytracing/camera.h"
@@ -34,12 +35,12 @@ int main(char** argc, char** argv)
 	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -10.0f), 1.f), material);
 	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -7.0f), 1.f), material);
 	scene->AddShape(new Sphere(float3(5.0f, -1.0f, -7.0f), 1.f), material);
-	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, -.75f).Normalize(), 0.2f, float3 {0.0f} });
-	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, 0.75f).Normalize(), 0.2f, float3 {0.0f} });
-	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -8.5f), 125.0f, float3 {0.0f} });
-	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -11.5f), 125.0f, float3 {0.0f} });
-	scene->AddPointLight(PointLight{ float3(0.5f, 0.5f, -8.5f), 125.0f, float3 {0.0f} });
-	scene->AddPointLight(PointLight{ float3(0.5f, 0.5f, -11.5f), 125.0f, float3 {0.0f} });
+	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, -.75f).Normalize(), 0.2f, Color::White });
+	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, 0.75f).Normalize(), 0.2f, Color::White });
+	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -8.5f), 125.0f, Color::Yellow });
+	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -11.5f), 125.0f, Color::Green });
+	scene->AddPointLight(PointLight{ float3(0.5f, 1.5f, -10.5f), 125.0f, Color::Purple });
+	scene->AddPointLight(PointLight{ float3(1.f, 0.5f, -11.5f), 125.0f, Color::Red });
 
 	// Camera
 	float aspect = float(window->GetWidth()) / float(window->GetHeight());

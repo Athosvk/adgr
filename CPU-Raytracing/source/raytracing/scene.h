@@ -28,10 +28,10 @@ namespace CRT
 		float3 Intersect(Ray _r) const;
 	private:
 		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;
-		float GetTotalLightContribution(const Manifest& _manifest) const;
+		float3 GetTotalLightContribution(const Manifest& _manifest) const;
 
 		template<typename TLight>
-		float GetLightContribution(const Manifest& _manifest, const TLight& _light) const
+		float3 GetLightContribution(const Manifest& _manifest, const TLight& _light) const
 		{
 			ShadowRay shadowRay = _light.ConstructShadowRay(_manifest);
 			std::optional<Manifest> possible_blocker = GetNearestIntersection(shadowRay.Ray);
@@ -41,7 +41,9 @@ namespace CRT
 			}
 			return 0.0f;
 		}
-
+		
+		const static float3 BackgroundColor;
+		
 		std::vector<Shape*>    m_Shapes;
 		std::vector<Material*> m_Materials;
 		std::vector<PointLight> m_PointLights;
