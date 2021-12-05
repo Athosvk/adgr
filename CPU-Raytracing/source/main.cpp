@@ -30,7 +30,10 @@ int main(char** argc, char** argv)
 	// Leaks
 	scene->AddShape(new Plane(float3(0.0f, -2.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(float3(0.2f, 0.8f, 0.2f), 0.0f, texture));
 	// Leaks
-	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -10.0f), 1.f), new Material(float3(0.2f, 0.2f, 0.8f), 1.0f, nullptr));
+	Material* material = new Material(float3(0.2f, 0.2f, 0.8f), 1.0f, nullptr);
+	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -10.0f), 1.f), material);
+	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -7.0f), 1.f), material);
+	scene->AddShape(new Sphere(float3(5.0f, -1.0f, -7.0f), 1.f), material);
 	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, -.75f).Normalize(), 0.2f, float3 {0.0f} });
 	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, 0.75f).Normalize(), 0.2f, float3 {0.0f} });
 	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -8.5f), 125.0f, float3 {0.0f} });

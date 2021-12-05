@@ -27,10 +27,10 @@ namespace CRT
 		{ 
 			float3 color;
 			if (nearest->M->Texture != nullptr)
-				color = nearest->M->Texture->GetValue(nearest->UV) ;
+				color = nearest->M->Texture->GetValue(nearest->UV);
 			else
 				color = nearest->M->Color;
-			return color * (GetLightContribution(*nearest));
+			return color * GetTotalLightContribution(*nearest);
 		}
 		return float3{ 0.0f, 0.0f, 0.0f };
 	}
@@ -50,26 +50,16 @@ namespace CRT
 		return nearest;
 	}
 
-	float Scene::GetLightContribution(const Manifest& _manifest) const
+	float Scene::GetTotalLightContribution(const Manifest& _manifest) const
 	{
 		float totalLightContribution = 0.1f;
 		for (const auto& directionalLight : m_DirectionalLights)
 		{
-			auto shadowRay = directionalLight.ConstructShadowRay(_manifest);
-			auto possible_blocker = GetNearestIntersection(shadowRay.Ray);
-			if (!possible_blocker)
-			{
-				totalLightContribution += directionalLight.GetLightContribution(_manifest);
-			}
+			totalLightContribution += GetLightContribution(_manifest, directionalLight);
 		}
 		for (const auto& pointLight : m_PointLights)
 		{
-			auto shadowRay = pointLight.ConstructShadowRay(_manifest);
-			auto possible_blocker = GetNearestIntersection(shadowRay.Ray);
-			if (!possible_blocker || possible_blocker->T >= shadowRay.MaxT)
-			{
-				totalLightContribution += pointLight.GetLightContribution(_manifest);
-			}
+			totalLightContribution += GetLightContribution(_manifest, pointLight);
 		}
 		return std::min(totalLightContribution, 1.0f);
 	}
