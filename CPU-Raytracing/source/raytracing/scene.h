@@ -7,7 +7,12 @@
 #include "./raytracing/material/material.h"
 #include "./raytracing/manifest.h"
 
+#include "./raytracing/lights/directional_light.h"
+#include "./raytracing/lights/point_light.h"
+
 #include <vector>
+#include <memory>
+#include <optional>
 
 namespace CRT
 {
@@ -17,10 +22,29 @@ namespace CRT
 		Scene() = default;
 
 		void AddShape(Shape* _shape, Material* _material);
+		void AddDirectionalLight(DirectionalLight _light);
+		void AddPointLight(PointLight _light);
 
-		Manifest Intersect(Ray _r);
+		float3 Intersect(Ray _r) const;
+	private:
+		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;
+		float GetTotalLightContribution(const Manifest& _manifest) const;
+
+		template<typename TLight>
+		float GetLightContribution(const Manifest& _manifest, const TLight& _light) const
+		{
+			ShadowRay shadowRay = _light.ConstructShadowRay(_manifest);
+			std::optional<Manifest> possible_blocker = GetNearestIntersection(shadowRay.Ray);
+			if (!possible_blocker || possible_blocker->T >= shadowRay.MaxT)
+			{
+				return _light.GetLightContribution(_manifest);
+			}
+			return 0.0f;
+		}
 
 		std::vector<Shape*>    m_Shapes;
 		std::vector<Material*> m_Materials;
+		std::vector<PointLight> m_PointLights;
+		std::vector<DirectionalLight> m_DirectionalLights;
 	};
 }

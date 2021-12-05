@@ -299,15 +299,22 @@ namespace CRT
 
 	float float3::Magnitude() const
 	{
-		return sqrt(x * x + y * y + z * z);
+		return sqrt(MagnitudeSquared());
 	}
 
 	float float3::Distance(const float3& _o) const
 	{
-		float a = x - _o.x;
-		float b = y - _o.y;
-		float c = z - _o.z;
-		return sqrt(a * a + b * b + c + c);
+		return sqrt(DistanceSquared(_o));
+	}
+
+	float float3::MagnitudeSquared() const
+	{
+		return Dot(*this);
+	}
+
+	float float3::DistanceSquared(const float3& _o) const
+	{
+		return (*this - _o).MagnitudeSquared();
 	}
 
 	std::string float3::ToString() const

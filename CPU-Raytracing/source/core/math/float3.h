@@ -76,6 +76,8 @@ namespace CRT
 
 		float Magnitude() const;
 		float Distance(const float3& _o) const;
+		float DistanceSquared(const float3& _o) const;
+		float MagnitudeSquared() const;
 
 		std::string ToString() const;
 
