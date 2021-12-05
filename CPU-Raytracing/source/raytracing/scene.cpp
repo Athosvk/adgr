@@ -1,9 +1,12 @@
 #include "./scene.h"
+#include <./core/graphics/color3.h>
 
 #include <optional>
 
 namespace CRT
 {
+	const float3 Scene::BackgroundColor = Color::Black;
+
 	void Scene::AddShape(Shape* _shape, Material* _material)
 	{
 		m_Shapes.push_back(_shape);
@@ -32,7 +35,7 @@ namespace CRT
 				color = nearest->M->Color;
 			return color * GetTotalLightContribution(*nearest);
 		}
-		return float3{ 0.0f, 0.0f, 0.0f };
+		return BackgroundColor;
 	}
 
 	std::optional<Manifest> Scene::GetNearestIntersection(Ray _ray) const
@@ -50,17 +53,20 @@ namespace CRT
 		return nearest;
 	}
 
-	float Scene::GetTotalLightContribution(const Manifest& _manifest) const
+	float3 Scene::GetTotalLightContribution(const Manifest& _manifest) const
 	{
-		float totalLightContribution = 0.1f;
-		for (const auto& directionalLight : m_DirectionalLights)
+		float3 totalLightContribution = { 0.1f, 0.1f, 0.1f };
+		for (const DirectionalLight& directionalLight : m_DirectionalLights)
 		{
 			totalLightContribution += GetLightContribution(_manifest, directionalLight);
 		}
-		for (const auto& pointLight : m_PointLights)
+		for (const PointLight& pointLight : m_PointLights)
 		{
 			totalLightContribution += GetLightContribution(_manifest, pointLight);
 		}
-		return std::min(totalLightContribution, 1.0f);
+		return std::min(totalLightContribution, float3::One());
+		return { std::min(totalLightContribution.x, 1.0f),
+				std::min(totalLightContribution.y, 1.0f),
+				std::min(totalLightContribution.z, 1.0f) };
 	}
 }

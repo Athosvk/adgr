@@ -18,8 +18,8 @@ namespace CRT
 		return { Ray(OffsetOrigin(_manifest), -Direction), std::numeric_limits<float>::infinity() };
 	}
 
-	float DirectionalLight::GetLightContribution(const Manifest& _manifest) const
+	float3 DirectionalLight::GetLightContribution(const Manifest& _manifest) const
 	{
-		return std::max(0.0f, _manifest.N.Dot(-Direction)) * Intensity;
+		return std::max(0.0f, _manifest.N.Dot(-Direction)) * Intensity * Attenuation;
 	}
 }
