@@ -25,15 +25,40 @@ namespace CRT
 
 	float3 Scene::Intersect(Ray _r) const
 	{
+		return IntersectBounced(_r, 5);
+	}
+
+	float3 Scene::IntersectBounced(Ray _r, unsigned _remainingBounces) const
+	{
+		if (_remainingBounces == 0)
+		{
+			return BackgroundColor;
+		}
 		std::optional<Manifest> nearest = GetNearestIntersection(_r);
 		if (nearest)
 		{ 
-			float3 color;
+			float3 object_color;
 			if (nearest->M->Texture != nullptr)
-				color = nearest->M->Texture->GetValue(nearest->UV);
+				object_color = nearest->M->Texture->GetValue(nearest->UV);
 			else
-				color = nearest->M->Color;
-			return color * GetTotalLightContribution(*nearest);
+				object_color = nearest->M->Color;
+			float specularity = nearest->M->Specularity;
+
+			float3 material_effect;
+			const float MinLightingComponent = 0.01f;
+			if (specularity > MinLightingComponent)
+			{
+				Ray reflectedRay = _r.Reflect(nearest->N);
+				reflectedRay.O = nearest->IntersectionPoint;
+				material_effect	+= IntersectBounced(reflectedRay, _remainingBounces - 1) * specularity;
+			}
+
+			float diffuseness = 1.0f - specularity;
+			if (diffuseness > MinLightingComponent)
+			{
+				material_effect += GetTotalLightContribution(*nearest);
+			}
+			return material_effect * object_color;
 		}
 		return BackgroundColor;
 	}
