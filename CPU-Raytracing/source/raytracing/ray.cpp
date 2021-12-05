@@ -2,10 +2,10 @@
 
 namespace CRT
 {
-	Ray Ray::Reflect(float3 _d, float3 _n, float3 _o)
+	Ray Ray::Reflect(float3 _n)
 	{
-		float3 r = _d - 2 * (_d.Dot(_n)) * _n;
-		return Ray(_o, r);
+		float3 r = D - 2 * (D.Dot(_n)) * _n;
+		return Ray(O, r);
 	}
 
 	float3 Ray::Sample(float _t) const

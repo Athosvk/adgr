@@ -11,7 +11,6 @@
 #include "./raytracing/lights/point_light.h"
 
 #include <vector>
-#include <memory>
 #include <optional>
 
 namespace CRT
@@ -27,6 +26,7 @@ namespace CRT
 
 		float3 Intersect(Ray _r) const;
 	private:
+		float3 IntersectBounced(Ray _r, unsigned _remainingBounces) const;
 		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;
 		float3 GetTotalLightContribution(const Manifest& _manifest) const;
 

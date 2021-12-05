@@ -12,7 +12,7 @@ namespace CRT
 		{ }
 
 		float3 Sample(float t) const;
-		static Ray Reflect(float3 _d, float3 _n, float3 _o);
+		Ray Reflect(float3 _n);
 
 		float3 O;
 		float3 D;
