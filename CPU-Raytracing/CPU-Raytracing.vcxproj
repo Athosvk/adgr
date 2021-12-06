@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\raytracing\material\dielectric.cpp" />
     <ClCompile Include="source\core\graphics\color3.cpp" />
     <ClCompile Include="source\raytracing\camera.cpp" />
     <ClCompile Include="source\core\graphics\render_device.cpp" />
@@ -169,6 +170,8 @@
     <ClCompile Include="source\scene\camera_controller.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\raytracing\material\basic.h" />
+    <ClInclude Include="source\raytracing\material\dielectric.h" />
     <ClInclude Include="source\core\graphics\color3.h" />
     <ClInclude Include="source\core\math\trigonometry.h" />
     <ClInclude Include="source\raytracing\camera.h" />

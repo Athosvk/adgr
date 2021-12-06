@@ -3,7 +3,7 @@
 
 #include <optional>
 #include <algorithm>
-
+#include <cmath>
 
 namespace CRT
 {
@@ -27,7 +27,7 @@ namespace CRT
 
 	float3 Scene::Intersect(Ray _r) const
 	{
-		return IntersectBounced(_r, 5);
+		return IntersectBounced(_r, 2);
 	}
 
 	float3 Scene::IntersectBounced(Ray _r, unsigned _remainingBounces) const
@@ -47,18 +47,48 @@ namespace CRT
 			float specularity = nearest->M->Specularity;
 
 			float3 material_effect;
-			const float MinLightingComponent = 0.01f;
-			if (specularity > MinLightingComponent)
+			if (nearest->M->type == Type::Basic)
 			{
-				Ray reflectedRay = _r.Reflect(nearest->N);
-				reflectedRay.O = nearest->IntersectionPoint;
-				material_effect	+= IntersectBounced(reflectedRay, _remainingBounces - 1) * specularity;
-			}
+				const float MinLightingComponent = 0.01f;
+				if (specularity > MinLightingComponent)
+				{
+					Ray reflectedRay = _r.Reflect(nearest->N);
+					reflectedRay.O = nearest->IntersectionPoint;
+					material_effect += IntersectBounced(reflectedRay, _remainingBounces - 1) * specularity;
+				}
 
-			float diffuseness = 1.0f - specularity;
-			if (diffuseness > MinLightingComponent)
+				float diffuseness = 1.0f - specularity;
+				if (diffuseness > MinLightingComponent)
+				{
+					material_effect += GetTotalLightContribution(*nearest) * diffuseness;
+				}
+			}
+			else if (nearest->M->type == Type::Dielectric)
 			{
-				material_effect += GetTotalLightContribution(*nearest);
+				Ray scattered_ray = _r;
+				// Get the cosine of the angle between the normal and the incoming ray
+				// by inverting the incoming ray's direction
+				float cosTheta = (-_r.D.Normalize()).Dot(nearest->N);
+				bool front_face = cosTheta > 0.0f;
+
+				float refractionIndexRatio = front_face ? 1.0f / nearest->M->RefractionIndex : nearest->M->RefractionIndex;
+				float k = 1 - (refractionIndexRatio * refractionIndexRatio) * (1 - (cosTheta * cosTheta));
+				float reflectance = 0.0f;
+				// Not past critical angle, refract ray
+				if (k >= 0.f)
+				{
+					float3 refractionDirection = refractionIndexRatio * _r.D + 
+						nearest->N * (refractionIndexRatio * cosTheta - std::sqrt(k));
+					material_effect = IntersectBounced(Ray(nearest->IntersectionPoint,
+						refractionDirection), _remainingBounces);
+				}
+				else
+				{
+					reflectance = 1.0f;
+					Ray reflectedRay = _r.Reflect(nearest->N);
+					reflectedRay.O = nearest->IntersectionPoint;
+					material_effect = IntersectBounced(reflectedRay, _remainingBounces - 1);
+				}
 			}
 			return material_effect * object_color;
 		}

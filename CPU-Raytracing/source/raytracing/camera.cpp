@@ -41,7 +41,7 @@ namespace CRT
 		float aspect_ratio = m_ViewportSize.x / (float)m_ViewportSize.y;
 		uv.x *= aspect_ratio;
 		float3 d = (Transform((uv), m_View)).Normalize();
-		return Ray(m_Position, d.Normalize());
+		return Ray(m_Position, d);
 	}
 
 	void Camera::SetDirection(float3 _direction)
