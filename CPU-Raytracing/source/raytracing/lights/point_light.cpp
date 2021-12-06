@@ -2,6 +2,8 @@
 #include <./raytracing/manifest.h>
 #include <./core/math/trigonometry.h>
 
+#include <algorithm>
+
 namespace CRT
 {
 	PointLight::PointLight(float3 _position, float _intensity, float3 _attenuation) : 

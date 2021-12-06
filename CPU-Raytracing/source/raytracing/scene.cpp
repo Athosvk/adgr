@@ -2,6 +2,8 @@
 #include <./core/graphics/color3.h>
 
 #include <optional>
+#include <algorithm>
+
 
 namespace CRT
 {
