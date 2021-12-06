@@ -7,7 +7,7 @@
 
 namespace CRT
 {
-	const float3 Scene::BackgroundColor = Color::Black;
+	const float3 Scene::BackgroundColor = float3(0.4f, 0.4f, 0.4f);
 
 	void Scene::AddShape(Shape* _shape, Material* _material)
 	{
@@ -27,7 +27,7 @@ namespace CRT
 
 	float3 Scene::Intersect(Ray _r) const
 	{
-		return IntersectBounced(_r, 2);
+		return IntersectBounced(_r, 5);
 	}
 
 	float3 Scene::IntersectBounced(Ray _r, unsigned _remainingBounces) const
@@ -65,22 +65,35 @@ namespace CRT
 			}
 			else if (nearest->M->type == Type::Dielectric)
 			{
-				Ray scattered_ray = _r;
 				// Get the cosine of the angle between the normal and the incoming ray
 				// by inverting the incoming ray's direction
-				float cosTheta = (-_r.D.Normalize()).Dot(nearest->N);
+				float cosTheta = ((_r.D).Normalize()).Dot(nearest->N);
+				float3 normal = nearest->N;
 				bool front_face = cosTheta > 0.0f;
+				if (front_face)
+				{
+					// Moving outside the object, so computed cosine and normal should be the other way
+					normal = -normal;
+				}
+				else
+				{
+					cosTheta = -cosTheta;
+				}
 
-				float refractionIndexRatio = front_face ? 1.0f / nearest->M->RefractionIndex : nearest->M->RefractionIndex;
+				float refractionIndexRatio = front_face ? 1.0 : 1.0 / nearest->M->RefractionIndex;
 				float k = 1 - (refractionIndexRatio * refractionIndexRatio) * (1 - (cosTheta * cosTheta));
 				float reflectance = 0.0f;
 				// Not past critical angle, refract ray
 				if (k >= 0.f)
 				{
 					float3 refractionDirection = refractionIndexRatio * _r.D + 
-						nearest->N * (refractionIndexRatio * cosTheta - std::sqrt(k));
-					material_effect = IntersectBounced(Ray(nearest->IntersectionPoint,
-						refractionDirection), _remainingBounces);
+						normal * (refractionIndexRatio * cosTheta - std::sqrtf(k));
+					// Make sure the refraction ray doesn't self-intersect
+					const float SelfIntersectionDelta = 0.001f;
+					// Displace into opposite direction since we're moving into the new medium
+					const float3 Displacement = SelfIntersectionDelta * -normal;
+					material_effect = IntersectBounced(Ray(nearest->IntersectionPoint + Displacement,
+						refractionDirection), _remainingBounces - 1);
 				}
 				else
 				{

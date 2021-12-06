@@ -19,7 +19,7 @@ namespace CRT
 		if (p2 > Radius2)
 			return false;
 
-		t -= sqrt(Radius2 - p2);
+		t -= sqrtf(Radius2 - p2);
 		if (t > 0.0f)
 		{
 			_m.T = t;

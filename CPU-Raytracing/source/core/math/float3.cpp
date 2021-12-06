@@ -211,7 +211,7 @@ namespace CRT
 
 	float3 operator-(const float3& _v)
 	{
-		return float3(-_v.x, -_v.y, _v.z);
+		return float3(-_v.x, -_v.y, -_v.z);
 	}
 
 	bool float3::operator==(const float3& _o) const

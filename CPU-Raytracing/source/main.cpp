@@ -31,14 +31,14 @@ int main(char** argc, char** argv)
 	// Leaks
 	Material* material = new Material(float3(0.2f, 0.2f, 0.8f), 0.0f, nullptr);
 	Material* spec_material = new Material(Color::White, 0.9f, nullptr);
-	Material* dielectric = new Material(Color::White, 0.9f, nullptr);
+	Material* dielectric = new Material(Color::Red, 0.9f, nullptr);
 	dielectric->type = Type::Dielectric;
-	dielectric->RefractionIndex = 1.11f;
+	dielectric->RefractionIndex = 1.4f;
 	scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(float3(0.2f, 0.8f, 0.2f), 0.0f, texture));
-	//scene->AddShape(new Plane(float3(0.0f, -3.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), dielectric);
+	// scene->AddShape(new Plane(float3(0.0f, -3.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), dielectric);
 	// Leaks
-	//scene->AddShape(new Sphere(float3(2.0f, -1.0f, -10.0f), 1.f), material);
-	//scene->AddShape(new Sphere(float3(2.0f, -1.0f, -7.0f), 1.f), material);
+	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -10.0f), 1.f), material);
+	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -7.0f), 1.f), material);
 	scene->AddShape(new Sphere(float3(5.0f, -1.0f, -7.0f), 1.f), dielectric);
 	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -1.f, 0.f).Normalize(), 0.5f, Color::White });
 	//scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, 0.75f).Normalize(), 0.2f, Color::White });
