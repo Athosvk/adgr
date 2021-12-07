@@ -77,6 +77,11 @@ namespace CRT
 		m_FocalLength = focalLength;
 	}
 
+	int Camera::GetAntiAliasing() const
+	{
+		return m_AntiAliasing;
+	}
+
 	glm::mat4 Camera::ConstructView() const
 	{
 		glm::vec3 front = ToGlm(m_Front);
