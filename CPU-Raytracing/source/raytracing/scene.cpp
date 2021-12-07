@@ -77,7 +77,7 @@ namespace CRT
 					cosTheta = -cosTheta;
 				}
 
-				float refractionIndexRatio = front_face ? nearest->M->RefractionIndex : 1.0 / nearest->M->RefractionIndex;
+				float refractionIndexRatio = front_face ? 1.0 / nearest->M->RefractionIndex : nearest->M->RefractionIndex;
 				float k = 1.0f - (refractionIndexRatio * refractionIndexRatio) * (1.0f - (cosTheta * cosTheta));
 				float reflectance = 0.0f;
 				// Not past critical angle, refract ray
@@ -93,6 +93,7 @@ namespace CRT
 						refractionDirection), _remainingBounces);
 					if (!front_face)
 					{
+						// Beer's law
 						material_effect.x *= std::expf(-material_effect.x * nearest->T);
 						material_effect.y *= std::expf(-material_effect.y * nearest->T);
 						material_effect.z *= std::expf(-material_effect.z * nearest->T);
