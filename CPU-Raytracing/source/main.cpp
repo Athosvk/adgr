@@ -13,8 +13,12 @@
 
 #include "./scene/camera_controller.h"
 
+#include "./scene/model_loading.h"
+
 using namespace CRT;
 
+int indexX = 0;
+int indexY = 0;
 int main(char** argc, char** argv)
 {
 	// Create and Show Window
@@ -33,7 +37,9 @@ int main(char** argc, char** argv)
 	// Leaks
 	Material* material = new Material(float3(0.2f, 0.2f, 0.8f), 0.5f, nullptr);
 	Material* spec_material = new Material(Color::White, 0.9f, nullptr);
-	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -10.0f), 1.f), material);
+
+	//ModelLoading::LoadModel(scene, float3(0.0f, 0.0f, -15.0f), "./assets/bunny.obj");
+
 	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -7.0f), 1.f), spec_material);
 	scene->AddShape(new Sphere(float3(5.0f, -1.0f, -7.0f), 1.f), spec_material);
 	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, -.75f).Normalize(), 0.2f, Color::White });
@@ -95,17 +101,34 @@ int main(char** argc, char** argv)
 		}
 		controller.ProcessInput(window->GetWindow(), deltaTime);
 		
-		for (uint32_t y = 0; y < viewport.y; y++)
-		{
+		//for (uint32_t y = 0; y < viewport.y; y++)
+		//{
+		//	printf("Y: %i\n", y);
 			for (uint32_t x = 0; x < viewport.x; x++)
 			{  
+			//	if (indexX >= viewport.x)
+			//	{
+			//		indexX = 0;
+			//		indexY++;
+			//		printf("Y: %i\n", indexY);
+			//	}
+				if (indexY >= viewport.y)
+				{
+					indexY = 0;
+				}
+			//	int x = indexX;
+				int y = indexY;
+
 				float u = (x / (viewport.x - 1.0f));
 				float v = (y / (viewport.y - 1.0f));
 				
 				float3 color = scene->Intersect(camera.ConstructRay({ u, v }));
 				surface->Set(x, y, (0xff000000 | (int(color.x * 255) << 16) | (int(color.y * 255) << 8) | int(color.z * 255)));
+		//		indexX++;
 			}
-		}
+				indexY++;
+				printf("Y: %i\n", indexY);
+		//}
 		
 		renderDevice->CopyFrom(surface);
 		renderDevice->Present();
