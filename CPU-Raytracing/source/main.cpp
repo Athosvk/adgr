@@ -101,34 +101,34 @@ int main(char** argc, char** argv)
 		}
 		controller.ProcessInput(window->GetWindow(), deltaTime);
 		
-		//for (uint32_t y = 0; y < viewport.y; y++)
-		//{
-		//	printf("Y: %i\n", y);
+		int aa = camera.GetAntiAliasing();
+		for (uint32_t y = 0; y < viewport.y; y++)
+		{
+			printf("Y: %i\n", y);
 			for (uint32_t x = 0; x < viewport.x; x++)
 			{  
-			//	if (indexX >= viewport.x)
-			//	{
-			//		indexX = 0;
-			//		indexY++;
-			//		printf("Y: %i\n", indexY);
-			//	}
-				if (indexY >= viewport.y)
+				float3 color(0.0f);
+				for (uint32_t k = 0; k < aa; k++)
 				{
-					indexY = 0;
-				}
-			//	int x = indexX;
-				int y = indexY;
+					float ur = (rand() / (RAND_MAX + 1.0f)) - 0.5f;
+					float vr = (rand() / (RAND_MAX + 1.0f)) - 0.5f;
 
-				float u = (x / (viewport.x - 1.0f));
-				float v = (y / (viewport.y - 1.0f));
-				
-				float3 color = scene->Intersect(camera.ConstructRay({ u, v }));
+					if (aa == 1)
+					{
+						vr = 0.0f;
+						ur = 0.0f;
+					}
+
+					float u = ((((float)x) + ur) / (viewport.x - 1.0f));
+					float v = ((((float)y) + vr) / (viewport.y - 1.0f));
+
+					color += scene->Intersect(camera.ConstructRay({ u, v }));
+				}
+
+				color /= aa;
 				surface->Set(x, y, (0xff000000 | (int(color.x * 255) << 16) | (int(color.y * 255) << 8) | int(color.z * 255)));
-		//		indexX++;
 			}
-				indexY++;
-				printf("Y: %i\n", indexY);
-		//}
+		}
 		
 		renderDevice->CopyFrom(surface);
 		renderDevice->Present();
