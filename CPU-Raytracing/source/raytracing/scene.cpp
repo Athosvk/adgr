@@ -47,14 +47,12 @@ namespace CRT
 			float specularity = nearest->M->Specularity;
 
 			float3 material_effect;
+			const float MinLightingComponent = 0.001f;
 			if (nearest->M->type == Type::Basic)
 			{
-				const float MinLightingComponent = 0.01f;
 				if (specularity > MinLightingComponent)
 				{
-					Ray reflectedRay = _r.Reflect(nearest->N);
-					reflectedRay.O = nearest->IntersectionPoint;
-					material_effect += IntersectBounced(reflectedRay, _remainingBounces - 1) * specularity;
+					material_effect += GetReflectance(_r, *nearest, _remainingBounces) * specularity;
 				}
 
 				float diffuseness = 1.0f - specularity;
@@ -86,10 +84,6 @@ namespace CRT
 				float k = 1.0f - (refractionIndexRatio * refractionIndexRatio) * (1.0f - (cosIncoming * cosIncoming));
 				float reflectance = 0.0f;
 
-				// Make sure the refraction ray doesn't self-intersect
-				const float SelfIntersectionDelta = 0.001f;
-				// Displace into opposite direction since we're moving into the new medium
-				const float3 Displacement = SelfIntersectionDelta * normal;
 
 				// Not past critical angle, refract ray
 				if (k >= 0.f)
@@ -108,17 +102,20 @@ namespace CRT
 				{
 					reflectance = 1.0f;
 				}
-				if (reflectance > 0.001f)
+				if (reflectance > MinLightingComponent)
 				{
-					Ray reflectedRay = _r.Reflect(nearest->N);
-					reflectedRay.O = nearest->IntersectionPoint + Displacement;
-					material_effect += IntersectBounced(reflectedRay, _remainingBounces - 1) * reflectance;
+					material_effect += GetReflectance(_r, *nearest, _remainingBounces) * reflectance;
 				}
 				float transmittance = 1.0f - reflectance;
-				if (transmittance > 0.001f)
+				if (transmittance > MinLightingComponent)
 				{
 					float3 refractionDirection = refractionIndexRatio * _r.D + 
 						normal * (refractionIndexRatio * cosIncoming - std::sqrtf(k));
+
+					// Make sure the refraction ray doesn't self-intersect
+					const float SelfIntersectionDelta = 0.001f;
+					// Displace into opposite direction since we're moving into the new medium
+					const float3 Displacement = SelfIntersectionDelta * normal;
 
 					float3 transmittedColor = IntersectBounced(Ray(nearest->IntersectionPoint - Displacement,
 						refractionDirection), _remainingBounces - 1);
@@ -163,9 +160,20 @@ namespace CRT
 		{
 			totalLightContribution += GetLightContribution(_manifest, pointLight);
 		}
-		return std::min(totalLightContribution, float3::One());
 		return { std::min(totalLightContribution.x, 1.0f),
 				std::min(totalLightContribution.y, 1.0f),
 				std::min(totalLightContribution.z, 1.0f) };
+	}
+
+	float3 Scene::GetReflectance(Ray _r, const Manifest& _manifest, unsigned _remainingBounces) const
+	{
+		// Make sure the refraction ray doesn't self-intersect
+		const float SelfIntersectionDelta = 0.001f;
+		// Displace into opposite direction since we're moving into the new medium
+		const float3 Displacement = SelfIntersectionDelta * _manifest.N;
+
+		Ray reflectedRay = _r.Reflect(_manifest.N);
+		reflectedRay.O = _manifest.IntersectionPoint;
+		return IntersectBounced(reflectedRay, _remainingBounces - 1);
 	}
 }
