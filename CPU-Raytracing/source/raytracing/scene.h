@@ -3,6 +3,8 @@
 #include "./raytracing/shapes/shape.h"
 #include "./raytracing/shapes/sphere.h"
 #include "./raytracing/shapes/plane.h"
+#include "./raytracing/shapes/torus.h"
+#include "./raytracing/shapes/triangle.h"
 
 #include "./raytracing/material/material.h"
 #include "./raytracing/manifest.h"

@@ -81,7 +81,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp.lib;glew32.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)dependencies/libs/x32/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -97,7 +97,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp.lib;glew32.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)dependencies/libs/x64/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -116,7 +116,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp.lib;glew32.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)dependencies/libs/x32/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -136,12 +136,13 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>glew32.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp.lib;glew32.lib;opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)dependencies/libs/x64/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\core\graphics\color3.cpp" />
+    <ClCompile Include="source\core\math\poly34.cpp" />
     <ClCompile Include="source\raytracing\camera.cpp" />
     <ClCompile Include="source\core\graphics\render_device.cpp" />
     <ClCompile Include="source\core\graphics\screen\surface.cpp" />
@@ -166,10 +167,14 @@
     <ClCompile Include="source\raytracing\scene.cpp" />
     <ClCompile Include="source\raytracing\shapes\plane.cpp" />
     <ClCompile Include="source\raytracing\shapes\sphere.cpp" />
+    <ClCompile Include="source\raytracing\shapes\torus.cpp" />
+    <ClCompile Include="source\raytracing\shapes\triangle.cpp" />
     <ClCompile Include="source\scene\camera_controller.cpp" />
+    <ClCompile Include="source\scene\model_loading.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\core\graphics\color3.h" />
+    <ClInclude Include="source\core\math\poly34.h" />
     <ClInclude Include="source\core\math\trigonometry.h" />
     <ClInclude Include="source\raytracing\camera.h" />
     <ClInclude Include="source\core\file_utility.h" />
@@ -201,7 +206,10 @@
     <ClInclude Include="source\raytracing\shapes\plane.h" />
     <ClInclude Include="source\raytracing\shapes\shape.h" />
     <ClInclude Include="source\raytracing\shapes\sphere.h" />
+    <ClInclude Include="source\raytracing\shapes\torus.h" />
+    <ClInclude Include="source\raytracing\shapes\triangle.h" />
     <ClInclude Include="source\scene\camera_controller.h" />
+    <ClInclude Include="source\scene\model_loading.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
