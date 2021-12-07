@@ -105,6 +105,9 @@
     <ClCompile Include="source\scene\model_loading.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\raytracing\lights\spot_light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\core\window\window.h">
@@ -216,6 +219,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="source\scene\model_loading.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\raytracing\lights\spot_light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

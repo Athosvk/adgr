@@ -10,6 +10,7 @@
 #include "./raytracing/manifest.h"
 
 #include "./raytracing/lights/directional_light.h"
+#include "./raytracing/lights/spot_light.h"
 #include "./raytracing/lights/point_light.h"
 
 #include <vector>
@@ -24,6 +25,7 @@ namespace CRT
 
 		void AddShape(Shape* _shape, Material* _material);
 		void AddDirectionalLight(DirectionalLight _light);
+		void AddSpotLight(SpotLight _light);
 		void AddPointLight(PointLight _light);
 
 		float3 Intersect(Ray _r) const;
@@ -49,6 +51,7 @@ namespace CRT
 		std::vector<Shape*>    m_Shapes;
 		std::vector<Material*> m_Materials;
 		std::vector<PointLight> m_PointLights;
+		std::vector<SpotLight> m_SpotLights;
 		std::vector<DirectionalLight> m_DirectionalLights;
 	};
 }

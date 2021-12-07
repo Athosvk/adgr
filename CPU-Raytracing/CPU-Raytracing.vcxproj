@@ -162,6 +162,7 @@
     <ClCompile Include="source\raytracing\lights\directional_light.cpp" />
     <ClCompile Include="source\raytracing\lights\light.cpp" />
     <ClCompile Include="source\raytracing\lights\point_light.cpp" />
+    <ClCompile Include="source\raytracing\lights\spot_light.cpp" />
     <ClCompile Include="source\raytracing\material\texture.cpp" />
     <ClCompile Include="source\raytracing\ray.cpp" />
     <ClCompile Include="source\raytracing\scene.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="source\raytracing\lights\directional_light.h" />
     <ClInclude Include="source\raytracing\lights\light.h" />
     <ClInclude Include="source\raytracing\lights\point_light.h" />
+    <ClInclude Include="source\raytracing\lights\spot_light.h" />
     <ClInclude Include="source\raytracing\manifest.h" />
     <ClInclude Include="source\raytracing\material\material.h" />
     <ClInclude Include="source\raytracing\material\texture.h" />
