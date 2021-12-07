@@ -67,21 +67,18 @@ namespace CRT
 			{
 				// Get the cosine of the angle between the normal and the incoming ray
 				// by inverting the incoming ray's direction
-				float cosTheta = ((_r.D).Normalize()).Dot(nearest->N);
+				float cosTheta = ((-_r.D)).Dot(nearest->N);
 				float3 normal = nearest->N;
 				bool front_face = cosTheta > 0.0f;
-				if (front_face)
+				if (!front_face)
 				{
 					// Moving outside the object, so computed cosine and normal should be the other way
 					normal = -normal;
-				}
-				else
-				{
 					cosTheta = -cosTheta;
 				}
 
-				float refractionIndexRatio = front_face ? 1.0 : 1.0 / nearest->M->RefractionIndex;
-				float k = 1 - (refractionIndexRatio * refractionIndexRatio) * (1 - (cosTheta * cosTheta));
+				float refractionIndexRatio = front_face ? nearest->M->RefractionIndex : 1.0 / nearest->M->RefractionIndex;
+				float k = 1.0f - (refractionIndexRatio * refractionIndexRatio) * (1.0f - (cosTheta * cosTheta));
 				float reflectance = 0.0f;
 				// Not past critical angle, refract ray
 				if (k >= 0.f)
@@ -93,7 +90,13 @@ namespace CRT
 					// Displace into opposite direction since we're moving into the new medium
 					const float3 Displacement = SelfIntersectionDelta * -normal;
 					material_effect = IntersectBounced(Ray(nearest->IntersectionPoint + Displacement,
-						refractionDirection), _remainingBounces - 1);
+						refractionDirection), _remainingBounces);
+					if (!front_face)
+					{
+						material_effect.x *= std::expf(-material_effect.x * nearest->T);
+						material_effect.y *= std::expf(-material_effect.y * nearest->T);
+						material_effect.z *= std::expf(-material_effect.z * nearest->T);
+					}
 				}
 				else
 				{
