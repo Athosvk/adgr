@@ -106,7 +106,6 @@ int main(char** argc, char** argv)
 		int aa = camera.GetAntiAliasing();
 		for (uint32_t y = 0; y < viewport.y; y++)
 		{
-		//	printf("Y: %i\n", y);
 			for (uint32_t x = 0; x < viewport.x; x++)
 			{  
 				float3 color(0.0f);
