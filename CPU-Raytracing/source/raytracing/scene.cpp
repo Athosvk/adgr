@@ -20,6 +20,11 @@ namespace CRT
 		m_DirectionalLights.emplace_back(std::move(_light));
 	}
 
+	void Scene::AddSpotLight(SpotLight _light)
+	{
+		m_SpotLights.emplace_back(std::move(_light));
+	}
+
 	void Scene::AddPointLight(PointLight _light)
 	{
 		m_PointLights.emplace_back(std::move(_light));
@@ -86,6 +91,10 @@ namespace CRT
 		for (const DirectionalLight& directionalLight : m_DirectionalLights)
 		{
 			totalLightContribution += GetLightContribution(_manifest, directionalLight);
+		}
+		for (const SpotLight& spotLight : m_SpotLights)
+		{
+			totalLightContribution += GetLightContribution(_manifest, spotLight);
 		}
 		for (const PointLight& pointLight : m_PointLights)
 		{

@@ -22,7 +22,7 @@ int indexY = 0;
 int main(char** argc, char** argv)
 {
 	// Create and Show Window
-	Window* window = new Window("Title", 1280, 720);
+	Window* window = new Window("Title", 320, 180);
 
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
@@ -38,7 +38,7 @@ int main(char** argc, char** argv)
 	Material* material = new Material(float3(0.2f, 0.2f, 0.8f), 0.5f, nullptr);
 	Material* spec_material = new Material(Color::White, 0.9f, nullptr);
 
-	//ModelLoading::LoadModel(scene, float3(0.0f, 0.0f, -15.0f), "./assets/bunny.obj");
+	ModelLoading::LoadModel(scene, float3(0.0f, -2.0f, -8.0f), "./assets/box.obj");
 
 	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -7.0f), 1.f), spec_material);
 	scene->AddShape(new Sphere(float3(5.0f, -1.0f, -7.0f), 1.f), spec_material);
@@ -48,6 +48,8 @@ int main(char** argc, char** argv)
 	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -11.5f), 125.0f, Color::Green });
 	scene->AddPointLight(PointLight{ float3(0.5f, 1.5f, -10.5f), 125.0f, Color::Purple });
 	scene->AddPointLight(PointLight{ float3(1.f, 0.5f, -11.5f), 125.0f, Color::Red });
+
+	scene->AddSpotLight(SpotLight{ float3(0.0f, 10.0f, -10.0f), float3(0.0f, -1.0f, 0.0f).Normalize(), 0.91, 0.82, 125.0f, Color::Purple });
 
 	// Camera
 	float aspect = float(window->GetWidth()) / float(window->GetHeight());
@@ -61,7 +63,7 @@ int main(char** argc, char** argv)
 
 	bool showImgui = true;
 
-	float2 viewport(1280, 720);
+	float2 viewport(window->GetWidth(), window->GetHeight());
 	Camera camera(viewport);
 	CameraController controller(camera);
 	// Main Loop
@@ -104,7 +106,6 @@ int main(char** argc, char** argv)
 		int aa = camera.GetAntiAliasing();
 		for (uint32_t y = 0; y < viewport.y; y++)
 		{
-			printf("Y: %i\n", y);
 			for (uint32_t x = 0; x < viewport.x; x++)
 			{  
 				float3 color(0.0f);

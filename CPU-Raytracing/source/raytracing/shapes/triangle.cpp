@@ -37,9 +37,9 @@ namespace CRT
         float3 qvec = tvec.Cross(v0v1);
         float v = _r.D.Dot(qvec) * invDet;
         if (v < 0 || u + v > 1) return false;
-
-        float t = v0v2.Dot(qvec) * invDet;
-        if (t < _m.T)
+     
+        float t = qvec.Dot(v0v2) * invDet;
+        if (t > 0.0f && t < _m.T)
         {
             _m.T = t;
             _m.UV = GetUV(_r.O+_r.D*t, N);
