@@ -17,8 +17,6 @@
 
 using namespace CRT;
 
-int indexX = 0;
-int indexY = 0;
 int main(char** argc, char** argv)
 {
 	// Create and Show Window
@@ -33,21 +31,25 @@ int main(char** argc, char** argv)
 
 	Scene* scene = new Scene();
 	// Leaks
-	scene->AddShape(new Plane(float3(0.0f, -2.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(float3(0.2f, 0.8f, 0.2f), 0.0f, texture));
-	// Leaks
-	Material* material = new Material(float3(0.2f, 0.2f, 0.8f), 0.5f, nullptr);
+	Material* material = new Material(float3(0.2f, 0.2f, 0.8f), 0.0f, nullptr);
 	Material* spec_material = new Material(Color::White, 0.9f, nullptr);
+	Material* dielectric = new Material(Color::Red, 0.9f, nullptr);
+	dielectric->type = Type::Dielectric;
+	dielectric->RefractionIndex = 1.4f;
+	scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(float3(0.2f, 0.8f, 0.2f), 0.0f, texture));
+	// scene->AddShape(new Plane(float3(0.0f, -3.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), dielectric);
+	// Leaks
 
 	ModelLoading::LoadModel(scene, float3(0.0f, -2.0f, -8.0f), "./assets/box.obj");
 
-	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -7.0f), 1.f), spec_material);
-	scene->AddShape(new Sphere(float3(5.0f, -1.0f, -7.0f), 1.f), spec_material);
-	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, -.75f).Normalize(), 0.2f, Color::White });
-	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, 0.75f).Normalize(), 0.2f, Color::White });
-	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -8.5f), 125.0f, Color::Yellow });
-	scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -11.5f), 125.0f, Color::Green });
-	scene->AddPointLight(PointLight{ float3(0.5f, 1.5f, -10.5f), 125.0f, Color::Purple });
-	scene->AddPointLight(PointLight{ float3(1.f, 0.5f, -11.5f), 125.0f, Color::Red });
+	scene->AddShape(new Sphere(float3(2.0f, -1.0f, -7.0f), 1.f), material);
+	scene->AddShape(new Sphere(float3(5.0f, -1.0f, -7.0f), 1.f), dielectric);
+	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -1.f, 0.f).Normalize(), 0.5f, Color::White });
+	//scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -.75f, 0.75f).Normalize(), 0.2f, Color::White });
+	//scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -8.5f), 125.0f, Color::Yellow });
+	//scene->AddPointLight(PointLight{ float3(3.5f, 0.5f, -11.5f), 125.0f, Color::Green });
+	//scene->AddPointLight(PointLight{ float3(0.5f, 1.5f, -10.5f), 125.0f, Color::Purple });
+	//scene->AddPointLight(PointLight{ float3(1.f, 0.5f, -11.5f), 125.0f, Color::Red });
 
 	scene->AddSpotLight(SpotLight{ float3(0.0f, 10.0f, -10.0f), float3(0.0f, -1.0f, 0.0f).Normalize(), 0.91, 0.82, 125.0f, Color::Purple });
 

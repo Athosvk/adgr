@@ -33,6 +33,7 @@ namespace CRT
 		float3 IntersectBounced(Ray _r, unsigned _remainingBounces) const;
 		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;
 		float3 GetTotalLightContribution(const Manifest& _manifest) const;
+		float3 GetReflectance(Ray _r, const Manifest& _manifest, unsigned _remainingBounces) const;
 
 		template<typename TLight>
 		float3 GetLightContribution(const Manifest& _manifest, const TLight& _light) const

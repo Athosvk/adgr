@@ -6,6 +6,12 @@ namespace CRT
 {
 	class Texture;
 
+	enum class Type
+	{
+		Basic,
+		Dielectric
+	};
+
 	class Material
 	{
 	public:
@@ -16,7 +22,9 @@ namespace CRT
 		{ }
 
 		float3 Color;
-		float  Specularity;
+		float Specularity;
 		Texture* Texture;
+		float RefractionIndex;
+		Type type = Type::Basic;
 	};
 }
