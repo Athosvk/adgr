@@ -21,7 +21,7 @@ namespace CRT
 		float3 GetRight() const;
 		float GetFocalLength() const;
 		void SetFocalLength(float focalLength);
-		int GetAntiAliasing() const;
+		uint32_t GetAntiAliasing() const;
 	private:
 		glm::mat4 ConstructView() const;
 		float3 Transform(float3 _toTranform, glm::mat4 _transform) const;

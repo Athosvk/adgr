@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\job_manager.cpp" />
     <ClCompile Include="source\raytracing\material\dielectric.cpp" />
     <ClCompile Include="source\core\graphics\color3.cpp" />
     <ClCompile Include="source\core\math\poly34.cpp" />
@@ -166,6 +167,7 @@
     <ClCompile Include="source\raytracing\lights\spot_light.cpp" />
     <ClCompile Include="source\raytracing\material\texture.cpp" />
     <ClCompile Include="source\raytracing\ray.cpp" />
+    <ClCompile Include="source\raytracing\raytracer.cpp" />
     <ClCompile Include="source\raytracing\scene.cpp" />
     <ClCompile Include="source\raytracing\shapes\plane.cpp" />
     <ClCompile Include="source\raytracing\shapes\sphere.cpp" />
@@ -175,6 +177,7 @@
     <ClCompile Include="source\scene\model_loading.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\job_manager.h" />
     <ClInclude Include="source\raytracing\material\basic.h" />
     <ClInclude Include="source\raytracing\material\dielectric.h" />
     <ClInclude Include="source\core\graphics\color3.h" />
@@ -207,6 +210,7 @@
     <ClInclude Include="source\raytracing\material\material.h" />
     <ClInclude Include="source\raytracing\material\texture.h" />
     <ClInclude Include="source\raytracing\ray.h" />
+    <ClInclude Include="source\raytracing\raytracer.h" />
     <ClInclude Include="source\raytracing\scene.h" />
     <ClInclude Include="source\raytracing\shapes\plane.h" />
     <ClInclude Include="source\raytracing\shapes\shape.h" />

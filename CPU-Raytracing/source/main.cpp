@@ -1,4 +1,5 @@
 #include <iostream>
+#include <array>
 
 #include "./core/window/window.h"
 #include "./core/graphics/render_device.h"
@@ -14,18 +15,18 @@
 #include "./scene/camera_controller.h"
 
 #include "./scene/model_loading.h"
+#include "job_manager.h"
+#include "raytracing/raytracer.h"
 
 using namespace CRT;
 
 int main(char** argc, char** argv)
 {
 	// Create and Show Window
-	Window* window = new Window("Title", 320, 180);
+	Window* window = new Window("Title", 720, 480);
 
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
-
-	Surface* surface = new Surface(window->GetWidth(), window->GetHeight());
 
 	Texture* texture = new Texture("./assets/test_texture.png");
 
@@ -51,7 +52,7 @@ int main(char** argc, char** argv)
 	//scene->AddPointLight(PointLight{ float3(0.5f, 1.5f, -10.5f), 125.0f, Color::Purple });
 	//scene->AddPointLight(PointLight{ float3(1.f, 0.5f, -11.5f), 125.0f, Color::Red });
 
-	scene->AddSpotLight(SpotLight{ float3(0.0f, 10.0f, -10.0f), float3(0.0f, -1.0f, 0.0f).Normalize(), 0.91, 0.82, 125.0f, Color::Purple });
+	scene->AddSpotLight(SpotLight{ float3(0.0f, 10.0f, -10.0f), float3(0.0f, -1.0f, 0.0f).Normalize(), 0.91f, 0.82f, 125.0f, Color::Purple });
 
 	// Camera
 	float aspect = float(window->GetWidth()) / float(window->GetHeight());
@@ -70,6 +71,9 @@ int main(char** argc, char** argv)
 	CameraController controller(camera);
 	// Main Loop
 	float previousFrame = (float)glfwGetTime();
+
+	Surface surface(window->GetWidth(), window->GetHeight());
+	Raytracer raytracer(surface, *scene, camera);
 	while (!window->ShouldClose())
 	{
 		ImGui_ImplOpenGL3_NewFrame();
@@ -105,35 +109,8 @@ int main(char** argc, char** argv)
 		}
 		controller.ProcessInput(window->GetWindow(), deltaTime);
 		
-		int aa = camera.GetAntiAliasing();
-		for (uint32_t y = 0; y < viewport.y; y++)
-		{
-			for (uint32_t x = 0; x < viewport.x; x++)
-			{  
-				float3 color(0.0f);
-				for (uint32_t k = 0; k < aa; k++)
-				{
-					float ur = (rand() / (RAND_MAX + 1.0f)) - 0.5f;
-					float vr = (rand() / (RAND_MAX + 1.0f)) - 0.5f;
-
-					if (aa == 1)
-					{
-						vr = 0.0f;
-						ur = 0.0f;
-					}
-
-					float u = ((((float)x) + ur) / (viewport.x - 1.0f));
-					float v = ((((float)y) + vr) / (viewport.y - 1.0f));
-
-					color += scene->Intersect(camera.ConstructRay({ u, v }));
-				}
-
-				color /= aa;
-				surface->Set(x, y, (0xff000000 | (int(color.x * 255) << 16) | (int(color.y * 255) << 8) | int(color.z * 255)));
-			}
-		}
-		
-		renderDevice->CopyFrom(surface);
+		raytracer.RenderFrame();
+		renderDevice->CopyFrom(&surface);
 		renderDevice->Present();
 
 		ImGui::Render();
@@ -148,7 +125,6 @@ int main(char** argc, char** argv)
 
 	delete renderDevice;
 	delete window;
-	delete surface;
 	delete scene;
 	return 0;
 }

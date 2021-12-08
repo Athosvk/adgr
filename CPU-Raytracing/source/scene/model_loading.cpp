@@ -13,7 +13,7 @@ namespace CRT
 		const aiScene* scene = importer.ReadFile(_filepath, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 
 
-		for(int i = 0; i < scene->mNumMeshes; i++)
+		for(size_t i = 0; i < scene->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[i];
 			int iMeshFaces = mesh->mNumFaces;
