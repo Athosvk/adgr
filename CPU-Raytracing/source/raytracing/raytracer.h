@@ -2,6 +2,8 @@
 #include <./job_manager.h>
 #include <cstdint>
 
+#include <array>
+
 namespace CRT
 {
 	class Surface;
