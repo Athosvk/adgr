@@ -1,5 +1,7 @@
 #include "job_manager.h"
 
+#include <random>
+
 namespace CRT
 {
 	JobManager::JobManager(int _numThreads) :
@@ -25,9 +27,12 @@ namespace CRT
 		for (size_t i = 0; i < _numThreads; i++)
 		{
 			threads.emplace_back([this] {
+				std::mt19937 generator { std::random_device()() };
+				std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+
 				while (true)
 				{
-					std::function<void()> task;
+					JobType task;
 					{
 						std::unique_lock<std::mutex> lock(m_TaskQueueMutex);
 						m_JobReady.wait(lock,
@@ -38,7 +43,7 @@ namespace CRT
 						m_TaskQueue.pop();
 					}
 
-					task();
+					task(generator, distribution);
 				}
 			}
 			);
