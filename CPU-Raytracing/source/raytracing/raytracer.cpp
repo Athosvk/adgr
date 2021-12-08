@@ -74,7 +74,7 @@ namespace CRT
 
 						color += m_Scene.Intersect(m_Camera.ConstructRay({ u, v }));
 					}
-					output.Color[job_x + job_y * JobWidth] = color;
+					output.Color[job_x + job_y * JobWidth] = color / m_Camera.GetAntiAliasing();
 				}
 			}
 			return output;
