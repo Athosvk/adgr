@@ -19,4 +19,8 @@ namespace CRT
 	{
 		return (radians * 180.0f) / Pi<T>();
 	}
+	
+	template <typename T> int sgn(T val) {
+		return (T(0) < val) - (val < T(0));
+	}
 }
