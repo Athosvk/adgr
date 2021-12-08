@@ -127,9 +127,9 @@ namespace CRT
 					if (!front_face)
 					{
 						// Beer's law
-						transmittedColor.x *= std::expf(-transmittedColor.x * nearest->T);
-						transmittedColor.y *= std::expf(-transmittedColor.y * nearest->T);
-						transmittedColor.z *= std::expf(-transmittedColor.z * nearest->T);
+						transmittedColor.x *= std::expf(-transmittedColor.x * (nearest->T / 10));
+						transmittedColor.y *= std::expf(-transmittedColor.y * (nearest->T / 10));
+						transmittedColor.z *= std::expf(-transmittedColor.z * (nearest->T / 10));
 					}
 					material_effect += transmittedColor * transmittance;
 				}
