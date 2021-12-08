@@ -1,67 +1,110 @@
 #include "./raytracing/shapes/torus.h"
+#include "./core/math/trigonometry.h"
 #include "./core/math/poly34.h"
 
 #include <vector>
+
+#include <algorithm>
+#include <cmath>
+#include <complex>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/type_precision.hpp>
 
 #define M_PI 3.14159265358979323846
 
 namespace CRT
 {
-	Torus::Torus(float _r1, float _r2)
+	Torus::Torus(float3 _pos, float _r1, float _r2)
 		: Shape(ShapeType::SHAPE_TYPE_TORUS)
 		, RR1(_r1)
 		, RR2(_r2)
-	{ }
+		, Position(_pos)
+	{ 
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(Position.x, Position.y, Position.z));
+
+		invModel = glm::inverse(model);
+		invModel = glm::transpose(invModel);
+	}
 
 	bool Torus::Intersect(Ray _r, Manifest& _m)
 	{
-        float r2 = sqrt(RR1);
-        float R2 = sqrt(RR2);
+		const auto transformedRay = _r.Transform(invModel);
+		const auto transformedRayDir = transformedRay.D;
+		const auto transformedOrigin = transformedRay.O;
 
-        double a4 = sqrt(_r.D.Dot(_r.D));
-        double a3 = 4 * _r.D.Dot(_r.D) * _r.O.Dot(_r.D);
-        double a2 = 4 * sqrt(_r.O.Dot(_r.D)) + 2 * _r.D.Dot(_r.D) * (_r.O.Dot(_r.O) - r2 - R2) + 4 * R2 * sqrt(_r.D.z);
-        double a1 = 4 * _r.O.Dot(_r.D) * (_r.O.Dot(_r.O) - r2 - R2) + 8 * R2 * _r.O.z * _r.D.z;
-        double a0 = sqrt(_r.O.Dot(_r.O) - r2 - R2) + 4 * R2 * sqrt(_r.O.z) - 4 * R2 * r2;
+		float rayDirDot = transformedRayDir.Dot(transformedRayDir);
+		float originDot = transformedOrigin.Dot(transformedOrigin);
 
-        a3 /= a4; a2 /= a4; a1 /= a4; a0 /= a4;
+		float originDirDot = transformedRayDir.Dot(transformedOrigin);
+		float commonTerm = originDot - (RR1 * RR1) - (RR2 * RR2);
 
-        double roots[4];
-        int n_real_roots;
-        n_real_roots = SolveP4(roots, a3, a2, a1, a0);
+		float c4 = rayDirDot * rayDirDot;
+		float c3 = 4.0f * rayDirDot * originDirDot;
+		float c2 = 2.0f * rayDirDot * commonTerm + 4.0f * originDirDot * originDirDot + 4.0f * (RR1 * RR1) * transformedRayDir.y * transformedRayDir.y;
+		float c1 = 4.0f * commonTerm * originDirDot + 8.0f * (RR1 * RR1) * transformedOrigin.y * transformedRayDir.y;
+		float c0 = commonTerm * commonTerm - 4.0f * (RR1 * RR1) * ((RR2 * RR2) - transformedOrigin.y * transformedOrigin.y);
 
-        if (n_real_roots == 0) 
-            return false;
+		c3 /= c4;
+		c2 /= c4;
+		c1 /= c4;
+		c0 /= c4;
 
-        float3 intersect_point;
-        for (int i = 0; i < n_real_roots; i++)
-        {
-            float root = static_cast<float>(roots[i]);
-            intersect_point = root * _r.D + _r.O;
+		std::complex<double>* solutions = solve_quartic(c3, c2, c1, c0);
 
-            if (root <= _m.T) {
-                _m.T = root;
-                
-                float3 normal(
-                    4.0 * intersect_point.x * (sqrt(intersect_point.x) + sqrt(intersect_point.y) + sqrt(intersect_point.z) - r2 - R2),
-                    4.0 * intersect_point.y * (sqrt(intersect_point.x) + sqrt(intersect_point.y) + sqrt(intersect_point.z) - r2 - R2),
-                    4.0 * intersect_point.z * (sqrt(intersect_point.x) + sqrt(intersect_point.y) + sqrt(intersect_point.z) - r2 - R2) + 8 * R2 * intersect_point.z
-                );
+		float minRealRoot = FLT_MAX;
+		if (solutions[0].real() > 0.0f && solutions[0].imag() == 0.0f && solutions[0].real() < minRealRoot) {
+			minRealRoot = solutions[0].real();
+		}
 
-                _m.N = normal;
-            }
-        }
+		if (solutions[1].real() > 0.0f && solutions[1].imag() == 0.0f && solutions[1].real() < minRealRoot) {
+			minRealRoot = solutions[1].real();
+		}
 
-		return true;
+		if (solutions[2].real() > 0.0f && solutions[2].imag() == 0.0f && solutions[2].real() < minRealRoot) {
+			minRealRoot = solutions[2].real();
+		}
+
+		if (solutions[3].real() > 0.0f && solutions[3].imag() == 0.0f && solutions[3].real() < minRealRoot) {
+			minRealRoot = solutions[3].real();
+		}
+
+		delete[] solutions;
+
+		if (minRealRoot == FLT_MAX) {
+			return false;
+		}
+
+	//	if (minRealRoot < _m.T) {
+
+			auto localp = transformedRay.Sample(minRealRoot);
+			float sumSquared = localp.Dot(localp);
+			float radii = RR1 * RR1 + RR2 * RR2;
+			glm::fvec3 normal = glm::normalize(glm::fvec3(
+				4.0f * localp.x * (sumSquared - radii),
+				4.0f * localp.y * (sumSquared - radii + 2.0f * (RR1 * RR1)),
+				4.0f * localp.z * (sumSquared - radii)
+			));
+
+			auto transformedNormal = model * glm::fvec4(normal, 0);
+			//transformedNormal = -transformedNormal;
+
+			_m.IntersectionPoint = localp;
+			_m.T = minRealRoot;
+			_m.UV = GetUV(localp, float3(1.0f, 1.0f, 1.0).Normalize());
+			_m.N = float3(transformedNormal.x, transformedNormal.y, transformedNormal.z).Normalize();
+			//getUV(rec);
+			return true;
+	//	}
+
+	//	return false;
 	}
 	float2 Torus::GetUV(float3 _point, float3 _normal)
 	{
-        float theta = atan2(_point.x, _point.z);
-        float radius = _point.Magnitude();
-
-        float phi = acos(_point.y / radius);
-
-        float raw_u = theta / (2.0 * M_PI);
-        return float2(1.0f - (raw_u + 0.5f), 1.0f - phi / M_PI);
+		float u = 0.5f + (std::atan2(_point.z, _point.x) / M_2PI);
+		float v = 0.5f + (std::atan2(_point.y, (sqrt(_point.x * _point.x + _point.z * _point.z) - RR1)) / M_2PI);
+        return float2(u, v);
 	}
 }
