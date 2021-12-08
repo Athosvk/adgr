@@ -6,6 +6,6 @@ namespace CRT
 	class ModelLoading
 	{
 	public:
-		static void LoadModel(Scene* _scene, float3 _offset, const std::string& _filepath);
+		static void LoadModel(Scene* _scene, Material* material, float3 _offset, const std::string& _filepath);
 	};
 }
