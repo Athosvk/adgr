@@ -58,6 +58,6 @@ namespace CRT
 			// Always have one worker thread to distribute jobs to
 			return 1u;
 
-		return std::max(1u, maxThreads - 1);
+		return std::max(1u, maxThreads - 2);
 	}
 }
