@@ -1,36 +1,68 @@
-// poly34.h : solution of cubic and quartic equation
-// (c) Khashin S.I. http://math.ivanovo.ac.ru/dalgebra/Khashin/index.html
-// khash2 (at) gmail.com
+/***************************************************************************
+ *   Copyright (C) 2016 by Ð¡Ð°ÑˆÐ° ÐœÐ¸Ð»ÐµÐ½ÐºÐ¾Ð²Ð¸Ñ›                                 *
+ *   sasa.milenkovic.xyz@gmail.com                                         *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *   ( http://www.gnu.org/licenses/gpl-3.0.en.html )                       *
+ *									   *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
 
+#ifndef QUARTIC_H_INCLUDED
+#define QUARTIC_H_INCLUDED
 
-// x - array of size 2
-// return 2: 2 real roots x[0], x[1]
-// return 0: pair of complex roots: x[0]±i*x[1]
-int   SolveP2(double* x, double a, double b);			// solve equation x^2 + a*x + b = 0
+#include <complex>
 
+const double PI = 3.141592653589793238463L;
+const double M_2PI = 2 * PI;
+const double eps = 1e-12;
+
+typedef std::complex<double> DComplex;
+
+//---------------------------------------------------------------------------
+// useful for testing
+inline DComplex polinom_2(DComplex x, double a, double b)
+{
+	//Horner's scheme for x*x + a*x + b
+	return x * (x + a) + b;
+}
+
+//---------------------------------------------------------------------------
+// useful for testing
+inline DComplex polinom_3(DComplex x, double a, double b, double c)
+{
+	//Horner's scheme for x*x*x + a*x*x + b*x + c;
+	return x * (x * (x + a) + b) + c;
+}
+
+//---------------------------------------------------------------------------
+// useful for testing
+inline DComplex polinom_4(DComplex x, double a, double b, double c, double d)
+{
+	//Horner's scheme for x*x*x*x + a*x*x*x + b*x*x + c*x + d;
+	return x * (x * (x * (x + a) + b) + c) + d;
+}
+
+//---------------------------------------------------------------------------
 // x - array of size 3
-// return 3: 3 real roots x[0], x[1], x[2]
-// return 1: 1 real root x[0] and pair of complex roots: x[1]±i*x[2]
-int   SolveP3(double* x, double a, double b, double c);			// solve cubic equation x^3 + a*x^2 + b*x + c = 0
+// In case 3 real roots: => x[0], x[1], x[2], return 3
+//         2 real roots: x[0], x[1],          return 2
+//         1 real root : x[0], x[1] Â± i*x[2], return 1
+unsigned int solveP3(double* x, double a, double b, double c);
 
-// x - array of size 4
-// return 4: 4 real roots x[0], x[1], x[2], x[3], possible multiple roots
-// return 2: 2 real roots x[0], x[1] and complex x[2]±i*x[3], 
-// return 0: two pair of complex roots: x[0]±i*x[1],  x[2]±i*x[3], 
-int   SolveP4(double* x, double a, double b, double c, double d);	// solve equation x^4 + a*x^3 + b*x^2 + c*x + d = 0 by Dekart-Euler method
+//---------------------------------------------------------------------------
+// Solve quartic equation x^4 + a*x^3 + b*x^2 + c*x + d
+// (attention - this function returns dynamically allocated array. It has to be released afterwards)
+DComplex* solve_quartic(double a, double b, double c, double d);
 
-// x - array of size 5
-// return 5: 5 real roots x[0], x[1], x[2], x[3], x[4], possible multiple roots
-// return 3: 3 real roots x[0], x[1], x[2] and complex x[3]±i*x[4], 
-// return 1: 1 real root x[0] and two pair of complex roots: x[1]±i*x[2],  x[3]±i*x[4], 
-int   SolveP5(double* x, double a, double b, double c, double d, double e);	// solve equation x^5 + a*x^4 + b*x^3 + c*x^2 + d*x + e = 0
-
-//-----------------------------------------------------------------------------
-// And some additional functions for internal use.
-// Your may remove this definitions from here
-int   SolveP4Bi(double* x, double b, double d);				// solve equation x^4 + b*x^2 + d = 0
-int   SolveP4De(double* x, double b, double c, double d);	// solve equation x^4 + b*x^2 + c*x + d = 0
-void  CSqrt(double x, double y, double& a, double& b);		// returns as a+i*s,  sqrt(x+i*y)
-double N4Step(double x, double a, double b, double c, double d);// one Newton step for x^4 + a*x^3 + b*x^2 + c*x + d
-double SolveP5_1(double a, double b, double c, double d, double e);	// return real root of x^5 + a*x^4 + b*x^3 + c*x^2 + d*x + e = 0
-
+#endif // QUARTIC_H_INCLUDED
