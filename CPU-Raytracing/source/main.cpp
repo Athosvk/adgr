@@ -16,6 +16,7 @@
 
 #include "./scene/model_loading.h"
 #include "job_manager.h"
+#include "raytracing/raytracer.h"
 
 using namespace CRT;
 
@@ -26,8 +27,6 @@ int main(char** argc, char** argv)
 
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
-
-	Surface* surface = new Surface(window->GetWidth(), window->GetHeight());
 
 	Texture* texture = new Texture("./assets/test_texture.png");
 
@@ -73,17 +72,8 @@ int main(char** argc, char** argv)
 	// Main Loop
 	float previousFrame = (float)glfwGetTime();
 
-	constexpr unsigned JobWidth = 4;
-	struct JobOutput
-	{
-		uint32_t XMin;
-		uint32_t YMin;
-		std::array<float3, JobWidth * JobWidth> Color;
-	};
-
-	JobManager job_manager;
-	std::vector<std::future<JobOutput>> results;
-	results.reserve((int32_t)(viewport.x * viewport.y));
+	Surface surface(window->GetWidth(), window->GetHeight());
+	Raytracer raytracer(surface, *scene, camera);
 	while (!window->ShouldClose())
 	{
 		ImGui_ImplOpenGL3_NewFrame();
@@ -119,69 +109,14 @@ int main(char** argc, char** argv)
 		}
 		controller.ProcessInput(window->GetWindow(), deltaTime);
 		
-		uint32_t aa = camera.GetAntiAliasing();
-		constexpr unsigned JobWidth = 4;
-
-		for (uint32_t y = 0; y < viewport.y; y += JobWidth)
-		{
-			for (uint32_t x = 0; x < viewport.x; x += JobWidth)
-			{
-				results.push_back(job_manager.AddJob([=] {
-					JobOutput output{ x, y };
-					for (uint32_t job_x = 0; job_x < JobWidth; job_x++)
-					{
-						for (uint32_t job_y = 0; job_y < JobWidth; job_y++)
-						{
-							float3 color(0.0f);
-							for (uint32_t k = 0; k < aa; k++)
-							{
-								float ur = (rand() / (RAND_MAX + 1.0f)) - 0.5f;
-								float vr = (rand() / (RAND_MAX + 1.0f)) - 0.5f;
-
-								if (aa == 1)
-								{
-									vr = 0.0f;
-									ur = 0.0f;
-								}
-
-								float u = ((((float)job_x + x) + ur) / (viewport.x - 1.0f));
-								float v = ((((float)job_y + y) + vr) / (viewport.y - 1.0f));
-
-								color += scene->Intersect(camera.ConstructRay({ u, v }));
-							}
-							output.Color[job_x + job_y * JobWidth] = color;
-						}
-					}
-					return output;
-				}));
-			}
-		}
-
-		for (auto& result : results)
-		{
-			JobOutput output = result.get();
-			for (uint32_t y = 0; y < JobWidth; y++)
-			{
-				for (uint32_t x = 0; x < JobWidth; x++)
-				{
-					if (x < viewport.x && y < viewport.y)
-					{
-						float3 color = output.Color[x + y * JobWidth];
-						surface->Set(x + output.XMin, y + output.YMin,
-							(0xff000000 | (int(color.x * 255) << 16) | (int(color.y * 255) << 8) | int(color.z * 255)));
-					}
-				}
-			}
-		}
-		
-		renderDevice->CopyFrom(surface);
+		raytracer.RenderFrame();
+		renderDevice->CopyFrom(&surface);
 		renderDevice->Present();
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		window->PollEvents();
-		results.clear();
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();
@@ -190,7 +125,6 @@ int main(char** argc, char** argv)
 
 	delete renderDevice;
 	delete window;
-	delete surface;
 	delete scene;
 	return 0;
 }

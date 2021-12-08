@@ -1,3 +1,4 @@
+#pragma once
 #include "./raytracing/ray.h"
 
 #include <concurrent_queue.h>

@@ -77,7 +77,7 @@ namespace CRT
 		m_FocalLength = focalLength;
 	}
 
-	int Camera::GetAntiAliasing() const
+	uint32_t Camera::GetAntiAliasing() const
 	{
 		return m_AntiAliasing;
 	}
