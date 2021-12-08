@@ -21,7 +21,7 @@ namespace CRT
 		, RR1(_r1)
 		, RR2(_r2)
 		, Position(_pos)
-	{ 
+	{
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(Position.x, Position.y, Position.z));
 
@@ -77,34 +77,34 @@ namespace CRT
 			return false;
 		}
 
-	//	if (minRealRoot < _m.T) {
+		//	if (minRealRoot < _m.T) {
 
-			auto localp = transformedRay.Sample(minRealRoot);
-			float sumSquared = localp.Dot(localp);
-			float radii = RR1 * RR1 + RR2 * RR2;
-			glm::fvec3 normal = glm::normalize(glm::fvec3(
-				4.0f * localp.x * (sumSquared - radii),
-				4.0f * localp.y * (sumSquared - radii + 2.0f * (RR1 * RR1)),
-				4.0f * localp.z * (sumSquared - radii)
-			));
+		auto localp = transformedRay.Sample(minRealRoot);
+		float sumSquared = localp.Dot(localp);
+		float radii = RR1 * RR1 + RR2 * RR2;
+		glm::fvec3 normal = glm::normalize(glm::fvec3(
+			4.0f * localp.x * (sumSquared - radii),
+			4.0f * localp.y * (sumSquared - radii + 2.0f * (RR1 * RR1)),
+			4.0f * localp.z * (sumSquared - radii)
+		));
 
-			auto transformedNormal = model * glm::fvec4(normal, 0);
-			//transformedNormal = -transformedNormal;
+		auto transformedNormal = model * glm::fvec4(normal, 0);
+		//transformedNormal = -transformedNormal;
 
-			_m.IntersectionPoint = localp;
-			_m.T = minRealRoot;
-			_m.UV = GetUV(localp, float3(1.0f, 1.0f, 1.0).Normalize());
-			_m.N = float3(transformedNormal.x, transformedNormal.y, transformedNormal.z).Normalize();
-			//getUV(rec);
-			return true;
-	//	}
+		_m.IntersectionPoint = localp;
+		_m.T = minRealRoot;
+		_m.UV = GetUV(localp, float3(1.0f, 1.0f, 1.0).Normalize());
+		_m.N = float3(transformedNormal.x, transformedNormal.y, transformedNormal.z).Normalize();
+		//getUV(rec);
+		return true;
+		//	}
 
-	//	return false;
+		//	return false;
 	}
 	float2 Torus::GetUV(float3 _point, float3 _normal)
 	{
 		float u = 0.5f + (std::atan2(_point.z, _point.x) / M_2PI);
 		float v = 0.5f + (std::atan2(_point.y, (sqrt(_point.x * _point.x + _point.z * _point.z) - RR1)) / M_2PI);
-        return float2(u, v);
+		return float2(u, v);
 	}
 }
