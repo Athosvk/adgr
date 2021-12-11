@@ -85,6 +85,11 @@ namespace CRT
 		return m_AntiAliasing;
 	}
 
+	void Camera::SetAntiAliasing(uint32_t aaFactor)
+	{
+		m_AntiAliasing = aaFactor;
+	}
+
 	glm::mat4 Camera::ConstructView() const
 	{
 		glm::vec3 front = ToGlm(m_Front);

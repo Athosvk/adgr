@@ -92,17 +92,16 @@ int main(char** argc, char** argv)
 			if (ImGui::CollapsingHeader("Camera"))
 			{
 				float3 cameraPosition = camera.GetPosition();
-				float3 cameraRight = camera.GetRight();
-				float3 cameraUp = camera.GetUp();
-				float3 cameraFront = camera.GetFront();
 				ImGui::SliderFloat3("CameraPosition", &cameraPosition.x, -10.0f, 10.0f);
-				ImGui::SliderFloat3("CameraRight", &cameraRight.x, -10.0f, 10.0f);
-				ImGui::SliderFloat3("CameraUp", &cameraUp.x, -10.0f, 10.0f);
-				ImGui::SliderFloat3("CameraFront", &cameraFront.x, -10.0f, 10.0f);
+				camera.SetPosition(cameraPosition);
+
 				float fieldOfView = ToDegrees(camera.GetFieldOfView());
 				ImGui::SliderFloat("Field of view", &fieldOfView, 0.1f, 179.9f);
-				camera.SetPosition(cameraPosition);
 				camera.SetFieldOfView(ToRadians(fieldOfView));
+
+				int antiAliasing = int(camera.GetAntiAliasing());
+				ImGui::SliderInt("Anti aliasing", &antiAliasing, 1, 16);
+				camera.SetAntiAliasing(antiAliasing);
 			}
 			ImGui::End();
 		}
