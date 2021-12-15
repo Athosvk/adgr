@@ -1,4 +1,3 @@
-#include <iostream>
 #include <array>
 
 #include "./core/window/window.h"
@@ -15,7 +14,6 @@
 #include "./scene/camera_controller.h"
 
 #include "./scene/model_loading.h"
-#include "job_manager.h"
 #include "raytracing/raytracer.h"
 
 using namespace CRT;
@@ -23,7 +21,7 @@ using namespace CRT;
 int main(char** argc, char** argv)
 {
 	// Create and Show Window
-	Window* window = new Window("Title", 1020, 720);
+	Window* window = new Window("Title", 1280, 720);
 
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
