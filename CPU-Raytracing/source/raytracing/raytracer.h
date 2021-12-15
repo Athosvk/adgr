@@ -1,5 +1,5 @@
 #pragma once
-#include <./job_manager.h>
+#include <./core/job_manager.h>
 #include <cstdint>
 
 #include <array>
