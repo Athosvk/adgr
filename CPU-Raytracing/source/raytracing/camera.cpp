@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <./core/math/trigonometry.h>
 
 namespace CRT
 {
@@ -67,19 +68,26 @@ namespace CRT
 		return m_Right;
 	}
 
-	float Camera::GetFocalLength() const
+	void Camera::SetFieldOfView(float angle)
 	{
-		return m_FocalLength;
+		// tan(2 / angle) gives us height / distance
+		m_FocalLength = 1 / std::tan(angle / 2);
 	}
 
-	void Camera::SetFocalLength(float focalLength)
+	float Camera::GetFieldOfView() const
 	{
-		m_FocalLength = focalLength;
+		// Our camera plane always has a width of 1
+		return std::atan(1 / m_FocalLength) * 2;
 	}
 
 	uint32_t Camera::GetAntiAliasing() const
 	{
 		return m_AntiAliasing;
+	}
+
+	void Camera::SetAntiAliasing(uint32_t aaFactor)
+	{
+		m_AntiAliasing = aaFactor;
 	}
 
 	glm::mat4 Camera::ConstructView() const
