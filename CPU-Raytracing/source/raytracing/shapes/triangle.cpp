@@ -54,6 +54,11 @@ namespace CRT
         return false;
 	}
 
+    float Triangle::GetSurfaceArea() const
+    {
+        return (V1 - V0).Cross(V2 - V0).Magnitude() * 0.5;
+    }
+
     float3 Triangle::Barycentric(float3 _point)
     {
         float3 v0 = V1 - V0, v1 = V2 - V0, v2 = _point - V0;

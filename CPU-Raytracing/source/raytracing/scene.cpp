@@ -97,9 +97,9 @@ namespace CRT
 					float sinIncoming = sqrtf(1.0f - cosIncoming * cosIncoming);
 					// Calculate from sin using Snell's law
 					float cosOutgoing = sqrtf(1.0f - std::powf((refractionIndexRatio * sinIncoming), 2));
-					float reflectanceSPolarized = std::pow((n1 * cosIncoming - n2 * cosOutgoing) / 
+					float reflectanceSPolarized = std::powf((n1 * cosIncoming - n2 * cosOutgoing) / 
 														   (n1 * cosIncoming + n2 * cosOutgoing), 2);
-					float reflectancePPolarized = std::pow((n1 * cosOutgoing - n2 * cosIncoming) / 
+					float reflectancePPolarized = std::powf((n1 * cosOutgoing - n2 * cosIncoming) / 
 														   (n1 * cosOutgoing + n2 * cosIncoming), 2);
 					reflectance = 0.5f * (reflectanceSPolarized + reflectancePPolarized);
 				}

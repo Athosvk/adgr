@@ -20,6 +20,7 @@ namespace CRT
 		float2 u2;
 
 		float3 N;
+		float GetSurfaceArea() const;
 	private:
 		float3 Barycentric(float3 _point);
 
