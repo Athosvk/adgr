@@ -21,29 +21,24 @@ namespace CRT
 
 	std::vector<Primitive> BVH::Traverse(const Ray& ray) const
 	{
+		return TraverseNode(ray, &m_RootNode);
+	}
+
+	std::vector<Primitive> BVH::TraverseNode(const Ray& ray, const BVHNode* parentNode) const
+	{
+		if (!parentNode->Primitives.empty())
+			return parentNode->Primitives;
 		std::vector<Primitive> primitives;
-		std::queue<const BVHNode*> toVisit;
-		toVisit.push(&m_RootNode);
-		while(!toVisit.empty())
+		if (parentNode->Left->Bounds.Intersects(ray))
 		{
-			auto current = toVisit.front();
-			toVisit.pop();
-			if (current->Primitives.size() > 0)
-			{
-				primitives.insert(primitives.end(), current->Primitives.begin(), current->Primitives.end());
-			}
-			else
-			{
-				if (current->Left->Bounds.Intersects(ray))
-				{
-					toVisit.push(current->Left.get());
-				}
-				if (current->Right->Bounds.Intersects(ray))
-				{
-					toVisit.push(current->Right.get());
-				}
-			}
-		} 
+			auto childPrimitives = TraverseNode(ray, parentNode->Left.get());
+			primitives.insert(primitives.begin(), childPrimitives.begin(), childPrimitives.end());
+		}
+		if (parentNode->Right->Bounds.Intersects(ray))
+		{
+			auto childPrimitives = TraverseNode(ray, parentNode->Right.get());
+			primitives.insert(primitives.begin(), childPrimitives.begin(), childPrimitives.end());
+		}
 		return primitives;
 	}
 

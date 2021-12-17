@@ -31,6 +31,7 @@ namespace CRT
 
 		std::vector<Primitive> Traverse(const Ray& ray) const;
 	private:
+		std::vector<Primitive> TraverseNode(const Ray& ray, const BVHNode* parentNode) const;
 		void Construct();
 		BVHNode SplitNode(BVHNode node, std::vector<Primitive> primitives) const;
 		SplitPoint CalculateSplitpoint(std::vector<Primitive>::const_iterator _start, 
