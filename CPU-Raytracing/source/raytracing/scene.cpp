@@ -15,6 +15,12 @@ namespace CRT
 		m_Materials.push_back(_material);
 	}
 
+	void Scene::AddTriangle(Triangle* _triangle, Material* _material)
+	{
+		m_Triangles.push_back(*_triangle);
+		AddShape(_triangle, _material);
+	}
+
 	void Scene::AddDirectionalLight(DirectionalLight _light)
 	{
 		m_DirectionalLights.emplace_back(std::move(_light));
@@ -28,6 +34,11 @@ namespace CRT
 	void Scene::AddPointLight(PointLight _light)
 	{
 		m_PointLights.emplace_back(std::move(_light));
+	}
+
+	void Scene::ConstructBVH()
+	{
+		m_BVH = BVH(m_Triangles);
 	}
 
 	float3 Scene::Intersect(Ray _r) const
@@ -142,15 +153,29 @@ namespace CRT
 	std::optional<Manifest> Scene::GetNearestIntersection(Ray _ray) const
 	{
 		std::optional<Manifest> nearest;
-		for (uint32_t i = 0; i < m_Shapes.size(); i++)
+		std::vector<Triangle> filteredPrims;
+		if (m_BVH)
 		{
-			Manifest manifest;
-			if (m_Shapes[i]->Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+			auto primitives = m_BVH->Traverse(_ray);
+			for (auto primitive : primitives)
 			{
-				manifest.M = m_Materials[i];
-				nearest = manifest;
+				Manifest manifest;
+				if (primitive.Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+				{
+					manifest.M = m_Materials.front();
+					nearest = manifest;
+				}
 			}
 		}
+		//for (uint32_t i = 0; i < m_Shapes.size(); i++)
+		//{
+		//	Manifest manifest;
+		//	if (m_Shapes[i]->Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+		//	{
+		//		manifest.M = m_Materials[i];
+		//		nearest = manifest;
+		//	}
+		//}
 		return nearest;
 	}
 

@@ -2,42 +2,75 @@
 
 #include <algorithm>
 #include <memory>
+#include <queue>
 
 namespace CRT
 {
 	BVH::BVH(std::vector<Primitive> _primitives) :
 		m_Primitives(std::move(_primitives))
 	{
+		Construct();
 	}
 
 	void BVH::Construct()
 	{
 		BVHNode root;
-		root.Bounds = CalculateSmallestAABB(m_Primitives);
-		m_RootNode = SplitNode(std::move(root), m_Primitives.begin(), m_Primitives.end());
+		root.Bounds = CalculateSmallestAABB(m_Primitives.begin(), m_Primitives.end());
+		m_RootNode = SplitNode(std::move(root), m_Primitives);
 	}
 
-	BVHNode BVH::SplitNode(BVHNode node, std::vector<Primitive>::const_iterator _start,
-		std::vector<Primitive>::const_iterator _end)
+	std::vector<Primitive> BVH::Traverse(const Ray& ray) const
 	{
-		SplitPoint splitPoint = CalculateSplitpoint(_start, _end);
-		float parentCost = GetCost(_start, _end);
+		std::vector<Primitive> primitives;
+		std::queue<const BVHNode*> toVisit;
+		toVisit.push(&m_RootNode);
+		while(!toVisit.empty())
+		{
+			auto current = toVisit.front();
+			toVisit.pop();
+			if (current->Primitives.size() > 0)
+			{
+				primitives.insert(primitives.end(), current->Primitives.begin(), current->Primitives.end());
+			}
+			else
+			{
+				if (current->Left->Bounds.Intersects(ray))
+				{
+					toVisit.push(current->Left.get());
+				}
+				if (current->Right->Bounds.Intersects(ray))
+				{
+					toVisit.push(current->Right.get());
+				}
+			}
+		} 
+		return primitives;
+	}
+
+	BVHNode BVH::SplitNode(BVHNode node, std::vector<Primitive> primitives) const
+	{
+		std::sort(primitives.begin(), primitives.end(), [](const Primitive& first, const Primitive& second) {
+			// TO-DO: Maybe use the barycenter instead
+			return first.V0.x < second.V0.x;
+		});
+		SplitPoint splitPoint = CalculateSplitpoint(primitives.begin(), primitives.end());
+		float parentCost = GetCost(primitives.begin(), primitives.end());
+
 		if (splitPoint.SplitCost < parentCost)
 		{
 			BVHNode left;
-			left.Bounds = CalculateSmallestAABB(std::vector<Primitive>(_start, splitPoint.SplitPrimitive));
-			left = SplitNode(std::move(left), _start, splitPoint.SplitPrimitive);
+			left.Bounds = CalculateSmallestAABB(primitives.begin(), splitPoint.SplitPrimitive + 1);
+			left = SplitNode(std::move(left), std::vector<Primitive>(primitives.cbegin(), splitPoint.SplitPrimitive + 1));
 			node.Left = std::make_unique<BVHNode>(std::move(left));
 
 			BVHNode right;
-			right.Bounds = CalculateSmallestAABB(std::vector<Primitive>(splitPoint.SplitPrimitive + 1, _end));
-			right = SplitNode(std::move(right), splitPoint.SplitPrimitive + 1, _end);
+			right.Bounds = CalculateSmallestAABB(splitPoint.SplitPrimitive + 1, primitives.end());
+			right = SplitNode(std::move(right), std::vector<Primitive>(splitPoint.SplitPrimitive + 1, primitives.cend()));
 			node.Right = std::make_unique<BVHNode>(std::move(right));
 		}
 		else
 		{
-			node.PrimitiveBegin = _start;
-			node.PrimitiveEnd = splitPoint.SplitPrimitive;
+			node.Primitives = std::move(primitives);
 		}
 		return node;
 	}
@@ -45,17 +78,12 @@ namespace CRT
 	SplitPoint BVH::CalculateSplitpoint(std::vector<Primitive>::const_iterator _start, 
 		std::vector<Primitive>::const_iterator _end) const
 	{
-		std::vector<Primitive> primitives(_start, _end);
-		std::sort(primitives.begin(), primitives.end(), [](const Primitive& first, const Primitive& second) {
-			// TO-DO: Maybe use the barycenter instead
-			return first.V0.x < second.V0.x;
-		});
-
 		SplitPoint splitPoint;
-		for (auto it = primitives.cbegin(); it != primitives.cend(); it++)
+		splitPoint.SplitCost = std::numeric_limits<float>::infinity();
+		for (auto it = _start; it != _end; it++)
 		{
-			auto costLeft = GetCost(primitives.cbegin(), it);
-			auto costRight = GetCost(it, primitives.cend());
+			auto costLeft = GetCost(_start, it + 1);
+			auto costRight = GetCost(it, _end);
 			auto totalCost = costLeft + costRight;
 			if (totalCost < splitPoint.SplitCost)
 			{
@@ -68,17 +96,21 @@ namespace CRT
 	float BVH::GetCost(std::vector<Primitive>::const_iterator _start, 
 		std::vector<Primitive>::const_iterator _end) const
 	{
-		return CalculateSmallestAABB(std::vector<Primitive>(_start, _end)).GetSurfaceArea()
+		return CalculateSmallestAABB(_start, _end).GetSurfaceArea()
 			* std::distance(_start, _end);
 	}
 
-	AABB BVH::CalculateSmallestAABB(const std::vector<Primitive>& primitives) const
+	AABB BVH::CalculateSmallestAABB(std::vector<Primitive>::const_iterator _start, 
+			std::vector<Primitive>::const_iterator _end) const
 	{
-		AABB boundingBox;
-		for (const Primitive& primitive : primitives)
+		auto it = _start;
+		AABB boundingBox{ float3::ComponentMin({ it->V0, it->V1, it->V2 }),
+						  float3::ComponentMax({ it->V0, it->V1, it->V2 }) };
+		it++;
+		for (; it != _end; it++)
 		{
-			boundingBox.Min = std::min({ boundingBox.Min, primitive.V0, primitive.V1, primitive.V2 });
-			boundingBox.Max = std::max({ boundingBox.Max, primitive.V0, primitive.V1, primitive.V2 });
+			boundingBox.Min = float3::ComponentMin({ boundingBox.Min, it->V0, it->V1, it->V2 });
+			boundingBox.Max = float3::ComponentMax({ boundingBox.Max, it->V0, it->V1, it->V2 });
 		}
 		return boundingBox;
 	}

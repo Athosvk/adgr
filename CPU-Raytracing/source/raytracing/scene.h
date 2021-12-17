@@ -1,10 +1,6 @@
 #pragma once
 #include "./raytracing/ray.h"
 #include "./raytracing/shapes/shape.h"
-#include "./raytracing/shapes/sphere.h"
-#include "./raytracing/shapes/plane.h"
-#include "./raytracing/shapes/torus.h"
-#include "./raytracing/shapes/triangle.h"
 
 #include "./raytracing/material/material.h"
 #include "./raytracing/manifest.h"
@@ -12,21 +8,26 @@
 #include "./raytracing/lights/directional_light.h"
 #include "./raytracing/lights/spot_light.h"
 #include "./raytracing/lights/point_light.h"
+#include "./raytracing/bvh.h"
 
 #include <vector>
 #include <optional>
 
 namespace CRT
 {
+	class Triangle;
+
 	class Scene
 	{
 	public:
 		Scene() = default;
 
 		void AddShape(Shape* _shape, Material* _material);
+		void AddTriangle(Triangle* _triangle, Material* _material);
 		void AddDirectionalLight(DirectionalLight _light);
 		void AddSpotLight(SpotLight _light);
 		void AddPointLight(PointLight _light);
+		void ConstructBVH();
 
 		float3 Intersect(Ray _r) const;
 	private:
@@ -49,6 +50,8 @@ namespace CRT
 		
 		const static float3 BackgroundColor;
 		
+		std::optional<BVH> m_BVH;
+		std::vector<Triangle> m_Triangles;
 		std::vector<Shape*>    m_Shapes;
 		std::vector<Material*> m_Materials;
 		std::vector<PointLight> m_PointLights;

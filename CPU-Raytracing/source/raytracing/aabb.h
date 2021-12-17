@@ -20,7 +20,7 @@ namespace CRT
 			float tFarthest = std::min({ std::max(tMin.x, tMax.x), std::max(tMin.y, tMax.y),
 				std::max(tMin.z, tMax.z) });
 
-			return tMax >= 0.0f && tMin < tMax;
+			return tFarthest >= 0.0f && tNearest < tFarthest;
 		}
 
 		float GetSurfaceArea() const

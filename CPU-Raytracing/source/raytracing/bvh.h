@@ -3,6 +3,8 @@
 #include <./raytracing/shapes/triangle.h>
 #include <./raytracing/aabb.h>
 #include <memory>
+#include <./raytracing/ray.h>
+#include <optional>
 
 namespace CRT
 {
@@ -13,8 +15,7 @@ namespace CRT
 		AABB Bounds;
 		std::unique_ptr<BVHNode> Left;
 		std::unique_ptr<BVHNode> Right;
-		std::vector<Primitive>::const_iterator PrimitiveBegin;
-		std::vector<Primitive>::const_iterator PrimitiveEnd;
+		std::vector<Primitive> Primitives;
 	};
 
 	struct SplitPoint
@@ -28,15 +29,16 @@ namespace CRT
 	public:
 		BVH(std::vector<Primitive> primitives);
 
+		std::vector<Primitive> Traverse(const Ray& ray) const;
 	private:
 		void Construct();
-		BVHNode SplitNode(BVHNode node, std::vector<Primitive>::const_iterator _start, 
-			std::vector<Primitive>::const_iterator _end);
+		BVHNode SplitNode(BVHNode node, std::vector<Primitive> primitives) const;
 		SplitPoint CalculateSplitpoint(std::vector<Primitive>::const_iterator _start, 
 			std::vector<Primitive>::const_iterator _end) const;
 		float GetCost(std::vector<Primitive>::const_iterator _start, 
 			std::vector<Primitive>::const_iterator _end) const;
-		AABB CalculateSmallestAABB(const std::vector<Primitive>& primitives) const;
+		AABB CalculateSmallestAABB(std::vector<Primitive>::const_iterator _start, 
+			std::vector<Primitive>::const_iterator _end) const;
 
 		std::vector<Primitive> m_Primitives;
 		BVHNode m_RootNode;

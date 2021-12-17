@@ -6,6 +6,7 @@
 
 #include "./raytracing/scene.h"
 #include "./raytracing/camera.h"
+#include "./raytracing/shapes/plane.h"
 
 #include "./imgui/imgui.h"
 #include "./imgui/imgui_impl_glfw.h"
@@ -36,19 +37,15 @@ int main(char** argc, char** argv)
 	dielectric->type = Type::Dielectric;
 	dielectric->RefractionIndex = 1.52f;
 	
-	scene->AddShape(new Plane(float3(7.0f, 0.0f, 0.0f), float3(-1.0f, 0.0f, 0.0f)), new Material(Color::Blue, 0.0f, nullptr));
-	scene->AddShape(new Plane(float3(-7.0f, 0.0f, 0.0f), float3(1.0f, 0.0f, 0.0f)), new Material(Color::Red, 0.0f, nullptr));
-	scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), material);
-	scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
-	scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(7.0f, 0.0f, 0.0f), float3(-1.0f, 0.0f, 0.0f)), new Material(Color::Blue, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(-7.0f, 0.0f, 0.0f), float3(1.0f, 0.0f, 0.0f)), new Material(Color::Red, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(Color::White, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
 
-	// ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -2.0f), "./assets/box.obj");
+	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -2.0f), "./assets/suzanne.obj");
+	scene->ConstructBVH();
 
-	//scene->AddShape(new Torus(float3(0.f, -4.f, -2.0f), 3.0f, 1.f), partial_spec_material);
-	scene->AddShape(new Sphere(float3(-3.5f, 1.f, -4.0f), 2.f), spec_material);
-	scene->AddShape(new Sphere(float3(4.f, 0.f, -3.0f), 2.f), dielectric);
-	scene->AddShape(new Sphere(float3(4.f, 0.f, 1.f), 0.5f), dielectric);
-	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, 0.f, -1.f).Normalize(), 0.5f, Color::White });
 	scene->AddPointLight(PointLight{ float3(0.0f, 4.5f, 0.f), 3500.0f, Color::White });
 	scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::Blue });
 
