@@ -48,7 +48,22 @@ namespace CRT
 			// TO-DO: Maybe use the barycenter instead
 			return first.V0.x < second.V0.x;
 		});
-		SplitPoint splitPoint = CalculateSplitpoint(primitives.begin(), primitives.end());
+		SplitPoint splitPointX = CalculateSplitpoint(primitives.begin(), primitives.end());
+		std::sort(primitives.begin(), primitives.end(), [](const Primitive& first, const Primitive& second) {
+			// TO-DO: Maybe use the barycenter instead
+			return first.V0.y < second.V0.y;
+		});
+		SplitPoint splitPointY = CalculateSplitpoint(primitives.begin(), primitives.end());
+		std::sort(primitives.begin(), primitives.end(), [](const Primitive& first, const Primitive& second) {
+			// TO-DO: Maybe use the barycenter instead
+			return first.V0.z < second.V0.z;
+		});
+		SplitPoint splitPointZ = CalculateSplitpoint(primitives.begin(), primitives.end());
+		SplitPoint splitPoint = std::min({ splitPointX, splitPointY, splitPointZ },
+			[](const SplitPoint& left, const SplitPoint& right)
+		{
+			return left.SplitCost < right.SplitCost;
+		});
 		float parentCost = GetCost(primitives.begin(), primitives.end());
 
 		if (splitPoint.SplitCost < parentCost)
@@ -70,7 +85,7 @@ namespace CRT
 		return node;
 	}
 
-	SplitPoint BVH::CalculateSplitpoint(std::vector<Primitive>::const_iterator _start, 
+	SplitPoint BVH::CalculateSplitpoint(std::vector<Primitive>::const_iterator _start,
 		std::vector<Primitive>::const_iterator _end) const
 	{
 		SplitPoint splitPoint;
@@ -88,15 +103,15 @@ namespace CRT
 		return splitPoint;
 	}
 
-	float BVH::GetCost(std::vector<Primitive>::const_iterator _start, 
+	float BVH::GetCost(std::vector<Primitive>::const_iterator _start,
 		std::vector<Primitive>::const_iterator _end) const
 	{
 		return CalculateSmallestAABB(_start, _end).GetSurfaceArea()
 			* std::distance(_start, _end);
 	}
 
-	AABB BVH::CalculateSmallestAABB(std::vector<Primitive>::const_iterator _start, 
-			std::vector<Primitive>::const_iterator _end) const
+	AABB BVH::CalculateSmallestAABB(std::vector<Primitive>::const_iterator _start,
+		std::vector<Primitive>::const_iterator _end) const
 	{
 		auto it = _start;
 		AABB boundingBox{ float3::ComponentMin({ it->V0, it->V1, it->V2 }),
