@@ -25,7 +25,7 @@ using namespace CRT;
 int main(char** argc, char** argv)
 {
 	// Create and Show Window
-	Window* window = new Window("Title", 1280, 720);
+	Window* window = new Window("CRT", 1280, 720);
 
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
@@ -47,7 +47,14 @@ int main(char** argc, char** argv)
 	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
 
 	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -2.0f), "./assets/suzanne.obj");
-	scene->ConstructBVH();
+
+	Timer::Duration bvhConstructionDuration;
+	{
+		Timer bvhConstructionTimer;
+		scene->ConstructBVH();
+		bvhConstructionDuration = bvhConstructionTimer.GetDuration();
+		std::cout << "Constructed BVH in " << bvhConstructionDuration.count() << " seconds";
+	}
 
 	scene->AddPointLight(PointLight{ float3(0.0f, 4.5f, 0.f), 3500.0f, Color::White });
 	// scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::White });
@@ -69,7 +76,7 @@ int main(char** argc, char** argv)
 
 	Surface surface(window->GetWidth(), window->GetHeight());
 	Raytracer raytracer(surface, *scene, camera);
-	RollingSampler<Timer::Duration, 10> rtFrameSampler;
+	RollingSampler<Timer::Duration, 20> rtFrameSampler;
 	float deltaFrameTime = 0.f;
 	while (!window->ShouldClose())
 	{
@@ -104,15 +111,26 @@ int main(char** argc, char** argv)
 					controller.Reset();
 				}
 			}
-			bool bvh = scene->IsBVHEnabled();
-			ImGui::Checkbox("BVH", &bvh);
-			if (bvh)
+			if (ImGui::CollapsingHeader("BVH"))
 			{
-				scene->EnableBVH();
-			}
-			else
-			{
-				scene->DisableBVH();
+				ImGui::Text("Last BVH construction duration: %.4f s", bvhConstructionDuration.count());
+				bool bvh = scene->IsBVHEnabled();
+				ImGui::Checkbox("BVH", &bvh);
+				if (bvh)
+				{
+					scene->EnableBVH();
+				}
+				else
+				{
+					scene->DisableBVH();
+				}
+				
+				if (ImGui::Button("Reconstruct BVH"))
+				{
+					Timer bvhTimer;
+					scene->ConstructBVH();
+					bvhConstructionDuration = bvhTimer.GetDuration();
+				}
 			}
 			ImGui::End();
 		}
