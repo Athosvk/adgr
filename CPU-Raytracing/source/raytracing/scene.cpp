@@ -60,6 +60,11 @@ namespace CRT
 		return m_UseBVH;
 	}
 
+	uint64_t Scene::GetTriangleCount() const
+	{
+		return m_Triangles.size();
+	}
+
 	float3 Scene::IntersectBounced(Ray _r, unsigned _remainingBounces) const
 	{
 		if (_remainingBounces == 0)

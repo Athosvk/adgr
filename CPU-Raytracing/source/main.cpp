@@ -46,7 +46,9 @@ int main(char** argc, char** argv)
 	//scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
 
-	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -2.0f), "./assets/suzanne.obj");
+	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, 00.0f), "./assets/suzanne.obj");
+	ModelLoading::LoadModel(scene, material, float3(5.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
+	ModelLoading::LoadModel(scene, material, float3(-5.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
 
 	Timer::Duration bvhConstructionDuration;
 	{
@@ -114,6 +116,7 @@ int main(char** argc, char** argv)
 			if (ImGui::CollapsingHeader("BVH"))
 			{
 				ImGui::Text("Last BVH construction duration: %.4f s", bvhConstructionDuration.count());
+				ImGui::Text("Tris: %u", scene->GetTriangleCount());
 				bool bvh = scene->IsBVHEnabled();
 				ImGui::Checkbox("BVH", &bvh);
 				if (bvh)
