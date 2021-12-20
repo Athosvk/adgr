@@ -39,7 +39,7 @@ int main(char** argc, char** argv)
 	
 	//scene->AddShape(new Plane(float3(7.0f, 0.0f, 0.0f), float3(-1.0f, 0.0f, 0.0f)), new Material(Color::Blue, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(-7.0f, 0.0f, 0.0f), float3(1.0f, 0.0f, 0.0f)), new Material(Color::Red, 0.0f, nullptr));
-	//scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(Color::White, 0.0f, nullptr));
+	scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(Color::White, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
 
@@ -47,7 +47,7 @@ int main(char** argc, char** argv)
 	scene->ConstructBVH();
 
 	scene->AddPointLight(PointLight{ float3(0.0f, 4.5f, 0.f), 3500.0f, Color::White });
-	scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::White });
+	// scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::White });
 
 	// IMGUI
 	ImGui::CreateContext();
@@ -61,8 +61,8 @@ int main(char** argc, char** argv)
 	float2 viewport(window->GetWidth(), window->GetHeight());
 	Camera camera(viewport);
 	CameraController controller(camera);
-	auto position = camera.GetPosition();
-	camera.SetPosition({ position.x, position.y, 10.0f });
+	auto initialCameraPosition = float3 { 0.0f, 0.0f, 10.0f };
+	camera.SetPosition(initialCameraPosition);
 	// Main Loop
 	float previousFrame = (float)glfwGetTime();
 
@@ -98,6 +98,12 @@ int main(char** argc, char** argv)
 				ImGui::SliderInt("Anti aliasing", &antiAliasing, 1, 16);
 				camera.SetAntiAliasing(antiAliasing);
 
+				if (ImGui::Button("Reset"))
+				{
+					camera.SetPosition(initialCameraPosition);
+					camera.SetDirection(float3::Forward());
+					controller.Reset();
+				}
 			}
 			bool bvh = scene->IsBVHEnabled();
 			ImGui::Checkbox("BVH", &bvh);

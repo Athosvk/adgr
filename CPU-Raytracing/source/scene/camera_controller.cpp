@@ -65,6 +65,12 @@ namespace CRT
 		RotateCamera();
 	}
 
+	void CameraController::Reset()
+	{
+		m_Pitch = 0.0f;
+		m_Yaw = -90.f;
+	}
+
 	void CameraController::RotateCamera()
 	{
 		m_Pitch = glm::clamp(m_Pitch, -89.f, 89.f);
