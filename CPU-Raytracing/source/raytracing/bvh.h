@@ -21,7 +21,7 @@ namespace CRT
 	struct SplitPoint
 	{
 		std::vector<Primitive>::const_iterator SplitPrimitive;
-		float SplitCost;
+		float SplitCost = 0.0f;
 	};
 
 	struct TraversalResult
@@ -41,7 +41,7 @@ namespace CRT
 		void Construct();
 		BVHNode SplitNode(BVHNode node, std::vector<Primitive> primitives) const;
 		SplitPoint CalculateSplitpoint(std::vector<Primitive>::const_iterator _start, 
-			std::vector<Primitive>::const_iterator _end, float _totalWidth) const;
+			std::vector<Primitive>::const_iterator _end, float _totalWidth, uint32_t dimension) const;
 		float GetCost(std::vector<Primitive>::const_iterator _start, 
 			std::vector<Primitive>::const_iterator _end) const;
 		AABB CalculateSmallestAABB(std::vector<Primitive>::const_iterator _start, 
