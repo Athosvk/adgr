@@ -3,11 +3,13 @@
 
 namespace CRT
 {
+	class Material;
+
 	class Triangle final : public Shape
 	{
 	public:
 		Triangle();
-		Triangle(float3 _v0, float3 _v1, float3 _v2, float2 u0, float2 _u1, float2 _u2, float3 _n);
+		Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n, Material* _material);
 
 		virtual bool Intersect(Ray _r, Manifest& _m) override;
 
@@ -20,6 +22,8 @@ namespace CRT
 		float2 u2;
 
 		float3 N;
+		Material* material;
+		float GetSurfaceArea() const;
 	private:
 		float3 Barycentric(float3 _point);
 

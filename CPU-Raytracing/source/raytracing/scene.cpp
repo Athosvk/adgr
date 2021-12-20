@@ -15,6 +15,11 @@ namespace CRT
 		m_Materials.push_back(_material);
 	}
 
+	void Scene::AddTriangle(Triangle _triangle)
+	{
+		m_Triangles.push_back(_triangle);
+	}
+
 	void Scene::AddDirectionalLight(DirectionalLight _light)
 	{
 		m_DirectionalLights.emplace_back(std::move(_light));
@@ -30,9 +35,29 @@ namespace CRT
 		m_PointLights.emplace_back(std::move(_light));
 	}
 
+	void Scene::ConstructBVH()
+	{
+		m_BVH = BVH(m_Triangles);
+	}
+
 	float3 Scene::Intersect(Ray _r) const
 	{
 		return IntersectBounced(_r, 5);
+	}
+
+	void Scene::EnableBVH()
+	{
+		m_UseBVH = true;
+	}
+
+	void Scene::DisableBVH()
+	{
+		m_UseBVH = false;
+	}
+
+	bool Scene::IsBVHEnabled() const
+	{
+		return m_UseBVH;
 	}
 
 	float3 Scene::IntersectBounced(Ray _r, unsigned _remainingBounces) const
@@ -89,7 +114,6 @@ namespace CRT
 				float k = 1.0f - (refractionIndexRatio * refractionIndexRatio) * (1.0f - (cosIncoming * cosIncoming));
 				float reflectance = 0.0f;
 
-
 				// Not past critical angle, refract ray
 				if (k >= 0.f)
 				{
@@ -97,9 +121,9 @@ namespace CRT
 					float sinIncoming = sqrtf(1.0f - cosIncoming * cosIncoming);
 					// Calculate from sin using Snell's law
 					float cosOutgoing = sqrtf(1.0f - std::powf((refractionIndexRatio * sinIncoming), 2));
-					float reflectanceSPolarized = std::pow((n1 * cosIncoming - n2 * cosOutgoing) / 
+					float reflectanceSPolarized = std::powf((n1 * cosIncoming - n2 * cosOutgoing) / 
 														   (n1 * cosIncoming + n2 * cosOutgoing), 2);
-					float reflectancePPolarized = std::pow((n1 * cosOutgoing - n2 * cosIncoming) / 
+					float reflectancePPolarized = std::powf((n1 * cosOutgoing - n2 * cosIncoming) / 
 														   (n1 * cosOutgoing + n2 * cosIncoming), 2);
 					reflectance = 0.5f * (reflectanceSPolarized + reflectancePPolarized);
 				}
@@ -141,7 +165,21 @@ namespace CRT
 
 	std::optional<Manifest> Scene::GetNearestIntersection(Ray _ray) const
 	{
+		TraversalResult traversalResult;
+		if (m_UseBVH)
+		{
+			traversalResult = m_BVH->Traverse(_ray);
+		}
 		std::optional<Manifest> nearest;
+		for (auto primitive : m_UseBVH ? traversalResult.Primitives : m_Triangles)
+		{
+			Manifest manifest;
+			if (primitive.Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+			{
+				manifest.M = primitive.material;
+				nearest = manifest;
+			}
+		}
 		for (uint32_t i = 0; i < m_Shapes.size(); i++)
 		{
 			Manifest manifest;

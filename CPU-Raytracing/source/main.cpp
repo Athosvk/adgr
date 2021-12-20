@@ -1,4 +1,5 @@
 #include <array>
+#include <iostream>
 
 #include "./core/window/window.h"
 #include "./core/graphics/render_device.h"
@@ -6,6 +7,7 @@
 
 #include "./raytracing/scene.h"
 #include "./raytracing/camera.h"
+#include "./raytracing/shapes/plane.h"
 
 #include "./imgui/imgui.h"
 #include "./imgui/imgui_impl_glfw.h"
@@ -14,6 +16,8 @@
 #include "./scene/camera_controller.h"
 
 #include "./scene/model_loading.h"
+#include "./benchmarking/rolling_sampler.h"
+#include "./benchmarking/timer.h"
 #include "raytracing/raytracer.h"
 
 using namespace CRT;
@@ -21,7 +25,7 @@ using namespace CRT;
 int main(char** argc, char** argv)
 {
 	// Create and Show Window
-	Window* window = new Window("Title", 1280, 720);
+	Window* window = new Window("CRT", 1280, 720);
 
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
@@ -29,28 +33,31 @@ int main(char** argc, char** argv)
 	Texture* texture = new Texture("./assets/test_texture.png");
 
 	Scene* scene = new Scene();
-	Material* material = new Material(Color::White, 0.0f, texture);
+	Material* material = new Material(Color::White, 0.0f, nullptr);
 	Material* spec_material = new Material(Color::White, 0.9f, nullptr);
 	Material* partial_spec_material = new Material(Color::White, 0.4f, nullptr);
 	Material* dielectric = new Material(Color::White, 0.0f, nullptr);
 	dielectric->type = Type::Dielectric;
 	dielectric->RefractionIndex = 1.52f;
 	
-	scene->AddShape(new Plane(float3(7.0f, 0.0f, 0.0f), float3(-1.0f, 0.0f, 0.0f)), new Material(Color::Blue, 0.0f, nullptr));
-	scene->AddShape(new Plane(float3(-7.0f, 0.0f, 0.0f), float3(1.0f, 0.0f, 0.0f)), new Material(Color::Red, 0.0f, nullptr));
-	scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), material);
-	scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
-	scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(7.0f, 0.0f, 0.0f), float3(-1.0f, 0.0f, 0.0f)), new Material(Color::Blue, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(-7.0f, 0.0f, 0.0f), float3(1.0f, 0.0f, 0.0f)), new Material(Color::Red, 0.0f, nullptr));
+	// scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(Color::White, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
+	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
 
-	// ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -2.0f), "./assets/box.obj");
+	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -2.0f), "./assets/suzanne.obj");
 
-	//scene->AddShape(new Torus(float3(0.f, -4.f, -2.0f), 3.0f, 1.f), partial_spec_material);
-	scene->AddShape(new Sphere(float3(-3.5f, 1.f, -4.0f), 2.f), spec_material);
-	scene->AddShape(new Sphere(float3(4.f, 0.f, -3.0f), 2.f), dielectric);
-	scene->AddShape(new Sphere(float3(4.f, 0.f, 1.f), 0.5f), dielectric);
-	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, 0.f, -1.f).Normalize(), 0.5f, Color::White });
+	Timer::Duration bvhConstructionDuration;
+	{
+		Timer bvhConstructionTimer;
+		scene->ConstructBVH();
+		bvhConstructionDuration = bvhConstructionTimer.GetDuration();
+		std::cout << "Constructed BVH in " << bvhConstructionDuration.count() << " seconds";
+	}
+
 	scene->AddPointLight(PointLight{ float3(0.0f, 4.5f, 0.f), 3500.0f, Color::White });
-	scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::Blue });
+	// scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::White });
 
 	// IMGUI
 	ImGui::CreateContext();
@@ -64,28 +71,25 @@ int main(char** argc, char** argv)
 	float2 viewport(window->GetWidth(), window->GetHeight());
 	Camera camera(viewport);
 	CameraController controller(camera);
-	auto position = camera.GetPosition();
-	camera.SetPosition({ position.x, position.y, 18.0f });
-	// Main Loop
-	float previousFrame = (float)glfwGetTime();
+	auto initialCameraPosition = float3 { 0.0f, 0.0f, 10.0f };
+	camera.SetPosition(initialCameraPosition);
 
 	Surface surface(window->GetWidth(), window->GetHeight());
 	Raytracer raytracer(surface, *scene, camera);
+	RollingSampler<Timer::Duration, 20> rtFrameSampler;
+	float deltaFrameTime = 0.f;
 	while (!window->ShouldClose())
 	{
+		Timer frameTimer;
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-
-		float currentFrame = (float)glfwGetTime();
-		float deltaTime = currentFrame - previousFrame;
-		previousFrame = currentFrame;
 
 		if (showImgui)
 		{
 			ImGui::Begin("Window", &showImgui);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
-			ImGui::Text("FPS: %.2f", 1.0 / deltaTime);
+			ImGui::Text("RayTracer FPS: %.2f", 1.0 / rtFrameSampler.GetAverage().count());
 			ImGui::Separator();
 			if (ImGui::CollapsingHeader("Camera"))
 			{
@@ -100,12 +104,44 @@ int main(char** argc, char** argv)
 				int antiAliasing = int(camera.GetAntiAliasing());
 				ImGui::SliderInt("Anti aliasing", &antiAliasing, 1, 16);
 				camera.SetAntiAliasing(antiAliasing);
+
+				if (ImGui::Button("Reset"))
+				{
+					camera.SetPosition(initialCameraPosition);
+					controller.Reset();
+				}
+			}
+			if (ImGui::CollapsingHeader("BVH"))
+			{
+				ImGui::Text("Last BVH construction duration: %.4f s", bvhConstructionDuration.count());
+				bool bvh = scene->IsBVHEnabled();
+				ImGui::Checkbox("BVH", &bvh);
+				if (bvh)
+				{
+					scene->EnableBVH();
+				}
+				else
+				{
+					scene->DisableBVH();
+				}
+				
+				if (ImGui::Button("Reconstruct BVH"))
+				{
+					Timer bvhTimer;
+					scene->ConstructBVH();
+					bvhConstructionDuration = bvhTimer.GetDuration();
+				}
 			}
 			ImGui::End();
 		}
-		controller.ProcessInput(window->GetWindow(), deltaTime);
 		
-		raytracer.RenderFrame();
+		{
+			Timer rtTimer;
+			raytracer.RenderFrame();
+			rtFrameSampler.AddSample(rtTimer.GetDuration());
+		}
+
+		controller.ProcessInput(window->GetWindow(), deltaFrameTime);
 		renderDevice->CopyFrom(&surface);
 		renderDevice->Present();
 
@@ -113,6 +149,7 @@ int main(char** argc, char** argv)
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		window->PollEvents();
+		deltaFrameTime = frameTimer.GetDuration().count();
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();

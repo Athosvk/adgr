@@ -34,7 +34,7 @@ namespace CRT
 				for (uint32_t x = 0; x < JobWidth; x++)
 				{
 					// To-do: jobs can exceed our width/height, should check inside the job
-					if (x < m_Surface.GetWidth() && y < m_Surface.GetHeight())
+					if (x + output.XMin < m_Surface.GetWidth() && y + output.YMin < m_Surface.GetHeight())
 					{
 						float3 color = output.Color[x + y * JobWidth];
 						m_Surface.Set(x + output.XMin, y + output.YMin,

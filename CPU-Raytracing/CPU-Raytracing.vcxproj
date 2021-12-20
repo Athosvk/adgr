@@ -141,7 +141,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\benchmarking\timer.cpp" />
     <ClCompile Include="source\core\job_manager.cpp" />
+    <ClCompile Include="source\raytracing\bvh.cpp" />
     <ClCompile Include="source\raytracing\material\dielectric.cpp" />
     <ClCompile Include="source\core\graphics\color3.cpp" />
     <ClCompile Include="source\core\math\poly34.cpp" />
@@ -177,7 +179,11 @@
     <ClCompile Include="source\scene\model_loading.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\benchmarking\rolling_sampler.h" />
     <ClInclude Include="source\core\job_manager.h" />
+    <ClInclude Include="source\benchmarking\timer.h" />
+    <ClInclude Include="source\raytracing\aabb.h" />
+    <ClInclude Include="source\raytracing\bvh.h" />
     <ClInclude Include="source\raytracing\material\basic.h" />
     <ClInclude Include="source\raytracing\material\dielectric.h" />
     <ClInclude Include="source\core\graphics\color3.h" />

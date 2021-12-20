@@ -117,6 +117,12 @@
     <ClCompile Include="source\raytracing\raytracer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\raytracing\bvh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\benchmarking\timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\core\window\window.h">
@@ -243,6 +249,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="source\raytracing\raytracer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\raytracing\bvh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\raytracing\aabb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\benchmarking\timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\benchmarking\rolling_sampler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

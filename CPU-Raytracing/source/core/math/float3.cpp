@@ -97,6 +97,28 @@ namespace CRT
 		return float3(0.0f, 0.0f, 1.0f);
 	}
 
+	float3 float3::ComponentMin(std::initializer_list<float3> values)
+	{
+		auto it = values.begin();
+		auto min = *(it++);
+		for (; it != values.end(); it++)
+		{
+			min = min.ComponentMin(*it);
+		}
+		return min;
+	}
+
+	float3 float3::ComponentMax(std::initializer_list<float3> values)
+	{
+		auto it = values.begin();
+		auto max = *(it++);
+		for (; it != values.end(); it++)
+		{
+			max = max.ComponentMax(*it);
+		}
+		return max;
+	}
+
 	float3& float3::Add(const float3& _o)
 	{
 		x += _o.x;
@@ -310,6 +332,18 @@ namespace CRT
 	float float3::MagnitudeSquared() const
 	{
 		return Dot(*this);
+	}
+
+	float3 float3::ComponentMin(float3 other) const
+	{
+		return { std::min(x, other.x), std::min(y, other.y),
+			std::min(z, other.z) };
+	}
+
+	float3 float3::ComponentMax(float3 other) const
+	{
+		return { std::max(x, other.x), std::max(y, other.y),
+			std::max(z, other.z) };
 	}
 
 	float float3::DistanceSquared(const float3& _o) const

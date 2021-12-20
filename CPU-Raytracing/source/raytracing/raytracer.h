@@ -13,7 +13,7 @@ namespace CRT
 	class Raytracer
 	{
 	private:
-		constexpr static uint32_t JobWidth = 4;
+		constexpr static uint32_t JobWidth = 16;
 
 		struct JobOutput
 		{

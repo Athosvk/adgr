@@ -14,6 +14,7 @@ namespace CRT
 		CameraController(Camera& _camera);
 
 		void ProcessInput(GLFWwindow* _window, float _deltaTime);
+		void Reset();
 	private:
 		void RotateCamera();
 		float2 GetMousePosition(GLFWwindow* _window) const;

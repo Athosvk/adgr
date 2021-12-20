@@ -30,6 +30,9 @@ namespace CRT
 		static float3 YAxis();
 		static float3 ZAxis();
 
+		static float3 ComponentMin(std::initializer_list<float3> values);
+		static float3 ComponentMax(std::initializer_list<float3> values);
+
 		float3& Add(const float3& _o);
 		float3& Subtract(const float3& _o);
 		float3& Multiply(const float3& _o);
@@ -78,6 +81,9 @@ namespace CRT
 		float Distance(const float3& _o) const;
 		float DistanceSquared(const float3& _o) const;
 		float MagnitudeSquared() const;
+
+		float3 ComponentMin(float3 other) const;
+		float3 ComponentMax(float3 other) const;
 
 		std::string ToString() const;
 
