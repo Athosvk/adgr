@@ -1,4 +1,5 @@
 #include <array>
+#include <iostream>
 
 #include "./core/window/window.h"
 #include "./core/graphics/render_device.h"
@@ -15,6 +16,8 @@
 #include "./scene/camera_controller.h"
 
 #include "./scene/model_loading.h"
+#include "./benchmarking/rolling_sampler.h"
+#include "./benchmarking/timer.h"
 #include "raytracing/raytracer.h"
 
 using namespace CRT;
@@ -39,7 +42,7 @@ int main(char** argc, char** argv)
 	
 	//scene->AddShape(new Plane(float3(7.0f, 0.0f, 0.0f), float3(-1.0f, 0.0f, 0.0f)), new Material(Color::Blue, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(-7.0f, 0.0f, 0.0f), float3(1.0f, 0.0f, 0.0f)), new Material(Color::Red, 0.0f, nullptr));
-	scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(Color::White, 0.0f, nullptr));
+	// scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(Color::White, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
 
@@ -63,26 +66,23 @@ int main(char** argc, char** argv)
 	CameraController controller(camera);
 	auto initialCameraPosition = float3 { 0.0f, 0.0f, 10.0f };
 	camera.SetPosition(initialCameraPosition);
-	// Main Loop
-	float previousFrame = (float)glfwGetTime();
 
 	Surface surface(window->GetWidth(), window->GetHeight());
 	Raytracer raytracer(surface, *scene, camera);
+	RollingSampler<Timer::Duration, 10> rtFrameSampler;
+	float deltaFrameTime = 0.f;
 	while (!window->ShouldClose())
 	{
+		Timer frameTimer;
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-
-		float currentFrame = (float)glfwGetTime();
-		float deltaTime = currentFrame - previousFrame;
-		previousFrame = currentFrame;
 
 		if (showImgui)
 		{
 			ImGui::Begin("Window", &showImgui);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
-			ImGui::Text("FPS: %.2f", 1.0 / deltaTime);
+			ImGui::Text("RayTracer FPS: %.2f", 1.0 / rtFrameSampler.GetAverage().count());
 			ImGui::Separator();
 			if (ImGui::CollapsingHeader("Camera"))
 			{
@@ -101,7 +101,6 @@ int main(char** argc, char** argv)
 				if (ImGui::Button("Reset"))
 				{
 					camera.SetPosition(initialCameraPosition);
-					camera.SetDirection(float3::Forward());
 					controller.Reset();
 				}
 			}
@@ -117,9 +116,14 @@ int main(char** argc, char** argv)
 			}
 			ImGui::End();
 		}
-		controller.ProcessInput(window->GetWindow(), deltaTime);
 		
-		raytracer.RenderFrame();
+		{
+			Timer rtTimer;
+			raytracer.RenderFrame();
+			rtFrameSampler.AddSample(rtTimer.GetDuration());
+		}
+
+		controller.ProcessInput(window->GetWindow(), deltaFrameTime);
 		renderDevice->CopyFrom(&surface);
 		renderDevice->Present();
 
@@ -127,6 +131,7 @@ int main(char** argc, char** argv)
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		window->PollEvents();
+		deltaFrameTime = frameTimer.GetDuration().count();
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();
