@@ -9,6 +9,12 @@ namespace CRT
 {
 	const float3 Scene::BackgroundColor = float3(0.4f, 0.4f, 0.4f);
 
+	void Scene::AddShape(Shape* _shape, Material* _material)
+	{
+		m_Shapes.push_back(_shape);
+		m_Materials.push_back(_material);
+	}
+
 	void Scene::AddTriangle(Triangle _triangle)
 	{
 		m_Triangles.push_back(_triangle);
