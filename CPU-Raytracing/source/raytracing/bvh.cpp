@@ -19,26 +19,26 @@ namespace CRT
 		m_RootNode = SplitNode(std::move(root), m_Primitives);
 	}
 
-	TraversalResult BVH::Traverse(const Ray& ray) const
+	TraversalResult BVH::Traverse(const Ray& _ray) const
 	{
-		return TraverseNode(ray, &m_RootNode);
+		return TraverseNode(_ray, &m_RootNode);
 	}
 
-	TraversalResult BVH::TraverseNode(const Ray& ray, const BVHNode* parentNode) const
+	TraversalResult BVH::TraverseNode(const Ray& _ray, const BVHNode* _parentNode) const
 	{
-		if (!parentNode->Primitives.empty())
-			return { parentNode->Primitives, 0 };
+		if (!_parentNode->Primitives.empty())
+			return { _parentNode->Primitives, 0 };
 		TraversalResult result;
-		if (parentNode->Left->Bounds.Intersects(ray))
+		if (_parentNode->Left->Bounds.Intersects(_ray))
 		{
-			auto resultLeft = TraverseNode(ray, parentNode->Left.get());
+			auto resultLeft = TraverseNode(_ray, _parentNode->Left.get());
 			result.Primitives.insert(result.Primitives.begin(), resultLeft.Primitives.begin(),
 				resultLeft.Primitives.end());
 			result.Traversals = resultLeft.Traversals + 1;
 		}
-		if (parentNode->Right->Bounds.Intersects(ray))
+		if (_parentNode->Right->Bounds.Intersects(_ray))
 		{
-			auto resultRight = TraverseNode(ray, parentNode->Right.get());
+			auto resultRight = TraverseNode(_ray, _parentNode->Right.get());
 			result.Primitives.insert(result.Primitives.begin(), resultRight.Primitives.begin(),
 				resultRight.Primitives.end());
 			result.Traversals = std::max(resultRight.Traversals + 1, result.Traversals);
@@ -46,64 +46,81 @@ namespace CRT
 		return result;
 	}
 
-	BVHNode BVH::SplitNode(BVHNode node, std::vector<Primitive> primitives) const
+	BVHNode BVH::SplitNode(BVHNode _node, std::vector<Primitive> _primitives) const
 	{
-		std::sort(primitives.begin(), primitives.end(), [](const Primitive& first, const Primitive& second) {
+		std::sort(_primitives.begin(), _primitives.end(), [](const Primitive& first, const Primitive& second) {
 			// TO-DO: Maybe use the barycenter instead
 			return first.V0.x < second.V0.x;
 		});
-		SplitPoint splitPointX = CalculateSplitpoint(primitives.begin(), primitives.end());
-		std::sort(primitives.begin(), primitives.end(), [](const Primitive& first, const Primitive& second) {
-			// TO-DO: Maybe use the barycenter instead
-			return first.V0.y < second.V0.y;
-		});
-		SplitPoint splitPointY = CalculateSplitpoint(primitives.begin(), primitives.end());
-		std::sort(primitives.begin(), primitives.end(), [](const Primitive& first, const Primitive& second) {
-			// TO-DO: Maybe use the barycenter instead
-			return first.V0.z < second.V0.z;
-		});
-		SplitPoint splitPointZ = CalculateSplitpoint(primitives.begin(), primitives.end());
-		SplitPoint splitPoint = std::min({ splitPointX, splitPointY, splitPointZ },
-			[](const SplitPoint& left, const SplitPoint& right)
+		float splitWidth = _primitives.back().V0.x - _primitives.front().V0.x;
+		// Make sure they're not all at the exact same location
+		if (splitWidth > 0.0001f)
 		{
-			return left.SplitCost < right.SplitCost;
-		});
-		float parentCost = GetCost(primitives.begin(), primitives.end());
+			SplitPoint splitPointX = CalculateSplitpoint(_primitives.begin(), _primitives.end(),
+				// Sorted, so the width of this dimension is equal to the difference between the first
+				// and last element
+				_primitives.back().V0.x - _primitives.front().V0.x);
 
-		if (splitPoint.SplitCost < parentCost)
-		{
-			BVHNode left;
-			left.Bounds = CalculateSmallestAABB(primitives.begin(), splitPoint.SplitPrimitive + 1);
-			left = SplitNode(std::move(left), std::vector<Primitive>(primitives.cbegin(), splitPoint.SplitPrimitive + 1));
-			node.Left = std::make_unique<BVHNode>(std::move(left));
+			SplitPoint splitPoint = std::min({ splitPointX },
+				[](const SplitPoint& left, const SplitPoint& right)
+			{
+				return left.SplitCost < right.SplitCost;
+			});
+			float parentCost = GetCost(_primitives.begin(), _primitives.end());
+			if (splitPoint.SplitCost < parentCost)
+			{
+				BVHNode left;
+				left.Bounds = CalculateSmallestAABB(_primitives.begin(), splitPoint.SplitPrimitive);
+				left = SplitNode(std::move(left), std::vector<Primitive>(_primitives.cbegin(), splitPoint.SplitPrimitive));
+				_node.Left = std::make_unique<BVHNode>(std::move(left));
 
-			BVHNode right;
-			right.Bounds = CalculateSmallestAABB(splitPoint.SplitPrimitive + 1, primitives.end());
-			right = SplitNode(std::move(right), std::vector<Primitive>(splitPoint.SplitPrimitive + 1, primitives.cend()));
-			node.Right = std::make_unique<BVHNode>(std::move(right));
+				BVHNode right;
+				right.Bounds = CalculateSmallestAABB(splitPoint.SplitPrimitive, _primitives.end());
+				right = SplitNode(std::move(right), std::vector<Primitive>(splitPoint.SplitPrimitive, _primitives.cend()));
+				_node.Right = std::make_unique<BVHNode>(std::move(right));
+				return _node;
+			}
 		}
-		else
-		{
-			node.Primitives = std::move(primitives);
-		}
-		return node;
+		_node.Primitives = std::move(_primitives);
+		return _node;
 	}
 
 	SplitPoint BVH::CalculateSplitpoint(std::vector<Primitive>::const_iterator _start,
-		std::vector<Primitive>::const_iterator _end) const
+		std::vector<Primitive>::const_iterator _end, float _totalWidth) const
 	{
 		SplitPoint splitPoint;
 		splitPoint.SplitCost = std::numeric_limits<float>::infinity();
-		for (auto it = _start; it != _end; it++)
+
+		size_t Bins = 16u;
+		auto splitPrimitive = _start;
+		// Try Bins number of split point locations. Exclude first and last bins since they 
+		// have empty
+		auto binWidth = (_totalWidth / Bins);
+		for (size_t bin = 1u; bin < Bins - 1; bin++)
 		{
-			auto costLeft = GetCost(_start, it + 1);
-			auto costRight = GetCost(it, _end);
+			auto separator = binWidth * bin + _start->V0.x;
+
+			// Move the right "boundary" primitive by checking if it exceeds the bin end
+			for (; splitPrimitive != _end && splitPrimitive->V0.x < separator; splitPrimitive++);
+
+			auto costLeft = GetCost(_start, splitPrimitive);
+			auto costRight = GetCost(splitPrimitive, _end);
 			auto totalCost = costLeft + costRight;
 			if (totalCost < splitPoint.SplitCost)
 			{
-				splitPoint = { it, totalCost };
+				splitPoint = { splitPrimitive, totalCost };
 			}
 		}
+		//for (auto it = _start; it != _end; it++)
+		//{
+		//	auto costLeft = GetCost(_start, it + 1);
+		//	auto costRight = GetCost(it, _end);
+		//	auto totalCost = costLeft + costRight;
+		//	if (totalCost < splitPoint.SplitCost)
+		//	{
+		//		splitPoint = { it, totalCost };
+		//	}
+		//}
 		return splitPoint;
 	}
 

@@ -41,7 +41,7 @@ namespace CRT
 		void Construct();
 		BVHNode SplitNode(BVHNode node, std::vector<Primitive> primitives) const;
 		SplitPoint CalculateSplitpoint(std::vector<Primitive>::const_iterator _start, 
-			std::vector<Primitive>::const_iterator _end) const;
+			std::vector<Primitive>::const_iterator _end, float _totalWidth) const;
 		float GetCost(std::vector<Primitive>::const_iterator _start, 
 			std::vector<Primitive>::const_iterator _end) const;
 		AABB CalculateSmallestAABB(std::vector<Primitive>::const_iterator _start, 
