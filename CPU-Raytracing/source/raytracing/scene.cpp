@@ -9,16 +9,9 @@ namespace CRT
 {
 	const float3 Scene::BackgroundColor = float3(0.4f, 0.4f, 0.4f);
 
-	void Scene::AddShape(Shape* _shape, Material* _material)
+	void Scene::AddTriangle(Triangle _triangle)
 	{
-		m_Shapes.push_back(_shape);
-		m_Materials.push_back(_material);
-	}
-
-	void Scene::AddTriangle(Triangle* _triangle, Material* _material)
-	{
-		m_Triangles.push_back(*_triangle);
-		AddShape(_triangle, _material);
+		m_Triangles.push_back(_triangle);
 	}
 
 	void Scene::AddDirectionalLight(DirectionalLight _light)
@@ -44,6 +37,21 @@ namespace CRT
 	float3 Scene::Intersect(Ray _r) const
 	{
 		return IntersectBounced(_r, 5);
+	}
+
+	void Scene::EnableBVH()
+	{
+		m_UseBVH = true;
+	}
+
+	void Scene::DisableBVH()
+	{
+		m_UseBVH = false;
+	}
+
+	bool Scene::IsBVHEnabled() const
+	{
+		return m_UseBVH;
 	}
 
 	float3 Scene::IntersectBounced(Ray _r, unsigned _remainingBounces) const
@@ -100,7 +108,6 @@ namespace CRT
 				float k = 1.0f - (refractionIndexRatio * refractionIndexRatio) * (1.0f - (cosIncoming * cosIncoming));
 				float reflectance = 0.0f;
 
-
 				// Not past critical angle, refract ray
 				if (k >= 0.f)
 				{
@@ -152,30 +159,30 @@ namespace CRT
 
 	std::optional<Manifest> Scene::GetNearestIntersection(Ray _ray) const
 	{
-		std::optional<Manifest> nearest;
-		std::vector<Triangle> filteredPrims;
-		if (m_BVH)
+		TraversalResult traversalResult;
+		if (m_UseBVH)
 		{
-			auto primitives = m_BVH->Traverse(_ray);
-			for (auto primitive : primitives)
+			traversalResult = m_BVH->Traverse(_ray);
+		}
+		std::optional<Manifest> nearest;
+		for (auto primitive : m_UseBVH ? traversalResult.Primitives : m_Triangles)
+		{
+			Manifest manifest;
+			if (primitive.Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
 			{
-				Manifest manifest;
-				if (primitive.Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
-				{
-					manifest.M = m_Materials.front();
-					nearest = manifest;
-				}
+				manifest.M = primitive.material;
+				nearest = manifest;
 			}
 		}
-		//for (uint32_t i = 0; i < m_Shapes.size(); i++)
-		//{
-		//	Manifest manifest;
-		//	if (m_Shapes[i]->Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
-		//	{
-		//		manifest.M = m_Materials[i];
-		//		nearest = manifest;
-		//	}
-		//}
+		for (uint32_t i = 0; i < m_Shapes.size(); i++)
+		{
+			Manifest manifest;
+			if (m_Shapes[i]->Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+			{
+				manifest.M = m_Materials[i];
+				nearest = manifest;
+			}
+		}
 		return nearest;
 	}
 

@@ -6,7 +6,7 @@ namespace CRT
         : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
     {  }
 
-    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n)
+    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n, Material* _material)
 		: Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
         , V0(_v0)
         , V1(_v1)
@@ -15,6 +15,7 @@ namespace CRT
         , u1(_u1)
         , u2(_u2)
         , N(_n)
+        , material(_material)
 	{ }
 
 	bool Triangle::Intersect(Ray _r, Manifest & _m)
@@ -56,7 +57,7 @@ namespace CRT
 
     float Triangle::GetSurfaceArea() const
     {
-        return (V1 - V0).Cross(V2 - V0).Magnitude() * 0.5;
+        return (V1 - V0).Cross(V2 - V0).Magnitude() * 0.5f;
     }
 
     float3 Triangle::Barycentric(float3 _point)

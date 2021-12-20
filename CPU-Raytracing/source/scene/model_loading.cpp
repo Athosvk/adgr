@@ -33,18 +33,19 @@ namespace CRT
 
 				aiVector3D normal = mesh->HasNormals() ? mesh->mNormals[face.mIndices[0]] : aiVector3D(1.0f, 1.0f, 1.0f);
 
-				triangles.emplace_back(Triangle(
+				triangles.emplace_back(
 					float3(pos0.x, pos0.y, pos0.z) + _offset, 
 					float3(pos1.x, pos1.y, pos1.z) + _offset, 
 					float3(pos2.x, pos2.y, pos2.z) + _offset, 
 					float2(uv0.x, uv0.y),
 					float2(uv1.x, uv1.y), 
 					float2(uv2.x, uv2.y), 
-					float3(normal.x, normal.y, normal.z)));
+					float3(normal.x, normal.y, normal.z),
+					material);
 			}
 			for (const Triangle& triangle : triangles)
 			{
-				_scene->AddTriangle(new Triangle(triangle), material);
+				_scene->AddTriangle(triangle);
 			}
 			triangles.clear();
 		}

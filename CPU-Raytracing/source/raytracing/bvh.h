@@ -24,14 +24,20 @@ namespace CRT
 		float SplitCost;
 	};
 
+	struct TraversalResult
+	{
+		std::vector<Primitive> Primitives;
+		uint32_t Traversals;
+	};
+
 	class BVH
 	{
 	public:
 		BVH(std::vector<Primitive> primitives);
 
-		std::vector<Primitive> Traverse(const Ray& ray) const;
+		TraversalResult Traverse(const Ray& ray) const;
 	private:
-		std::vector<Primitive> TraverseNode(const Ray& ray, const BVHNode* parentNode) const;
+		TraversalResult TraverseNode(const Ray& ray, const BVHNode* parentNode) const;
 		void Construct();
 		BVHNode SplitNode(BVHNode node, std::vector<Primitive> primitives) const;
 		SplitPoint CalculateSplitpoint(std::vector<Primitive>::const_iterator _start, 

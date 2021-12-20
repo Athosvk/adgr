@@ -30,7 +30,7 @@ int main(char** argc, char** argv)
 	Texture* texture = new Texture("./assets/test_texture.png");
 
 	Scene* scene = new Scene();
-	Material* material = new Material(Color::White, 0.0f, texture);
+	Material* material = new Material(Color::White, 0.0f, nullptr);
 	Material* spec_material = new Material(Color::White, 0.9f, nullptr);
 	Material* partial_spec_material = new Material(Color::White, 0.4f, nullptr);
 	Material* dielectric = new Material(Color::White, 0.0f, nullptr);
@@ -47,7 +47,7 @@ int main(char** argc, char** argv)
 	scene->ConstructBVH();
 
 	scene->AddPointLight(PointLight{ float3(0.0f, 4.5f, 0.f), 3500.0f, Color::White });
-	scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::Blue });
+	scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::White });
 
 	// IMGUI
 	ImGui::CreateContext();
@@ -62,7 +62,7 @@ int main(char** argc, char** argv)
 	Camera camera(viewport);
 	CameraController controller(camera);
 	auto position = camera.GetPosition();
-	camera.SetPosition({ position.x, position.y, 18.0f });
+	camera.SetPosition({ position.x, position.y, 10.0f });
 	// Main Loop
 	float previousFrame = (float)glfwGetTime();
 
@@ -97,6 +97,17 @@ int main(char** argc, char** argv)
 				int antiAliasing = int(camera.GetAntiAliasing());
 				ImGui::SliderInt("Anti aliasing", &antiAliasing, 1, 16);
 				camera.SetAntiAliasing(antiAliasing);
+
+			}
+			bool bvh = scene->IsBVHEnabled();
+			ImGui::Checkbox("BVH", &bvh);
+			if (bvh)
+			{
+				scene->EnableBVH();
+			}
+			else
+			{
+				scene->DisableBVH();
 			}
 			ImGui::End();
 		}

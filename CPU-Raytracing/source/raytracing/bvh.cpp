@@ -19,27 +19,31 @@ namespace CRT
 		m_RootNode = SplitNode(std::move(root), m_Primitives);
 	}
 
-	std::vector<Primitive> BVH::Traverse(const Ray& ray) const
+	TraversalResult BVH::Traverse(const Ray& ray) const
 	{
 		return TraverseNode(ray, &m_RootNode);
 	}
 
-	std::vector<Primitive> BVH::TraverseNode(const Ray& ray, const BVHNode* parentNode) const
+	TraversalResult BVH::TraverseNode(const Ray& ray, const BVHNode* parentNode) const
 	{
 		if (!parentNode->Primitives.empty())
-			return parentNode->Primitives;
-		std::vector<Primitive> primitives;
+			return { parentNode->Primitives, 0 };
+		TraversalResult result;
 		if (parentNode->Left->Bounds.Intersects(ray))
 		{
-			auto childPrimitives = TraverseNode(ray, parentNode->Left.get());
-			primitives.insert(primitives.begin(), childPrimitives.begin(), childPrimitives.end());
+			auto resultLeft = TraverseNode(ray, parentNode->Left.get());
+			result.Primitives.insert(result.Primitives.begin(), resultLeft.Primitives.begin(),
+				resultLeft.Primitives.end());
+			result.Traversals = resultLeft.Traversals + 1;
 		}
 		if (parentNode->Right->Bounds.Intersects(ray))
 		{
-			auto childPrimitives = TraverseNode(ray, parentNode->Right.get());
-			primitives.insert(primitives.begin(), childPrimitives.begin(), childPrimitives.end());
+			auto resultRight = TraverseNode(ray, parentNode->Right.get());
+			result.Primitives.insert(result.Primitives.begin(), resultRight.Primitives.begin(),
+				resultRight.Primitives.end());
+			result.Traversals = std::max(resultRight.Traversals + 1, result.Traversals);
 		}
-		return primitives;
+		return result;
 	}
 
 	BVHNode BVH::SplitNode(BVHNode node, std::vector<Primitive> primitives) const
