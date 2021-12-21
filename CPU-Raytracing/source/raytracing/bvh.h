@@ -35,7 +35,7 @@ namespace CRT
 	struct TraversalResult
 	{
 		std::vector<PrimitiveRange> Primitives;
-		uint32_t Traversals;
+		uint32_t Traversals = 0;
 	};
 
 	class BVH
