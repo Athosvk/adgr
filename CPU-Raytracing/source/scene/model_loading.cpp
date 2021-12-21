@@ -40,12 +40,11 @@ namespace CRT
 					float2(uv0.x, uv0.y),
 					float2(uv1.x, uv1.y), 
 					float2(uv2.x, uv2.y), 
-					float3(normal.x, normal.y, normal.z),
-					material);
+					float3(normal.x, normal.y, normal.z));
 			}
 			for (const Triangle& triangle : triangles)
 			{
-				_scene->AddTriangle(triangle);
+				_scene->AddTriangle(triangle, material);
 			}
 			triangles.clear();
 		}

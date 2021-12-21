@@ -25,29 +25,13 @@ namespace CRT
 		m_RootNode = SplitNode(std::move(root), indices);
 	}
 
-	std::optional<Manifest> BVH::GetNearestIntersection(const Ray& _ray) const
+	TraversalResult BVH::GetNearestIntersection(const Ray& _ray) const
 	{
 		if (!m_RootNode.Bounds.Intersects(_ray))
 		{
-			return std::nullopt;
+			return {};
 		}
-		std::optional<Manifest> nearest;
-		auto traversalResult = TraverseNode(_ray, m_RootNode);
-
-		for (auto primitiveRange : traversalResult.Primitives)
-		{
-			for (uint32_t i = 0; i < primitiveRange.Count; i++)
-			{
-				auto primitive = m_Primitives[m_PrimitiveIndices[size_t(primitiveRange.FirstPrimitiveIndex) + i]];
-				Manifest manifest;
-				if (primitive.Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
-				{
-					manifest.M = primitive.material;
-					nearest = manifest;
-				}
-			}
-		}
-		return nearest;
+		return TraverseNode(_ray, m_RootNode);
 	}
 
 	uint64_t BVH::GetNodeCount() const
@@ -58,23 +42,44 @@ namespace CRT
 	TraversalResult BVH::TraverseNode(const Ray& _ray, const BVHNode& _parentNode) const
 	{
 		if (_parentNode.Count > 0)
-			return { { { _parentNode.First, _parentNode.Count } }, 0 };
+		{
+			return GetNearest(_ray, { _parentNode.First, _parentNode.Count });
+		}
 		TraversalResult result;
 		const auto& leftNode = m_Nodes[_parentNode.Left];
 		if (leftNode.Bounds.Intersects(_ray))
 		{
 			auto resultLeft = TraverseNode(_ray, leftNode);
-			result.Primitives.insert(result.Primitives.begin(), resultLeft.Primitives.begin(),
-				resultLeft.Primitives.end());
-			result.Traversals = resultLeft.Traversals + 1;
+			result = resultLeft;
 		}
-		const auto& rightNode = m_Nodes[_parentNode.Left + 1];
+		const auto& rightNode = m_Nodes[_parentNode.Left + 1ull];
 		if (rightNode.Bounds.Intersects(_ray))
 		{
 			auto resultRight = TraverseNode(_ray, rightNode);
-			result.Primitives.insert(result.Primitives.begin(), resultRight.Primitives.begin(),
-				resultRight.Primitives.end());
-			result.Traversals = std::max(resultRight.Traversals + 1, result.Traversals);
+			if (resultRight.Manifest)
+			{
+				if (!result.Manifest || resultRight.Manifest->T < result.Manifest->T)
+				{
+					result = resultRight;
+				}
+			}
+		}
+		result.Traversals++;
+		return result;
+	}
+
+	TraversalResult BVH::GetNearest(const Ray& _ray, const PrimitiveRange& range) const
+	{
+		TraversalResult result;
+		for (uint32_t i = 0; i < range.Count; i++)
+		{
+			auto primitive = m_Primitives[m_PrimitiveIndices[i + range.FirstPrimitiveIndex]];
+			Manifest manifest;
+			if (primitive.Intersect(_ray, manifest) && (!result.Manifest || manifest.T < result.Manifest->T))
+			{
+				result.Manifest = manifest;
+				result.Index = i + range.FirstPrimitiveIndex;
+			}
 		}
 		return result;
 	}

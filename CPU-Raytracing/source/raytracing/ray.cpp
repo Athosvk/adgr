@@ -8,7 +8,7 @@ namespace CRT
 		return Ray(O, r);
 	}
 
-	Ray Ray::Transform(glm::mat4x4& _matrix)
+	Ray Ray::Transform(const glm::mat4x4& _matrix) const
 	{
 		glm::vec4 origin(O.x, O.y, O.z, 1.0f);
 		glm::vec4 dir(D.x, D.y, D.z, 0.0f);

@@ -23,7 +23,7 @@ namespace CRT
 		Scene() = default;
 
 		void AddShape(Shape* _shape, Material* _material);
-		void AddTriangle(Triangle _triangle);
+		void AddTriangle(Triangle _triangle, Material* _material);
 		void AddDirectionalLight(DirectionalLight _light);
 		void AddSpotLight(SpotLight _light);
 		void AddPointLight(PointLight _light);
@@ -57,6 +57,7 @@ namespace CRT
 		
 		std::optional<BVH> m_BVH;
 		std::vector<Triangle> m_Triangles;
+		std::vector<Material*> m_TriangleMaterials;
 		std::vector<Shape*>    m_Shapes;
 		std::vector<Material*> m_Materials;
 		std::vector<PointLight> m_PointLights;

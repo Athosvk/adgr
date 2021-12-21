@@ -15,9 +15,10 @@ namespace CRT
 		m_Materials.push_back(_material);
 	}
 
-	void Scene::AddTriangle(Triangle _triangle)
+	void Scene::AddTriangle(Triangle _triangle, Material* _material)
 	{
 		m_Triangles.push_back(_triangle);
+		m_TriangleMaterials.push_back(_material);
 	}
 
 	void Scene::AddDirectionalLight(DirectionalLight _light)
@@ -175,19 +176,26 @@ namespace CRT
 
 	std::optional<Manifest> Scene::GetNearestIntersection(Ray _ray) const
 	{
-		std::vector<Primitive> primitives;
+		std::optional<Manifest> nearest;
 		if (m_UseBVH)
 		{
-			primitives = m_BVH->Traverse(_ray);
-		}
-		std::optional<Manifest> nearest;
-		for (auto primitive : m_UseBVH ? primitives : m_Triangles)
-		{
-			Manifest manifest;
-			if (primitive.Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+			TraversalResult result = m_BVH->GetNearestIntersection(_ray);
+			if (result.Manifest)
 			{
-				manifest.M = primitive.material;
-				nearest = manifest;
+				nearest = result.Manifest;
+				nearest->M = m_TriangleMaterials[result.Index];
+			}
+		}
+		else
+		{
+			for (uint32_t i = 0; i < m_Triangles.size(); i++)
+			{
+				Manifest manifest;
+				if (m_Triangles[i].Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+				{
+					manifest.M = m_TriangleMaterials[i];
+					nearest = manifest;
+				}
 			}
 		}
 		for (uint32_t i = 0; i < m_Shapes.size(); i++)

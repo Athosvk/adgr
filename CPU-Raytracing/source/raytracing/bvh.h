@@ -37,7 +37,8 @@ namespace CRT
 
 	struct TraversalResult
 	{
-		std::vector<PrimitiveRange> Primitives;
+		PrimitiveIndex Index = 0;
+		std::optional<Manifest> Manifest;
 		uint32_t Traversals = 0;
 	};
 
@@ -46,10 +47,12 @@ namespace CRT
 	public:
 		BVH(std::vector<Primitive> primitives);
 		
-		std::optional<Manifest> GetNearestIntersection(const Ray& ray) const;
+		TraversalResult GetNearestIntersection(const Ray& ray) const;
 		uint64_t GetNodeCount() const;
 	private:
 		TraversalResult TraverseNode(const Ray& ray, const BVHNode& parentNode) const;
+		TraversalResult GetNearest(const Ray& _ray, const PrimitiveRange& range) const;
+		
 		void Construct();
 		BVHNode SplitNode(BVHNode node, const std::vector<PrimitiveIndex>& _range);
 		SplitPoint CalculateSplitpoint(const std::vector<PrimitiveIndex>& _range) const;

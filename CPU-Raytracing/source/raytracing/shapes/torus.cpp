@@ -29,7 +29,7 @@ namespace CRT
 		invModel = glm::transpose(invModel);
 	}
 
-	bool Torus::Intersect(Ray _r, Manifest& _m)
+	bool Torus::Intersect(Ray _r, Manifest& _m) const
 	{
 		const auto transformedRay = _r.Transform(invModel);
 		const auto transformedRayDir = transformedRay.D;
@@ -97,11 +97,8 @@ namespace CRT
 		_m.N = float3(transformedNormal.x, transformedNormal.y, transformedNormal.z).Normalize();
 		//getUV(rec);
 		return true;
-		//	}
-
-		//	return false;
 	}
-	float2 Torus::GetUV(float3 _point, float3 _normal)
+	float2 Torus::GetUV(float3 _point, float3 _normal) const
 	{
 		float u = 0.5f + (std::atan2(_point.z, _point.x) / M_2PI);
 		float v = 0.5f + (std::atan2(_point.y, (sqrt(_point.x * _point.x + _point.z * _point.z) - RR1)) / M_2PI);

@@ -33,7 +33,7 @@ int main(char** argc, char** argv)
 	Texture* texture = new Texture("./assets/test_texture.png");
 
 	Scene* scene = new Scene();
-	Material* material = new Material(Color::White, 0.0f, nullptr);
+	Material* material = new Material(Color::White, 0.0f, texture);
 	Material* spec_material = new Material(Color::White, 0.9f, nullptr);
 	Material* partial_spec_material = new Material(Color::White, 0.4f, nullptr);
 	Material* dielectric = new Material(Color::White, 0.0f, nullptr);

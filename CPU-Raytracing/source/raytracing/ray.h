@@ -15,7 +15,7 @@ namespace CRT
 		float3 Sample(float t) const;
 		Ray Reflect(float3 _n);
 
-		Ray Transform(glm::mat4x4& _matrix);
+		Ray Transform(const glm::mat4x4& _matrix) const;
 
 		float3 O;
 		float3 D;
