@@ -58,8 +58,8 @@ int main(char** argc, char** argv)
 		std::cout << "Constructed BVH in " << bvhConstructionDuration.count() << " seconds";
 	}
 
-	scene->AddPointLight(PointLight{ float3(0.0f, 4.5f, 0.f), 3500.0f, Color::White });
-	// scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, -1.5f), 15000.0f, Color::White });
+	scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, 2.5f), 3500.0f, Color::White });
+	//scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, 1.5f), 15000.0f, Color::White });
 
 	// IMGUI
 	ImGui::CreateContext();
@@ -117,6 +117,7 @@ int main(char** argc, char** argv)
 			{
 				ImGui::Text("Last BVH construction duration: %.4f s", bvhConstructionDuration.count());
 				ImGui::Text("Tris: %u", scene->GetTriangleCount());
+				ImGui::Text("Nodes: %u", scene->GetBHVNodeCount());
 				bool bvh = scene->IsBVHEnabled();
 				ImGui::Checkbox("BVH Enabled", &bvh);
 				if (bvh)

@@ -34,6 +34,7 @@ namespace CRT
 		void DisableBVH();
 		bool IsBVHEnabled() const;
 		uint64_t GetTriangleCount() const;
+		uint64_t GetBHVNodeCount() const;
 	private:
 		float3 IntersectBounced(Ray _r, unsigned _remainingBounces) const;
 		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;

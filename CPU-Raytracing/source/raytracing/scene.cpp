@@ -65,6 +65,11 @@ namespace CRT
 		return m_Triangles.size();
 	}
 
+	uint64_t Scene::GetBHVNodeCount() const
+	{
+		return m_BVH->GetNodeCount();
+	}
+
 	float3 Scene::IntersectBounced(Ray _r, unsigned _remainingBounces) const
 	{
 		if (_remainingBounces == 0)
