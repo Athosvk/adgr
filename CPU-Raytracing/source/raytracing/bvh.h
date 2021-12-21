@@ -20,8 +20,12 @@ namespace CRT
 	struct BVHNode
 	{
 		AABB Bounds;
-		uint32_t Left = 0;
-		PrimitiveRange Range;
+		uint32_t Count = 0;
+		union
+		{
+			uint32_t Left = 0;
+			PrimitiveIndex First;
+		};
 	};
 
 	struct SplitPoint

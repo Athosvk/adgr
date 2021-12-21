@@ -45,8 +45,8 @@ namespace CRT
 
 	TraversalResult BVH::TraverseNode(const Ray& _ray, const BVHNode& _parentNode) const
 	{
-		if (_parentNode.Range.Count > 0)
-			return { { _parentNode.Range }, 0 };
+		if (_parentNode.Count > 0)
+			return { { { _parentNode.First, _parentNode.Count } }, 0 };
 		TraversalResult result;
 		const auto& leftNode = m_Nodes[_parentNode.Left];
 		if (leftNode.Bounds.Intersects(_ray))
@@ -91,9 +91,9 @@ namespace CRT
 				return _node;
 			}
 		}
-		_node.Range.FirstPrimitiveIndex = m_PrimitiveIndices.size();
+		_node.First = m_PrimitiveIndices.size();
 		m_PrimitiveIndices.insert(m_PrimitiveIndices.end(), _primitiveRange.begin(), _primitiveRange.end());
-		_node.Range.Count = _primitiveRange.size();
+		_node.Count = _primitiveRange.size();
 		return _node;
 	}
 
