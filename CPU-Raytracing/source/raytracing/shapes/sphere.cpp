@@ -85,7 +85,7 @@ namespace CRT
 
 		float phi = acosf(_point.y / radius);
 
-		float raw_u = theta / (2.0 * Pi<float>());
+		float raw_u = theta / (2.0f * Pi<float>());
 		return float2(1.0f - (raw_u + 0.5f), 1.0f - phi / Pi<float>());
 	}
 }

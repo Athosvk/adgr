@@ -96,9 +96,9 @@ namespace CRT
 				return _node;
 			}
 		}
-		_node.First = m_PrimitiveIndices.size();
+		_node.First = uint32_t(m_PrimitiveIndices.size());
 		m_PrimitiveIndices.insert(m_PrimitiveIndices.end(), _primitiveRange.begin(), _primitiveRange.end());
-		_node.Count = _primitiveRange.size();
+		_node.Count = uint32_t(_primitiveRange.size());
 		return _node;
 	}
 
