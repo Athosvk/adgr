@@ -85,6 +85,8 @@ namespace CRT
 		float3 ComponentMin(float3 other) const;
 		float3 ComponentMax(float3 other) const;
 
+		float3 Abs() const; 
+
 		std::string ToString() const;
 
 		union

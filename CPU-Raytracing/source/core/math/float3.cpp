@@ -346,6 +346,11 @@ namespace CRT
 			std::max(z, other.z) };
 	}
 
+	float3 float3::Abs() const
+	{
+		return float3(std::abs(x), std::abs(y), std::abs(z));
+	}
+
 	float float3::DistanceSquared(const float3& _o) const
 	{
 		return (*this - _o).MagnitudeSquared();
