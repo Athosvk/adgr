@@ -82,6 +82,16 @@ namespace CRT
 		return float3(1.0f, 1.0f, 1.0f);
 	}
 
+	float3 float3::Infinity()
+	{
+		return float3(std::numeric_limits<float>::infinity());
+	}
+
+	float3 float3::NegativeInfinity()
+	{
+		return -Infinity();
+	}
+
 	float3 float3::XAxis()
 	{
 		return float3(1.0f, 0.0f, 0.0f);
