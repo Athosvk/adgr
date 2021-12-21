@@ -37,7 +37,7 @@ namespace CRT
 
 	void Scene::ConstructBVH()
 	{
-		m_BVH = BVH(m_Triangles);
+		m_BVH = std::optional<BVH>(BVH(m_Triangles));
 	}
 
 	float3 Scene::Intersect(Ray _r) const
@@ -170,13 +170,13 @@ namespace CRT
 
 	std::optional<Manifest> Scene::GetNearestIntersection(Ray _ray) const
 	{
-		TraversalResult traversalResult;
+		std::vector<Primitive> primitives;
 		if (m_UseBVH)
 		{
-			traversalResult = m_BVH->Traverse(_ray);
+			primitives = m_BVH->Traverse(_ray);
 		}
 		std::optional<Manifest> nearest;
-		for (auto primitive : m_UseBVH ? traversalResult.Primitives : m_Triangles)
+		for (auto primitive : m_UseBVH ? primitives : m_Triangles)
 		{
 			Manifest manifest;
 			if (primitive.Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
