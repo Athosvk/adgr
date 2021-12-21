@@ -25,9 +25,14 @@ namespace CRT
 
 		float GetSurfaceArea() const
 		{
-			float3 dimensions = (Max - Min).Abs();
+			float3 dimensions = GetDimensions();
 			return 2.0f * (dimensions.x * dimensions.y + dimensions.y * dimensions.z +
 				dimensions.z * dimensions.x);
+		}
+
+		float3 GetDimensions() const
+		{
+			return (Max - Min).Abs();
 		}
 	};
 }
