@@ -56,7 +56,7 @@ namespace CRT
 				resultLeft.Primitives.end());
 			result.Traversals = resultLeft.Traversals + 1;
 		}
-		const auto& rightNode = m_Nodes[_parentNode.Right];
+		const auto& rightNode = m_Nodes[_parentNode.Left + 1];
 		if (rightNode.Bounds.Intersects(_ray))
 		{
 			auto resultRight = TraverseNode(_ray, rightNode);
@@ -85,10 +85,9 @@ namespace CRT
 				right.Bounds = CalculateSmallestAABB(splitPoint.Right.begin(), splitPoint.Right.end());
 				right = SplitNode(right, splitPoint.Right);
 
+				_node.Left = uint32_t(m_Nodes.size());
 				m_Nodes.emplace_back(std::move(left));
-				_node.Left = uint32_t(m_Nodes.size() - 1);
 				m_Nodes.emplace_back(std::move(right));
-				_node.Right = uint32_t(m_Nodes.size() - 1);
 				return _node;
 			}
 		}

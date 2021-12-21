@@ -21,7 +21,6 @@ namespace CRT
 	{
 		AABB Bounds;
 		uint32_t Left = 0;
-		uint32_t Right = 0;
 		PrimitiveRange Range;
 	};
 
