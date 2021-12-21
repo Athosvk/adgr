@@ -47,11 +47,13 @@ namespace CRT
 		BVH(std::vector<Primitive> primitives);
 		
 		std::vector<Primitive> Traverse(const Ray& ray) const;
+		uint64_t GetNodeCount() const;
 	private:
 		TraversalResult TraverseNode(const Ray& ray, const BVHNode& parentNode) const;
 		void Construct();
 		BVHNode SplitNode(BVHNode node, const std::vector<PrimitiveIndex>& _range);
 		SplitPoint CalculateSplitpoint(const std::vector<PrimitiveIndex>& _range) const;
+		int32_t GetSplitDimension(const std::vector<PrimitiveIndex>& _range) const;
 		float GetCost(std::vector<PrimitiveIndex>::const_iterator _start, 
 			std::vector<PrimitiveIndex>::const_iterator _end) const;
 		AABB CalculateSmallestAABB(std::vector<PrimitiveIndex>::const_iterator _start, 
