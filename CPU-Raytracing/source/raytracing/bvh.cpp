@@ -51,32 +51,8 @@ namespace CRT
 		if (_primitives.size() > 1)
 		{
 			float parentCost = GetCost(_primitives.begin(), _primitives.end());
-			std::array<SplitPoint, 3> splitPoints;
-			for (uint32_t i = 0; i < 3; i++)
-			{
-				splitPoints[i].SplitCost = std::numeric_limits<float>::infinity();
-				std::sort(_primitives.begin(), _primitives.end(), [i](const Primitive& first, const Primitive& second) {
-					// TO-DO: Maybe use the barycenter instead
-					return first.V0.f[i] < second.V0.f[i];
-				});
+			SplitPoint splitPoint = CalculateSplitpoint(_primitives);
 
-				// Sorted, so the width of this dimension is equal to the difference between the first
-				// and last element
-				float splitWidth = _primitives.back().V0.f[i] - _primitives.front().V0.f[i];
-				
-				// No split on this axis possible otherwise
-				if (splitWidth > 0.0001f)
-				{
-					splitPoints[i] = CalculateSplitpoint(_primitives.begin(), _primitives.end(),
-						splitWidth, i);
-				}
-			}
-
-			SplitPoint splitPoint = *std::min_element(splitPoints.begin(), splitPoints.end(),
-				[](const SplitPoint& left, const SplitPoint& right)
-			{
-				return left.SplitCost < right.SplitCost;
-			});
 			auto TraversalCost = 10.0f;
 			if (splitPoint.SplitCost + TraversalCost < parentCost)
 			{
@@ -96,36 +72,57 @@ namespace CRT
 		return _node;
 	}
 
-	SplitPoint BVH::CalculateSplitpoint(std::vector<Primitive>::const_iterator _start,
-		std::vector<Primitive>::const_iterator _end, float _totalWidth, uint32_t dimension) const
+	SplitPoint BVH::CalculateSplitpoint(std::vector<Primitive>& _primitives) const
 	{
-		SplitPoint splitPoint;
-		splitPoint.SplitCost = std::numeric_limits<float>::infinity();
-
+		std::array<SplitPoint, 3> splitPoints;
 		size_t Bins = 16u;
-		auto splitPrimitive = _start;
 
-		// Don't iterate over the first and last bins, so that we're guaranteed to have at least one primitive
-		// on both sides
-		for (size_t bin = 1u; bin < Bins - 1; bin++)
+		for (uint32_t i = 0u; i < 3; i++)
 		{
-			// Place the separator at Bins number of locations to try as split points
-			auto separator = (_totalWidth / Bins) * bin + _start->V0.f[dimension];
-
-			// Find the first primitive past the separator, i.e. where the "bin ends"
-			splitPrimitive = std::find_if(splitPrimitive, _end, [separator, dimension](Primitive primitive) 
-			{
-				return primitive.V0.f[dimension] >= separator; 
+			splitPoints[i].SplitCost = std::numeric_limits<float>::infinity();
+			std::sort(_primitives.begin(), _primitives.end(), [i](const Primitive& first, const Primitive& second) {
+				// TO-DO: Maybe use the barycenter instead
+				return first.V0.f[i] < second.V0.f[i];
 			});
 
-			auto costLeft = GetCost(_start, splitPrimitive);
-			auto costRight = GetCost(splitPrimitive, _end);
-			auto totalCost = costLeft + costRight;
-			if (totalCost < splitPoint.SplitCost)
+			// Sorted, so the width of this dimension is the difference between the first
+			// and last element
+			float splitWidth = _primitives.back().V0.f[i] - _primitives.front().V0.f[i];
+			if (splitWidth <= 0.0001f)
 			{
-				splitPoint = { splitPrimitive, totalCost };
+				// Nothing to split along this axis
+				continue;
+			}
+
+			auto splitPrimitive = _primitives.cbegin();
+
+			// Don't iterate over the first and last bins, so that we're guaranteed to have at least one primitive
+			// on both sides
+			for (size_t bin = 1u; bin < Bins - 1; bin++)
+			{
+				// Place the separator at Bins number of locations to try as split points
+				auto separator = (splitWidth / Bins) * bin + _primitives.front().V0.f[i];
+
+				// Find the first primitive past the separator, i.e. where the "bin ends"
+				splitPrimitive = std::find_if(splitPrimitive, _primitives.cend(), [separator, i](const Primitive& primitive)
+				{
+					return primitive.V0.f[i] >= separator;
+				});
+
+				auto costLeft = GetCost(_primitives.begin(), splitPrimitive);
+				auto costRight = GetCost(splitPrimitive, _primitives.end());
+				auto totalCost = costLeft + costRight;
+				if (totalCost < splitPoints[i].SplitCost)
+				{
+					splitPoints[i] = { splitPrimitive, totalCost };
+				}
 			}
 		}
+		return *std::min_element(splitPoints.begin(), splitPoints.end(),
+			[](const SplitPoint& left, const SplitPoint& right)
+		{
+			return left.SplitCost < right.SplitCost;
+		});
 		//for (auto it = _start; it != _end; it++)
 		//{
 		//	auto costLeft = GetCost(_start, it + 1);
@@ -136,7 +133,6 @@ namespace CRT
 		//		splitPoint = { it, totalCost };
 		//	}
 		//}
-		return splitPoint;
 	}
 
 	float BVH::GetCost(std::vector<Primitive>::const_iterator _start,
