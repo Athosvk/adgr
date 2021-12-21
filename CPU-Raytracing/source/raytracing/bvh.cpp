@@ -27,6 +27,10 @@ namespace CRT
 
 	std::vector<Primitive> BVH::Traverse(const Ray& _ray) const
 	{
+		if (!m_RootNode.Bounds.Intersects(_ray))
+		{
+			return {};
+		}
 		auto traversalResult = TraverseNode(_ray, m_RootNode);
 		std::vector<Primitive> primitives;
 		for (auto primitiveRange : traversalResult.Primitives)
