@@ -46,7 +46,7 @@ namespace CRT
 	public:
 		BVH(std::vector<Primitive> primitives);
 		
-		std::vector<Primitive> Traverse(const Ray& ray) const;
+		std::optional<Manifest> GetNearestIntersection(const Ray& ray) const;
 		uint64_t GetNodeCount() const;
 	private:
 		TraversalResult TraverseNode(const Ray& ray, const BVHNode& parentNode) const;

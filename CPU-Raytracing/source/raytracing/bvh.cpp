@@ -25,22 +25,29 @@ namespace CRT
 		m_RootNode = SplitNode(std::move(root), indices);
 	}
 
-	std::vector<Primitive> BVH::Traverse(const Ray& _ray) const
+	std::optional<Manifest> BVH::GetNearestIntersection(const Ray& _ray) const
 	{
 		if (!m_RootNode.Bounds.Intersects(_ray))
 		{
-			return {};
+			return std::nullopt;
 		}
+		std::optional<Manifest> nearest;
 		auto traversalResult = TraverseNode(_ray, m_RootNode);
-		std::vector<Primitive> primitives;
+
 		for (auto primitiveRange : traversalResult.Primitives)
 		{
-			for (uint32_t i = 0u; i < primitiveRange.Count; i++)
+			for (uint32_t i = 0; i < primitiveRange.Count; i++)
 			{
-				primitives.emplace_back(m_Primitives[m_PrimitiveIndices[size_t(primitiveRange.FirstPrimitiveIndex) + i]]);
+				auto primitive = m_Primitives[m_PrimitiveIndices[size_t(primitiveRange.FirstPrimitiveIndex) + i]];
+				Manifest manifest;
+				if (primitive.Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+				{
+					manifest.M = primitive.material;
+					nearest = manifest;
+				}
 			}
 		}
-		return primitives;
+		return nearest;
 	}
 
 	uint64_t BVH::GetNodeCount() const
