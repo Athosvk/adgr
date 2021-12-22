@@ -21,13 +21,13 @@ namespace CRT
 			: m_Type(_type)
 		{ }
 
-		virtual bool Intersect(Ray _r, Manifest& _m) = 0;
+		virtual bool Intersect(Ray _r, Manifest& _m) const = 0;
 
 		// Getters
 		inline ShapeType GetType() const { return m_Type; }
 
 	protected:
-		virtual float2 GetUV(float3 _point, float3 _normal) = 0;
+		virtual float2 GetUV(float3 _point, float3 _normal) const = 0;
 
 		ShapeType m_Type;
 	};

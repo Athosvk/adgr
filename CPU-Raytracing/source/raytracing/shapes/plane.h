@@ -8,10 +8,10 @@ namespace CRT
 	public:
 		Plane(float3 _point, float3 _normal);
 
-		virtual bool Intersect(Ray _r, Manifest& _m) override;
+		virtual bool Intersect(Ray _r, Manifest& _m) const override;
 
 	private:
-		virtual float2 GetUV(float3 _point, float3 _normal) override;
+		virtual float2 GetUV(float3 _point, float3 _normal) const override;
 
 		float3 Point;
 		float3 Normal;

@@ -10,7 +10,7 @@ namespace CRT
 		, Radius2(_radius* _radius)
 	{ }
 
-	bool Sphere::Intersect(Ray _r, Manifest& _m)
+	bool Sphere::Intersect(Ray _r, Manifest& _m) const
 	{
 		// Ray originates from inside the sphere
 		if (Position.DistanceSquared(_r.O) <= Radius2)
@@ -20,7 +20,7 @@ namespace CRT
 		return IntersectOuter(_r, _m);
 	}
 
-	bool Sphere::IntersectOuter(Ray _r, Manifest& _m)
+	bool Sphere::IntersectOuter(Ray _r, Manifest& _m) const
 	{
 		float3 C = Position - _r.O;
 		float t = C.Dot(_r.D);
@@ -43,7 +43,7 @@ namespace CRT
 		return false;
 	}
 
-	bool Sphere::IntersectInner(Ray _r, Manifest& _m)
+	bool Sphere::IntersectInner(Ray _r, Manifest& _m) const
 	{
 		float3 toSphere = Position - _r.O;
 		
@@ -78,14 +78,14 @@ namespace CRT
 		return true;
 	}
 
-	float2 Sphere::GetUV(float3 _point, float3 _normal)
+	float2 Sphere::GetUV(float3 _point, float3 _normal) const
 	{
 		float theta = atan2f(_point.x, _point.z);
 		float radius = _point.Magnitude();
 
 		float phi = acosf(_point.y / radius);
 
-		float raw_u = theta / (2.0 * Pi<float>());
+		float raw_u = theta / (2.0f * Pi<float>());
 		return float2(1.0f - (raw_u + 0.5f), 1.0f - phi / Pi<float>());
 	}
 }

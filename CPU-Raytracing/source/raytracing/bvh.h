@@ -9,45 +9,62 @@
 namespace CRT
 {
 	using Primitive = Triangle;
+	using PrimitiveIndex = uint32_t;
+
+	struct PrimitiveRange
+	{
+		PrimitiveIndex FirstPrimitiveIndex = 0;
+		uint32_t Count = 0;
+	};
 
 	struct BVHNode
 	{
 		AABB Bounds;
-		std::unique_ptr<BVHNode> Left;
-		std::unique_ptr<BVHNode> Right;
-		std::vector<Primitive> Primitives;
+		uint32_t Count = 0;
+		union
+		{
+			uint32_t Left = 0;
+			PrimitiveIndex First;
+		};
 	};
 
 	struct SplitPoint
 	{
-		std::vector<Primitive>::const_iterator SplitPrimitive;
-		float SplitCost;
+		std::vector<PrimitiveIndex> Left;
+		std::vector<PrimitiveIndex> Right;
+		float SplitCost = 0.0f;
 	};
 
 	struct TraversalResult
 	{
-		std::vector<Primitive> Primitives;
-		uint32_t Traversals;
+		PrimitiveIndex Index = 0;
+		std::optional<Manifest> Manifest;
+		uint32_t Traversals = 0;
 	};
 
 	class BVH
 	{
 	public:
 		BVH(std::vector<Primitive> primitives);
-
-		TraversalResult Traverse(const Ray& ray) const;
+		
+		TraversalResult GetNearestIntersection(const Ray& ray) const;
+		uint64_t GetNodeCount() const;
 	private:
-		TraversalResult TraverseNode(const Ray& ray, const BVHNode* parentNode) const;
+		TraversalResult TraverseNode(const Ray& ray, const BVHNode& parentNode) const;
+		TraversalResult GetNearest(const Ray& _ray, const PrimitiveRange& range) const;
+		
 		void Construct();
-		BVHNode SplitNode(BVHNode node, std::vector<Primitive> primitives) const;
-		SplitPoint CalculateSplitpoint(std::vector<Primitive>::const_iterator _start, 
-			std::vector<Primitive>::const_iterator _end) const;
-		float GetCost(std::vector<Primitive>::const_iterator _start, 
-			std::vector<Primitive>::const_iterator _end) const;
-		AABB CalculateSmallestAABB(std::vector<Primitive>::const_iterator _start, 
-			std::vector<Primitive>::const_iterator _end) const;
+		BVHNode SplitNode(BVHNode node, const std::vector<PrimitiveIndex>& _range);
+		SplitPoint CalculateSplitpoint(const std::vector<PrimitiveIndex>& _range) const;
+		int32_t GetSplitDimension(const std::vector<PrimitiveIndex>& _range) const;
+		float GetCost(std::vector<PrimitiveIndex>::const_iterator _start, 
+			std::vector<PrimitiveIndex>::const_iterator _end) const;
+		AABB CalculateSmallestAABB(std::vector<PrimitiveIndex>::const_iterator _start, 
+			std::vector<PrimitiveIndex>::const_iterator _end) const;
 
 		std::vector<Primitive> m_Primitives;
+		std::vector<uint32_t> m_PrimitiveIndices;
+		std::vector<BVHNode> m_Nodes;
 		BVHNode m_RootNode;
 	};
 }

@@ -9,9 +9,9 @@ namespace CRT
 	{
 	public:
 		Triangle();
-		Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n, Material* _material);
+		Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n);
 
-		virtual bool Intersect(Ray _r, Manifest& _m) override;
+		virtual bool Intersect(Ray _r, Manifest& _m) const override;
 
 		float3 V0;
 		float3 V1;
@@ -22,11 +22,10 @@ namespace CRT
 		float2 u2;
 
 		float3 N;
-		Material* material;
 		float GetSurfaceArea() const;
 	private:
-		float3 Barycentric(float3 _point);
+		float3 Barycentric(float3 _point) const;
 
-		virtual float2 GetUV(float3 _point, float3 _normal) override;
+		virtual float2 GetUV(float3 _point, float3 _normal) const override;
 	};
 }

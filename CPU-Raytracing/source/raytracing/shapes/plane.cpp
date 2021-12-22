@@ -9,7 +9,7 @@ namespace CRT
 		, Normal(_normal) 
 	{ }
 
-	bool Plane::Intersect(Ray _r, Manifest& _m)
+	bool Plane::Intersect(Ray _r, Manifest& _m) const
 	{
 		float cosTheta = Normal.Dot(_r.D);
 		// Backface check; if plane normal faces opposite direction of 
@@ -32,7 +32,7 @@ namespace CRT
 		return false;
 	}
 
-	float2 Plane::GetUV(float3 _point, float3 _normal)
+	float2 Plane::GetUV(float3 _point, float3 _normal) const
 	{
 		if (_point.x > 1.0f)
 			int z = 0;

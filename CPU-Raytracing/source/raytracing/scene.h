@@ -23,7 +23,7 @@ namespace CRT
 		Scene() = default;
 
 		void AddShape(Shape* _shape, Material* _material);
-		void AddTriangle(Triangle _triangle);
+		void AddTriangle(Triangle _triangle, Material* _material);
 		void AddDirectionalLight(DirectionalLight _light);
 		void AddSpotLight(SpotLight _light);
 		void AddPointLight(PointLight _light);
@@ -33,6 +33,8 @@ namespace CRT
 		void EnableBVH();
 		void DisableBVH();
 		bool IsBVHEnabled() const;
+		uint64_t GetTriangleCount() const;
+		uint64_t GetBHVNodeCount() const;
 	private:
 		float3 IntersectBounced(Ray _r, unsigned _remainingBounces) const;
 		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;
@@ -55,6 +57,7 @@ namespace CRT
 		
 		std::optional<BVH> m_BVH;
 		std::vector<Triangle> m_Triangles;
+		std::vector<Material*> m_TriangleMaterials;
 		std::vector<Shape*>    m_Shapes;
 		std::vector<Material*> m_Materials;
 		std::vector<PointLight> m_PointLights;

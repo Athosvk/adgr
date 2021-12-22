@@ -25,6 +25,8 @@ namespace CRT
 
 		static float3 Zero();
 		static float3 One();
+		static float3 Infinity();
+		static float3 NegativeInfinity();
 
 		static float3 XAxis();
 		static float3 YAxis();
@@ -84,6 +86,8 @@ namespace CRT
 
 		float3 ComponentMin(float3 other) const;
 		float3 ComponentMax(float3 other) const;
+
+		float3 Abs() const; 
 
 		std::string ToString() const;
 

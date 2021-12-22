@@ -6,7 +6,7 @@ namespace CRT
         : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
     {  }
 
-    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n, Material* _material)
+    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n)
 		: Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
         , V0(_v0)
         , V1(_v1)
@@ -15,10 +15,9 @@ namespace CRT
         , u1(_u1)
         , u2(_u2)
         , N(_n)
-        , material(_material)
 	{ }
 
-	bool Triangle::Intersect(Ray _r, Manifest & _m)
+	bool Triangle::Intersect(Ray _r, Manifest & _m) const
 	{
         float3 v0v1 = V1 - V0;
         float3 v0v2 = V2 - V0;
@@ -60,7 +59,7 @@ namespace CRT
         return (V1 - V0).Cross(V2 - V0).Magnitude() * 0.5f;
     }
 
-    float3 Triangle::Barycentric(float3 _point)
+    float3 Triangle::Barycentric(float3 _point) const
     {
         float3 v0 = V1 - V0, v1 = V2 - V0, v2 = _point - V0;
         float d00 = v0.Dot(v0);
@@ -77,7 +76,7 @@ namespace CRT
         return float3(u, v, w);
     }
 
-    float2 Triangle::GetUV(float3 _point, float3 _normal)
+    float2 Triangle::GetUV(float3 _point, float3 _normal) const
 	{
         float3 barycentric = Barycentric(_point);
 		return (barycentric.x * u0) + (barycentric.y * u1) + (barycentric.z * u2);
