@@ -5,23 +5,22 @@
 #include <thread>
 #include <future>
 #include <queue>
-#include <random>
 
 namespace CRT
 {
+	class RandomGenerator;
+
 	class JobManager
 	{
 	public:
-		using JobType = std::function<void(std::mt19937&, std::uniform_real_distribution<float>&)>;
+		using JobType = std::function<void(RandomGenerator& generator)>;
 
 		// -1 means use threads equal to the amount of hardware threads
 		JobManager(int _numThreads = -1);
 		~JobManager();
 
 		template<typename TReturnType>
-		auto AddJob(std::function<TReturnType(std::mt19937&, std::uniform_real_distribution<float>&)> job)->
-			std::future<TReturnType>
-;
+		auto AddJob(std::function<TReturnType(RandomGenerator&)> job)->std::future<TReturnType>;
 		unsigned GetMaxWorkerThreads();
 	private:
 		std::vector<std::thread> InitThreads(uint32_t _numThreads);
@@ -34,12 +33,11 @@ namespace CRT
 	};
 
 	template<typename TReturnType>
-	auto JobManager::AddJob(std::function<TReturnType(std::mt19937&, std::uniform_real_distribution<float>&)> job) -> 
+	auto JobManager::AddJob(std::function<TReturnType(RandomGenerator& generator)> job) -> 
 		std::future<TReturnType>
 	{
 		using return_type = TReturnType;
-		auto task = std::make_shared<std::packaged_task<return_type(std::mt19937&, 
-			std::uniform_real_distribution<float>&)>>(job);
+		auto task = std::make_shared<std::packaged_task<return_type(RandomGenerator&)>>(job);
 			
 		std::future<return_type> future = task->get_future();
 		{
@@ -49,9 +47,9 @@ namespace CRT
 			if(m_Done)
 				throw std::runtime_error("enqueue on stopped ThreadPool");
 
-			m_TaskQueue.emplace([task](std::mt19937& generator, std::uniform_real_distribution<float>& distribution)
+			m_TaskQueue.emplace([task](RandomGenerator& generator)
 			{ 
-				(*task)(generator, distribution); 
+				(*task)(generator); 
 			});
 		}
 		m_JobReady.notify_one();

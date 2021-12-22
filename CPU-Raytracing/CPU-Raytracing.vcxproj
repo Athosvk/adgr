@@ -168,6 +168,7 @@
     <ClCompile Include="source\raytracing\lights\point_light.cpp" />
     <ClCompile Include="source\raytracing\lights\spot_light.cpp" />
     <ClCompile Include="source\raytracing\material\texture.cpp" />
+    <ClCompile Include="source\core\random_generator.cpp" />
     <ClCompile Include="source\raytracing\ray.cpp" />
     <ClCompile Include="source\raytracing\raytracer.cpp" />
     <ClCompile Include="source\raytracing\scene.cpp" />
@@ -215,6 +216,7 @@
     <ClInclude Include="source\raytracing\manifest.h" />
     <ClInclude Include="source\raytracing\material\material.h" />
     <ClInclude Include="source\raytracing\material\texture.h" />
+    <ClInclude Include="source\core\random_generator.h" />
     <ClInclude Include="source\raytracing\ray.h" />
     <ClInclude Include="source\raytracing\raytracer.h" />
     <ClInclude Include="source\raytracing\scene.h" />
