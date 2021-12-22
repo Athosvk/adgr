@@ -54,29 +54,15 @@ namespace CRT
 		[this, _xMin, _yMin]
 		(RandomGenerator& generator) {
 			JobOutput output{ _xMin, _yMin };
-			for (uint32_t job_x = 0; job_x < JobWidth; job_x++)
+			for (uint32_t jobID = 0; jobID < JobWidth * JobWidth; jobID += JOB_INC)
 			{
-				for (uint32_t job_y = 0; job_y < JobWidth; job_y++)
-				{
-					float3 color(0.0f);
-					for (uint32_t k = 0; k < m_Camera.GetAntiAliasing(); k++)
-					{
-						float ur = generator.NextFloat() - 0.5f;
-						float vr = generator.NextFloat() - 0.5f;
+				float3 color(0.0f);
+				color += m_Scene.Intersect(m_Camera.ConstructRay(jobID, _xMin, _yMin));
 
-						if (m_Camera.GetAntiAliasing() == 1)
-						{
-							vr = 0.0f;
-							ur = 0.0f;
-						}
-
-						float u = (((float)job_x + _xMin) + ur) / (m_Surface.GetWidth() - 1.0f);
-						float v = (((float)job_y + _yMin) + vr) / (m_Surface.GetHeight() - 1.0f);
-
-						color += m_Scene.Intersect(m_Camera.ConstructRay({ u, v }));
-					}
-					output.Color[job_x + job_y * JobWidth] = color / (float)m_Camera.GetAntiAliasing();
-				}
+				uint32_t x, y;
+				morton_to_xy(jobID, &x, &y);
+				output.Color[x + y * JobWidth] = color;
+				
 			}
 			return output;
 		};
