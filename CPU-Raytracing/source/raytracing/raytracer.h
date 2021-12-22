@@ -31,7 +31,7 @@ namespace CRT
 		Surface& m_Surface;
 		const Scene& m_Scene;
 		const Camera& m_Camera;
-		JobManager m_JobManager;
+		JobManager m_JobManager; //= JobManager(1);
 
 		// Saves a big allocation every frame
 		std::vector<std::future<JobOutput>> m_LastResults;
