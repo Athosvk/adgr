@@ -17,12 +17,15 @@ namespace CRT
 		BVHNode root;
 		std::vector<PrimitiveIndex> indices;
 		indices.reserve(m_Primitives.size());
+		// -2 because we store the root node separately, while max nodes is bounded by 2n - 1
+		m_Nodes.reserve(m_Primitives.size() * 2 - 2);
 		for (uint32_t i = 0u; i < uint32_t(m_Primitives.size()); i++)
 		{
 			indices.emplace_back(i);
 		}
 		root.Bounds = CalculateSmallestAABB(indices.cbegin(), indices.cend());
 		m_RootNode = SplitNode(std::move(root), indices);
+		m_Nodes.shrink_to_fit();
 	}
 
 	TraversalResult BVH::GetNearestIntersection(const Ray& _ray) const
@@ -137,16 +140,15 @@ namespace CRT
 		float splitWidth = m_Primitives[primitiveIndices.back()].V0.f[splitDimension] - 
 			leftBoundary;
 
+		// Don't try more bins than we have primitives
+		uint32_t bins = _range.size() > MaxBins ? MaxBins : _range.size();
 		auto splitPrimitive = primitiveIndices.cbegin();
-
-		size_t Bins = 16u;
-		// Don't iterate over the first and last bins, so that we're guaranteed to have at least one primitive
-		// on both sides
-		for (size_t bin = 1u; bin < Bins - 1; bin++)
+		auto binWidth = splitWidth / bins;
+		auto separator = leftBoundary + binWidth;
+		// Iterate over the right-bounding line of each bin. We skip the last one, since there's no primitives
+		// on the last bins right boundary
+		for (size_t bin = 0u; bin < bins - 1; bin++)
 		{
-			// Place the separator at Bins number of locations to try as split points
-			auto separator = (splitWidth / Bins) * bin + leftBoundary;
-
 			// Find the first primitive past the separator, i.e. where the "bin ends"
 			splitPrimitive = std::find_if(splitPrimitive, primitiveIndices.cend(), [separator, splitDimension, this](PrimitiveIndex index)
 			{
@@ -162,6 +164,7 @@ namespace CRT
 				splitPoint.Right = std::vector<PrimitiveIndex>(splitPrimitive, primitiveIndices.cend());
 				splitPoint.SplitCost = totalCost;
 			}
+			separator += binWidth;
 		}
 		return splitPoint;
 	}

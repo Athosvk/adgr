@@ -62,6 +62,7 @@ namespace CRT
 		AABB CalculateSmallestAABB(std::vector<PrimitiveIndex>::const_iterator _start, 
 			std::vector<PrimitiveIndex>::const_iterator _end) const;
 
+		constexpr static uint32_t MaxBins = 16u;
 		std::vector<Primitive> m_Primitives;
 		std::vector<uint32_t> m_PrimitiveIndices;
 		std::vector<BVHNode> m_Nodes;
