@@ -46,7 +46,7 @@ int main(char** argc, char** argv)
 	//scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
 
-	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, 00.0f), "./assets/box.obj");
+	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -150.0f), "./assets/stenford_dragon_high.fbx");
 	//ModelLoading::LoadModel(scene, material, float3(5.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
 	//ModelLoading::LoadModel(scene, material, float3(-5.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
 
@@ -80,6 +80,9 @@ int main(char** argc, char** argv)
 	Raytracer raytracer(surface, *scene, camera);
 	RollingSampler<Timer::Duration, 20> rtFrameSampler;
 	float deltaFrameTime = 0.f;
+
+	auto previousCameraDirection = float3(std::numeric_limits<float>::infinity());
+	auto previousCameraPosition = previousCameraDirection;
 	while (!window->ShouldClose())
 	{
 		Timer frameTimer;
@@ -91,7 +94,7 @@ int main(char** argc, char** argv)
 		{
 			ImGui::Begin("Window", &showImgui);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
 
-			ImGui::Text("RayTracer FPS: %.2f", 1.0 / rtFrameSampler.GetAverage().count());
+			ImGui::Text("RayTracer Frametime: %.3f ms", rtFrameSampler.GetAverage().count() * 1000);
 			ImGui::Separator();
 			if (ImGui::CollapsingHeader("Camera"))
 			{
@@ -139,11 +142,15 @@ int main(char** argc, char** argv)
 			ImGui::End();
 		}
 		
+		// Only update if our view changed
+		if (previousCameraPosition != camera.GetPosition() || previousCameraDirection != camera.GetFront())
 		{
 			Timer rtTimer;
 			raytracer.RenderFrame();
 			rtFrameSampler.AddSample(rtTimer.GetDuration());
 		}
+		previousCameraPosition = camera.GetPosition();
+		previousCameraDirection = camera.GetFront();
 
 		controller.ProcessInput(window->GetWindow(), deltaFrameTime);
 		renderDevice->CopyFrom(&surface);
