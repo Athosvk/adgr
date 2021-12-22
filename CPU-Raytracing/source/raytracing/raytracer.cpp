@@ -3,6 +3,7 @@
 #include <./core/graphics/screen/surface.h>
 #include <./raytracing/camera.h>
 #include <./raytracing/scene.h>
+#include <./core/random_generator.h>
 #include <random>
 #include <functional>
 
@@ -48,10 +49,10 @@ namespace CRT
 
 	std::future<Raytracer::JobOutput> Raytracer::CreateJob(uint32_t _xMin, uint32_t _yMin)
 	{
-		std::function<JobOutput(std::mt19937&, std::uniform_real_distribution<float>& distribution)> func
+		std::function<JobOutput(RandomGenerator&)> func
 			= 
 		[this, _xMin, _yMin]
-		(std::mt19937& generator, std::uniform_real_distribution<float>& distribution) {
+		(RandomGenerator& generator) {
 			JobOutput output{ _xMin, _yMin };
 			for (uint32_t job_x = 0; job_x < JobWidth; job_x++)
 			{
@@ -60,8 +61,8 @@ namespace CRT
 					float3 color(0.0f);
 					for (uint32_t k = 0; k < m_Camera.GetAntiAliasing(); k++)
 					{
-						float ur = distribution(generator) - 0.5f;
-						float vr = distribution(generator) - 0.5f;
+						float ur = generator.NextFloat() - 0.5f;
+						float vr = generator.NextFloat() - 0.5f;
 
 						if (m_Camera.GetAntiAliasing() == 1)
 						{
