@@ -2,6 +2,8 @@
 #include <./core/math/float3.h>
 #include <./raytracing/ray.h>
 
+#include <algorithm>
+
 namespace CRT
 {
 	struct AABB
