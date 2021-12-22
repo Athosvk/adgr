@@ -1,6 +1,8 @@
 #include "./core/math/float2.h"
 #include "./core/math/float3.h"
 #include "./core/math/float4.h"
+#include <smmintrin.h>
+#include <immintrin.h>
 
 #include <sstream>
 
@@ -110,22 +112,26 @@ namespace CRT
 	float3 float3::ComponentMin(std::initializer_list<float3> values)
 	{
 		auto it = values.begin();
-		auto min = *(it++);
+		__m128 minM128 = _mm_setr_ps(it->x, it->y, it->z, 0.0f);
 		for (; it != values.end(); it++)
 		{
-			min = min.ComponentMin(*it);
+			minM128 = _mm_min_ps(minM128, _mm_setr_ps(it->x, it->y, it->z, 0.0f));
 		}
+		float4 min;
+		_mm_storeu_ps(min.f, minM128);
 		return min;
 	}
 
 	float3 float3::ComponentMax(std::initializer_list<float3> values)
 	{
 		auto it = values.begin();
-		auto max = *(it++);
+		__m128 maxM128 = _mm_setr_ps(it->x, it->y, it->z, 0.0f);
 		for (; it != values.end(); it++)
 		{
-			max = max.ComponentMax(*it);
+			maxM128 = _mm_max_ps(maxM128, _mm_setr_ps(it->x, it->y, it->z, 0.0f));
 		}
+		float4 max;
+		_mm_storeu_ps(max.f, maxM128);
 		return max;
 	}
 
