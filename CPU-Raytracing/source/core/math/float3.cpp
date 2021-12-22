@@ -5,6 +5,7 @@
 #include <immintrin.h>
 
 #include <sstream>
+#include <algorithm>
 
 namespace CRT
 {
