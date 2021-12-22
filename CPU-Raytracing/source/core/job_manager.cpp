@@ -1,5 +1,6 @@
 #include "job_manager.h"
 
+#include <./core/random_generator.h>
 #include <random>
 
 namespace CRT
@@ -27,8 +28,7 @@ namespace CRT
 		for (size_t i = 0; i < _numThreads; i++)
 		{
 			threads.emplace_back([this] {
-				std::mt19937 generator { std::random_device()() };
-				std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+				RandomGenerator generator{ std::random_device()() };
 
 				while (true)
 				{
@@ -43,7 +43,7 @@ namespace CRT
 						m_TaskQueue.pop();
 					}
 
-					task(generator, distribution);
+					task(generator);
 				}
 			}
 			);
