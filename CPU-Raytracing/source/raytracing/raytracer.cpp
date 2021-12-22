@@ -3,7 +3,6 @@
 #include <./core/graphics/screen/surface.h>
 #include <./raytracing/camera.h>
 #include <./raytracing/scene.h>
-#include <./core/random_generator.h>
 #include <random>
 #include <functional>
 
@@ -12,7 +11,8 @@ namespace CRT
 	Raytracer::Raytracer(Surface& _surface, const Scene& _scene, const Camera& _camera) :
 		m_Surface(_surface),
 		m_Scene(_scene),
-		m_Camera(_camera)
+		m_Camera(_camera),
+		m_JobManager([]() { return RandomGenerator(std::random_device()()); })
 	{
 		m_LastResults.reserve((uint64_t)m_Surface.GetWidth() * m_Surface.GetHeight());
 	}

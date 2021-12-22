@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <array>
+#include <./core/random_generator.h>
 
 namespace CRT
 {
@@ -31,7 +32,7 @@ namespace CRT
 		Surface& m_Surface;
 		const Scene& m_Scene;
 		const Camera& m_Camera;
-		JobManager m_JobManager;
+		JobManager<RandomGenerator> m_JobManager;
 
 		// Saves a big allocation every frame
 		std::vector<std::future<JobOutput>> m_LastResults;
