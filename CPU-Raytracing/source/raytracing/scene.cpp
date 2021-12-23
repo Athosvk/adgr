@@ -200,7 +200,15 @@ namespace CRT
 					float3 n = m_Triangles[packetResult.ID[i]].N;
 					float2 uv = m_Triangles[packetResult.ID[i]].GetUV(p, n);
 
-					float3 color = m_TriangleMaterials[packetResult.ID[i]]->Texture->GetValue(uv);
+					float3 color;
+					Material* mat = m_TriangleMaterials[packetResult.ID[i]];
+					if (mat != nullptr)
+					{
+						if (mat->Texture != nullptr)
+							color = mat->Texture->GetValue(uv);
+						else
+							color = mat->Color;
+					}
 
 					//	float3 lightdir = float3(0.0f, 1.0f, 1.0f).Normalize();
 					//	float diff = std::max(n.Dot(lightdir), 0.0f);
