@@ -14,8 +14,8 @@ namespace CRT
 		glm::vec4 dir(D.x, D.y, D.z, 0.0f);
 		glm::vec4 whatever(1.0f, 2.0f, 3.0f, 4.0f);
 
-		glm::vec3 n0 = origin*_matrix;
-		glm::vec3 d0 = dir*_matrix;
+		glm::vec3 n0 = origin * _matrix;
+		glm::vec3 d0 = dir * _matrix;
 		glm::vec4 w0 = whatever * _matrix;
 
 		d0 = glm::normalize(d0);
@@ -41,5 +41,13 @@ namespace CRT
 		_x = _mm256_add_ps(Ox, _mm256_mul_ps(Dx, t));
 		_y = _mm256_add_ps(Oy, _mm256_mul_ps(Dy, t));
 		_z = _mm256_add_ps(Oz, _mm256_mul_ps(Dz, t));
+	}
+
+	void RayPacket::CalculateFrustum(float3* _corners)
+	{
+		P[0] = (_corners[0] - O).Cross(_corners[1] - _corners[0]).Normalize(); DD[0] = P[0].Dot(O);
+		P[1] = (_corners[1] - O).Cross(_corners[2] - _corners[1]).Normalize(); DD[1] = P[1].Dot(O);
+		P[2] = (_corners[2] - O).Cross(_corners[3] - _corners[2]).Normalize(); DD[2] = P[2].Dot(O);
+		P[3] = (_corners[3] - O).Cross(_corners[0] - _corners[3]).Normalize(); DD[3] = P[3].Dot(O);
 	}
 }
