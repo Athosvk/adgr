@@ -51,6 +51,31 @@ namespace CRT
 		return Ray(m_Position, d);
 	}
 
+	RayPacket Camera::ConstructRayPacket(int _id, int _x, int _y) const
+	{
+		float3 focalDirection(0.0, 0.0, -1.0);
+		float3 cameraPlane = m_FocalLength * focalDirection;
+		float3 p0 = cameraPlane + float3(-1, 1, 0);
+		float3 p1 = cameraPlane + float3(1, 1, 0);
+		float3 p2 = cameraPlane + float3(-1, -1, 0);
+
+		uint32_t xa, ya;
+		float3 dArr[RAYPACKET_WIDTH * RAYPACKET_HEIGHT];
+		for (int i = 0; i < RAYPACKET_WIDTH * RAYPACKET_HEIGHT; i++)
+		{
+			morton_to_xy(_id + i, &xa, &ya);
+
+			float u = ((float)xa + _x) / ((float)m_ViewportSize.x - 1.0f);
+			float v = ((float)ya + _y) / ((float)m_ViewportSize.y - 1.0f);
+
+			float3 uv = p0 + (u * (p1 - p0)) + (v * (p2 - p0));
+			float aspect_ratio = m_ViewportSize.x / (float)m_ViewportSize.y;
+			uv.x *= aspect_ratio;
+			dArr[i] = (Transform((uv), m_View)).Normalize();
+		}
+		return RayPacket(m_Position, dArr, RAYPACKET_WIDTH, RAYPACKET_HEIGHT);
+	}
+
 	OctRay Camera::ConstructOctRay(int _id, int _x, int _y) const
 	{
 		float3 focalDirection(0.0, 0.0, -1.0);
@@ -132,6 +157,6 @@ namespace CRT
 	{
 		glm::vec4 toTransform = glm::vec4(ToGlm(_toTransform), 0.0f);
 		glm::vec4 transformed = _transform * toTransform;
-		return float3 { transformed.x, transformed.y, transformed.z };
+		return float3{ transformed.x, transformed.y, transformed.z };
 	}
 }
