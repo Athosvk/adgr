@@ -94,6 +94,11 @@ namespace CRT
         return (V1 - V0).Cross(V2 - V0).Magnitude() * 0.5f;
     }
 
+    float3 Triangle::GetCentroid() const
+    {
+        return (V0 + V1 + V2) / 3.0f;
+    }
+
     float3 Triangle::Barycentric(float3 _point) const
     {
         float3 v0 = V1 - V0, v1 = V2 - V0, v2 = _point - V0;

@@ -26,6 +26,7 @@ namespace CRT
 
 		float3 N;
 		float GetSurfaceArea() const;
+		float3 GetCentroid() const;
 	private:
 		float3 Barycentric(float3 _point) const;
 	};

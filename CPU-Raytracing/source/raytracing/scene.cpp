@@ -38,7 +38,7 @@ namespace CRT
 
 	void Scene::ConstructBVH()
 	{
-		m_BVH = std::optional<BVH>(BVH(m_Triangles));
+		m_BVH = std::make_unique<BVH>(m_Triangles);
 	}
 
 	float3 Scene::Intersect(Ray _r) const
