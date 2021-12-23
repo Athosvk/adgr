@@ -46,20 +46,25 @@ namespace CRT
 	{
 	public:
 		BVH(std::vector<Primitive> primitives);
-		
+
 		TraversalResult GetNearestIntersection(const Ray& ray) const;
+		void GetNearestIntersection(const RayPacket& ray, TraversalResultPacket& _result) const;
+
 		uint64_t GetNodeCount() const;
 	private:
 		TraversalResult TraverseNode(const Ray& ray, const BVHNode& parentNode) const;
+		void TraverseNode(const RayPacket& ray, TraversalResultPacket& _result, const BVHNode& parentNode, int _firstActive)const;
+
+
 		TraversalResult GetNearest(const Ray& _ray, const PrimitiveRange& range) const;
-		
+
 		void Construct();
 		BVHNode SplitNode(BVHNode node, const std::vector<PrimitiveIndex>& _range);
 		SplitPoint CalculateSplitpoint(const std::vector<PrimitiveIndex>& _range) const;
 		int32_t GetSplitDimension(const std::vector<PrimitiveIndex>& _range) const;
-		float GetCost(std::vector<PrimitiveIndex>::const_iterator _start, 
+		float GetCost(std::vector<PrimitiveIndex>::const_iterator _start,
 			std::vector<PrimitiveIndex>::const_iterator _end) const;
-		AABB CalculateSmallestAABB(std::vector<PrimitiveIndex>::const_iterator _start, 
+		AABB CalculateSmallestAABB(std::vector<PrimitiveIndex>::const_iterator _start,
 			std::vector<PrimitiveIndex>::const_iterator _end) const;
 
 		std::vector<Primitive> m_Primitives;
