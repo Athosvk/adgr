@@ -20,7 +20,7 @@ namespace CRT
 		{
 			uint32_t XMin;
 			uint32_t YMin;
-			std::array<float3, JobWidth * JobWidth> Color;
+			std::array<float3, JobWidth* JobWidth> Color;
 		};
 
 	public:

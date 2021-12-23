@@ -7,7 +7,7 @@ namespace CRT
     {  }
 
     Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n)
-		: Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
+        : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
         , V0(_v0)
         , V1(_v1)
         , V2(_v2)
@@ -15,10 +15,10 @@ namespace CRT
         , u1(_u1)
         , u2(_u2)
         , N(_n)
-	{ }
+    { }
 
-	bool Triangle::Intersect(Ray _r, Manifest & _m) const
-	{
+    bool Triangle::Intersect(Ray _r, Manifest& _m) const
+    {
         float3 v0v1 = V1 - V0;
         float3 v0v2 = V2 - V0;
         float3 pvec = _r.D.Cross(v0v2);
@@ -40,19 +40,54 @@ namespace CRT
         float3 qvec = tvec.Cross(v0v1);
         float v = _r.D.Dot(qvec) * invDet;
         if (v < 0 || u + v > 1) return false;
-     
+
         float t = qvec.Dot(v0v2) * invDet;
         if (t > 0.0f && t < _m.T)
         {
             _m.IntersectionPoint = _r.O + _r.D * t;
             _m.T = t;
             _m.UV = GetUV(_m.IntersectionPoint, N);
-            _m.N  = N;
+            _m.N = N;
             return true;
         }
 
         return false;
-	}
+    }
+
+    void Triangle::Intersect(const RayPacket& ray, TraversalResultPacket& _result, int _first, int _id)
+    {
+        for (int i = _first; i < 16 * 16; i++)
+        {
+            float3 v0v1 = V1 - V0;
+            float3 v0v2 = V2 - V0;
+            float3 pvec = ray.D[i].Cross(v0v2);
+            float det = v0v1.Dot(pvec);
+#ifdef CULLING 
+            // if the determinant is negative the triangle is backfacing
+            // if the determinant is close to 0, the ray misses the triangle
+            if (det < kEpsilon) return false;
+#else 
+            // ray and triangle are parallel if det is close to 0
+            if (fabs(det) < 0.001) continue;
+#endif 
+            float invDet = 1 / det;
+
+            float3 tvec = ray.O - V0;
+            float u = tvec.Dot(pvec) * invDet;
+            if (u < 0 || u > 1)continue;
+
+            float3 qvec = tvec.Cross(v0v1);
+            float v = ray.D[i].Dot(qvec) * invDet;
+            if (v < 0 || u + v > 1) continue;
+
+            float t = qvec.Dot(v0v2) * invDet;
+            if (t > 0.0f && t < _result.T[i])
+            {
+                _result.T[i] = t;
+                _result.ID[i] = _id;
+            }
+        }
+    }
 
     float Triangle::GetSurfaceArea() const
     {
@@ -73,7 +108,7 @@ namespace CRT
         float d20 = v2.Dot(v0);
         float d21 = v2.Dot(v1);
         float denom = d00 * d11 - d01 * d01;
-        
+
         float v = (d11 * d20 - d01 * d21) / denom;
         float w = (d00 * d21 - d01 * d20) / denom;
         float u = 1.0f - v - w;
@@ -82,8 +117,8 @@ namespace CRT
     }
 
     float2 Triangle::GetUV(float3 _point, float3 _normal) const
-	{
+    {
         float3 barycentric = Barycentric(_point);
-		return (barycentric.x * u0) + (barycentric.y * u1) + (barycentric.z * u2);
-	}
+        return (barycentric.x * u0) + (barycentric.y * u1) + (barycentric.z * u2);
+    }
 }

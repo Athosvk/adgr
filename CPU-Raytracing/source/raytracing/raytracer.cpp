@@ -50,19 +50,30 @@ namespace CRT
 	std::future<Raytracer::JobOutput> Raytracer::CreateJob(uint32_t _xMin, uint32_t _yMin)
 	{
 		std::function<JobOutput(RandomGenerator&)> func
-			= 
-		[this, _xMin, _yMin]
+			=
+			[this, _xMin, _yMin]
 		(RandomGenerator& generator) {
 			JobOutput output{ _xMin, _yMin };
 			for (uint32_t jobID = 0; jobID < JobWidth * JobWidth; jobID += JOB_INC)
 			{
+#if defined(USE_AVX)
+				OctRay r = m_Camera.ConstructOctRay(jobID, _xMin, _yMin);
+				m_Scene.Intersect(r, output.Color.data(), jobID);
+#else
+#if defined(USE_RAYPACKET)
+				RayPacket r = m_Camera.ConstructRayPacket(jobID, _xMin, _yMin);
+				m_Scene.Intersect(r, output.Color.data(), jobID);
+#else
+
 				float3 color(0.0f);
 				color += m_Scene.Intersect(m_Camera.ConstructRay(jobID, _xMin, _yMin));
 
 				uint32_t x, y;
 				morton_to_xy(jobID, &x, &y);
 				output.Color[x + y * JobWidth] = color;
-				
+#endif
+#endif
+
 			}
 			return output;
 		};

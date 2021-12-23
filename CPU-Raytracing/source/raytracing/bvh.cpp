@@ -168,6 +168,22 @@ namespace CRT
 		return TraverseNode(_ray, m_RootNode);
 	}
 
+	void BVH::GetNearestIntersection(const RayPacket& ray, TraversalResultPacket& _result) const
+	{
+		int first = 0;
+		if (!m_RootNode.Bounds.IntersectPacket(ray, first))
+			return;
+
+		//for (int i = 0; i < 16 * 16; i++)
+		//{
+		//	TraversalResult t = GetNearestIntersection(Ray(ray.O, ray.D[i]));
+		//	_result.T[i] = t.Manifest->T;
+		//}
+		//return;
+
+		TraverseNode(ray, _result, m_RootNode, first);
+	}
+
 	uint64_t BVH::GetNodeCount() const
 	{
 		return m_Nodes.size();
@@ -200,6 +216,40 @@ namespace CRT
 		}
 		result.Traversals++;
 		return result;
+	}
+
+	void BVH::TraverseNode(const RayPacket& ray, TraversalResultPacket& _result, const BVHNode& parentNode, int _firstActive) const
+	{
+		if (parentNode.Count > 0)
+		{
+			for (uint32_t i = 0; i < parentNode.Count; i++)
+			{
+				auto primitive = m_Primitives[m_PrimitiveIndices[i + parentNode.First]];
+				primitive.Intersect(ray, _result, _firstActive, m_PrimitiveIndices[i + parentNode.First]);
+			}
+
+			//for (int i = _firstActive; i < 16 * 16; i++)
+			//{
+			//	TraversalResult t = GetNearest(Ray(ray.O, ray.D[i]), { parentNode.First, parentNode.Count });
+			//	if (t.Manifest->T < 1000.0f && t.Manifest->T > 0.0f)
+			//		_result.T[i] = t.Manifest->T;
+			//}
+			return;
+		}
+
+		int fl = _firstActive;
+		const auto& leftNode = m_Nodes[parentNode.Left];
+		if (leftNode.Bounds.IntersectPacket(ray, fl))
+		{
+			TraverseNode(ray, _result, leftNode, fl);
+		}
+
+		int fr = _firstActive;
+		const auto& rightNode = m_Nodes[parentNode.Left + 1ull];
+		if (rightNode.Bounds.IntersectPacket(ray, fr))
+		{
+			TraverseNode(ray, _result, rightNode, fr);
+		}
 	}
 
 	TraversalResult BVH::GetNearest(const Ray& _ray, const PrimitiveRange& range) const
