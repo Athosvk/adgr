@@ -19,7 +19,7 @@ namespace CRT
 		{
 			uint32_t XMin;
 			uint32_t YMin;
-			std::array<float3, JobWidth * JobWidth> Color;
+			std::array<float3, JobWidth* JobWidth> Color;
 		};
 
 	public:
@@ -31,7 +31,7 @@ namespace CRT
 		Surface& m_Surface;
 		const Scene& m_Scene;
 		const Camera& m_Camera;
-		JobManager m_JobManager; //= JobManager(1);
+		JobManager m_JobManager;// = JobManager(1);
 
 		// Saves a big allocation every frame
 		std::vector<std::future<JobOutput>> m_LastResults;
