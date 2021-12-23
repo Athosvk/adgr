@@ -30,6 +30,8 @@ namespace CRT
 		void ConstructBVH();
 
 		float3 Intersect(Ray _r) const;
+		void Intersect(const RayPacket& _r, float3* _ptr, int _id) const;
+
 		void EnableBVH();
 		void DisableBVH();
 		bool IsBVHEnabled() const;
@@ -37,6 +39,8 @@ namespace CRT
 		uint64_t GetBHVNodeCount() const;
 	private:
 		float3 IntersectBounced(Ray _r, unsigned _remainingBounces) const;
+		void IntersectBounced(const RayPacket& _r, float3* _ptr, int _id) const;
+
 		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;
 		float3 GetTotalLightContribution(const Manifest& _manifest) const;
 		float3 GetReflectance(Ray _r, const Manifest& _manifest, unsigned _remainingBounces) const;
@@ -52,9 +56,9 @@ namespace CRT
 			}
 			return 0.0f;
 		}
-		
+
 		const static float3 BackgroundColor;
-		
+
 		std::optional<BVH> m_BVH;
 		std::vector<Triangle> m_Triangles;
 		std::vector<Material*> m_TriangleMaterials;
