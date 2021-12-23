@@ -30,7 +30,7 @@ int main(char** argc, char** argv)
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
 
-	Texture* texture = new Texture("./assets/test_texture.png");
+	Texture* texture = new Texture("./assets/book/textures/Texture-base_baseColor.jpg");
 
 	Scene* scene = new Scene();
 	Material* material = new Material(Color::White, 0.0f, texture);
@@ -46,7 +46,7 @@ int main(char** argc, char** argv)
 	//scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
 	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
 
-	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -150.0f), "./assets/stenford_dragon_high.fbx");
+	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -150.0f), "./assets/book/scene.gltf");
 	//ModelLoading::LoadModel(scene, material, float3(5.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
 	//ModelLoading::LoadModel(scene, material, float3(-5.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
 
