@@ -6,8 +6,13 @@ namespace CRT
 {
 	struct AABB
 	{
-		float3 Min;
-		float3 Max;
+		float3 Min = float3::Zero();
+		float3 Max = float3::Zero();
+
+		static AABB NegativeBox();
+
+		AABB Extend(AABB other);
+		AABB Extend(float3 point);
 
 		bool Intersects(const Ray& ray) const
 		{

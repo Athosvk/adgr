@@ -14,7 +14,22 @@ namespace CRT
 
 	void BVH::Construct()
 	{
-		BVHNode root;
+		std::vector<PrimitiveNode> primNodes;
+		primNodes.reserve(m_Primitives.size());
+
+		AABB triangleBounds = AABB::NegativeBox();
+		AABB centroidBounds = AABB::NegativeBox();
+		for (const Primitive& prim : m_Primitives)
+		{
+			PrimitiveNode node;
+			node.Bounds.Min = float3::ComponentMin({ prim.V0, prim.V1, prim.V2 });
+			node.Bounds.Max = float3::ComponentMax({ prim.V0, prim.V1, prim.V2 });
+			node.Centroid = prim.GetCentroid();
+			triangleBounds = triangleBounds.Extend(node.Bounds);
+			centroidBounds = centroidBounds.Extend(node.Centroid);
+			primNodes.emplace_back(node);
+		}
+
 		std::vector<PrimitiveIndex> indices;
 		indices.reserve(m_Primitives.size());
 		// -2 because we store the root node separately, while max nodes is bounded by 2n - 1
@@ -23,9 +38,125 @@ namespace CRT
 		{
 			indices.emplace_back(i);
 		}
-		root.Bounds = CalculateSmallestAABB(indices.cbegin(), indices.cend());
-		m_RootNode = SplitNode(std::move(root), indices);
-		m_Nodes.shrink_to_fit();
+		m_RootNode.Bounds = triangleBounds;
+		m_RootNode = SplitChild(m_RootNode, indices, primNodes, centroidBounds);
+	}
+
+	BVHNode BVH::SplitChild(BVHNode _node, const std::vector<PrimitiveIndex>& _range, const std::vector<PrimitiveNode>& _primitiveNodes, AABB _centroidBounds)
+	{
+		if (_range.size() > 1)
+		{
+			int splitDimension;
+			float3 centroidDimensions = _centroidBounds.GetDimensions();
+			if (centroidDimensions.MagnitudeSquared() < 0.0001f)
+			{
+				splitDimension = -1;
+			}
+			if (centroidDimensions.x > centroidDimensions.y && centroidDimensions.x > centroidDimensions.z)
+			{
+				splitDimension = 0;
+			}
+			else if (centroidDimensions.y > centroidDimensions.z)
+			{
+				splitDimension = 1;
+			}
+			else
+			{
+				splitDimension = 2;
+			}
+			float splitWidth = centroidDimensions.f[splitDimension];
+			
+			struct Bin
+			{
+				AABB Bounds = AABB::NegativeBox();
+				uint32_t PrimitiveCount = 0;
+			};
+			std::vector<Bin> bins(MaxBins);
+			for (auto index : _range)
+			{
+				const auto& node = _primitiveNodes[index];
+				float relativePosition = (node.Centroid.f[splitDimension] - _centroidBounds.Min.f[splitDimension]) / splitWidth;
+				// Subtract some epsilon so that triangles always end up on the left side of the bin
+				int bin = int(MaxBins * (1 - 0.000001f) * relativePosition);
+				
+				bins[bin].Bounds = bins[bin].Bounds.Extend(node.Bounds);
+				bins[bin].PrimitiveCount++;
+			}
+
+			std::vector<float> leftPartitionCosts;
+			int totalPrims = 0;
+			AABB totalBounds = AABB::NegativeBox();
+			for (int i = 0; i < bins.size() - 1; i++)
+			{
+				totalBounds = totalBounds.Extend(bins[i].Bounds);
+				totalPrims += bins[i].PrimitiveCount;
+				leftPartitionCosts.emplace_back(totalBounds.GetSurfaceArea() * totalPrims);
+			}
+
+			float minCost = std::numeric_limits<float>::infinity();
+			uint32_t bestBin = 0;
+			totalPrims = 0;
+			totalBounds = AABB::NegativeBox();
+			std::vector<float> rightPartitionCosts;
+			for (uint32_t i = bins.size() - 1; i > 0; i--)
+			{
+				totalBounds = totalBounds.Extend(bins[i].Bounds);
+				totalPrims += bins[i].PrimitiveCount;
+				rightPartitionCosts.emplace_back(totalBounds.GetSurfaceArea()* totalPrims);
+				auto cost = totalBounds.GetSurfaceArea() * totalPrims + leftPartitionCosts[i - 1];
+				if (cost < minCost)
+				{
+					minCost = cost;
+					bestBin = uint32_t(i);
+				}
+			}
+			
+			constexpr auto TraversalCost = 10.0f;
+			const auto parentCost = _node.Bounds.GetSurfaceArea() * _range.size();
+			std::vector<PrimitiveIndex> leftPrimitives;
+			std::vector<PrimitiveIndex> rightPrimitives;
+			if (minCost + TraversalCost < parentCost)
+			{
+				AABB leftBounds = AABB::NegativeBox();
+				AABB rightBounds = AABB::NegativeBox();
+				AABB leftCentroidBounds = AABB::NegativeBox();
+				AABB rightCentroidBounds = AABB::NegativeBox();
+				for (auto index : _range)
+				{
+					const auto& node = _primitiveNodes[index];
+					float relativePosition = (node.Centroid.f[splitDimension] - _centroidBounds.Min.f[splitDimension]) / splitWidth;
+					uint32_t bin = uint32_t(MaxBins * (1 - 0.000001f) * relativePosition);
+					if (bin < bestBin)
+					{
+						leftBounds = leftBounds.Extend(node.Bounds);
+						leftCentroidBounds = leftCentroidBounds.Extend(node.Centroid);
+						leftPrimitives.emplace_back(index);
+					}
+					else
+					{
+						rightBounds = rightBounds.Extend(node.Bounds);
+						rightCentroidBounds = rightCentroidBounds.Extend(node.Centroid);
+						rightPrimitives.emplace_back(index);
+					}
+				}
+				
+				BVHNode left;
+				left.Bounds = leftBounds;
+				left = SplitChild(left, leftPrimitives, _primitiveNodes, leftCentroidBounds);
+
+				BVHNode right;
+				right.Bounds = rightBounds;
+				right = SplitChild(right, rightPrimitives,_primitiveNodes, rightCentroidBounds);
+				_node.Left = uint32_t(m_Nodes.size());
+				m_Nodes.emplace_back(left);
+				m_Nodes.emplace_back(right);
+				return _node;
+			}
+		}
+		_node.First = uint32_t(m_PrimitiveIndices.size());
+		m_PrimitiveIndices.insert(m_PrimitiveIndices.end(), _range.begin(), _range.end());
+		_node.Count = uint32_t(_range.size());
+		return _node;
 	}
 
 	TraversalResult BVH::GetNearestIntersection(const Ray& _ray) const
@@ -85,138 +216,5 @@ namespace CRT
 			}
 		}
 		return result;
-	}
-
-	BVHNode BVH::SplitNode(BVHNode _node, const std::vector<PrimitiveIndex>& _primitiveRange)
-	{
-		if (_primitiveRange.size() > 1)
-		{
-			float parentCost = GetCost(_primitiveRange.cbegin(), _primitiveRange.cend());
-			SplitPoint splitPoint = CalculateSplitpoint(_primitiveRange);
-
-			auto TraversalCost = 10.0f;
-			if (splitPoint.SplitCost + TraversalCost < parentCost)
-			{
-				BVHNode left;
-				left.Bounds = CalculateSmallestAABB(splitPoint.Left.begin(), splitPoint.Left.end());
-				left = SplitNode(left, splitPoint.Left);
-
-				BVHNode right;
-				right.Bounds = CalculateSmallestAABB(splitPoint.Right.begin(), splitPoint.Right.end());
-				right = SplitNode(right, splitPoint.Right);
-
-				_node.Left = uint32_t(m_Nodes.size());
-				m_Nodes.emplace_back(std::move(left));
-				m_Nodes.emplace_back(std::move(right));
-				return _node;
-			}
-		}
-		_node.First = uint32_t(m_PrimitiveIndices.size());
-		m_PrimitiveIndices.insert(m_PrimitiveIndices.end(), _primitiveRange.begin(), _primitiveRange.end());
-		_node.Count = uint32_t(_primitiveRange.size());
-		return _node;
-	}
-
-	SplitPoint BVH::CalculateSplitpoint(const std::vector<PrimitiveIndex>& _range) const
-	{
-		std::vector<PrimitiveIndex> primitiveIndices = _range;
-
-		SplitPoint splitPoint;
-		splitPoint.SplitCost = std::numeric_limits<float>::infinity();
-
-		int32_t splitDimension = GetSplitDimension(_range);
-		if (splitDimension == -1)
-		{
-			return splitPoint;
-		}
-		std::sort(primitiveIndices.begin(), primitiveIndices.end(), [this, splitDimension](PrimitiveIndex first, PrimitiveIndex second)
-		{
-			return m_Primitives[first].V0.f[splitDimension] < m_Primitives[second].V0.f[splitDimension];
-		});
-
-		float leftBoundary = m_Primitives[primitiveIndices.front()].V0.f[splitDimension];
-		// Sorted, so the width of this dimension is the difference between the first
-		// and last element
-		float splitWidth = m_Primitives[primitiveIndices.back()].V0.f[splitDimension] - 
-			leftBoundary;
-
-		// Don't try more bins than we have primitives
-		uint32_t bins = _range.size() > MaxBins ? MaxBins : _range.size();
-		auto splitPrimitive = primitiveIndices.cbegin();
-		auto binWidth = splitWidth / bins;
-		auto separator = leftBoundary + binWidth;
-		// Iterate over the right-bounding line of each bin. We skip the last one, since there's no primitives
-		// on the last bins right boundary
-		for (size_t bin = 0u; bin < bins - 1; bin++)
-		{
-			// Find the first primitive past the separator, i.e. where the "bin ends"
-			splitPrimitive = std::find_if(splitPrimitive, primitiveIndices.cend(), [separator, splitDimension, this](PrimitiveIndex index)
-			{
-				return m_Primitives[index].V0.f[splitDimension] >= separator;
-			});
-
-			auto costLeft = GetCost(primitiveIndices.cbegin(), splitPrimitive);
-			auto costRight = GetCost(splitPrimitive, primitiveIndices.cend());
-			auto totalCost = costLeft + costRight;
-			if (totalCost < splitPoint.SplitCost)
-			{
-				splitPoint.Left = std::vector<PrimitiveIndex>(primitiveIndices.cbegin(), splitPrimitive);
-				splitPoint.Right = std::vector<PrimitiveIndex>(splitPrimitive, primitiveIndices.cend());
-				splitPoint.SplitCost = totalCost;
-			}
-			separator += binWidth;
-		}
-		return splitPoint;
-	}
-
-	float BVH::GetCost(std::vector<PrimitiveIndex>::const_iterator _start,
-		std::vector<PrimitiveIndex>::const_iterator _end) const
-	{
-		return CalculateSmallestAABB(_start, _end).GetSurfaceArea()
-			* std::distance(_start, _end);
-	}
-
-	int32_t BVH::GetSplitDimension(const std::vector<PrimitiveIndex>& _range) const
-	{
-		float3 min = float3::Infinity();
-		float3 max = float3::NegativeInfinity();
-		for (auto index : _range)
-		{
-			min = min.ComponentMin(m_Primitives[index].V0);
-			max = max.ComponentMax(m_Primitives[index].V0);
-		}
-		float3 extents = (max - min).Abs();
-
-		// Every dimension is near zero
-		if (extents.MagnitudeSquared() < 0.0001f)
-		{
-			return -1;
-		}
-		if (extents.x > extents.y && extents.x > extents.z)
-		{
-			return 0;
-		}
-		if (extents.y > extents.z)
-		{
-			return 1;
-		}
-		return 2;
-	}
-
-	AABB BVH::CalculateSmallestAABB(std::vector<PrimitiveIndex>::const_iterator _start,
-		std::vector<PrimitiveIndex>::const_iterator _end) const
-	{
-		auto it = _start;
-		auto primitive = &m_Primitives[*it];
-		AABB boundingBox{ float3::ComponentMin({ primitive->V0, primitive->V1, primitive->V2 }),
-						  float3::ComponentMax({ primitive->V0, primitive->V1, primitive->V2 }) };
-		it++;
-		for (; it != _end; it++)
-		{
-			primitive = &m_Primitives[*it];
-			boundingBox.Min = float3::ComponentMin({ boundingBox.Min, primitive->V0, primitive->V1, primitive->V2 });
-			boundingBox.Max = float3::ComponentMax({ boundingBox.Max, primitive->V0, primitive->V1, primitive->V2 });
-		}
-		return boundingBox;
 	}
 }

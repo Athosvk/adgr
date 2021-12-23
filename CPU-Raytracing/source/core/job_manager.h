@@ -10,7 +10,9 @@ namespace CRT
 {
 	class RandomGenerator;
 
-	template<typename TThreadStateType>
+	struct EmptyThreadState {};
+
+	template<typename TThreadStateType = EmptyThreadState>
 	class JobManager
 	{
 	public:
@@ -19,7 +21,7 @@ namespace CRT
 		using ThreadInitType = std::function<TThreadStateType(void)>;
 
 		// -1 means use threads equal to the amount of hardware threads
-		explicit JobManager(ThreadInitType _threadInit, int _numThreads = -1);
+		explicit JobManager(ThreadInitType _threadInit = [] { return EmptyThreadState{}; }, int _numThreads = -1);
 
 		~JobManager()
 		{

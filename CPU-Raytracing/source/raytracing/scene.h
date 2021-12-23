@@ -55,7 +55,7 @@ namespace CRT
 		
 		const static float3 BackgroundColor;
 		
-		std::optional<BVH> m_BVH;
+		std::unique_ptr<BVH> m_BVH;
 		std::vector<Triangle> m_Triangles;
 		std::vector<Material*> m_TriangleMaterials;
 		std::vector<Shape*>    m_Shapes;

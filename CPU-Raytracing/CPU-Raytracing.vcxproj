@@ -142,6 +142,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\benchmarking\timer.cpp" />
+    <ClCompile Include="source\raytracing\aabb.cpp" />
     <ClCompile Include="source\raytracing\bvh.cpp" />
     <ClCompile Include="source\raytracing\material\dielectric.cpp" />
     <ClCompile Include="source\core\graphics\color3.cpp" />

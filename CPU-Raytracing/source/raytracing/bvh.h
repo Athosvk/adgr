@@ -1,10 +1,11 @@
 #pragma once
 #include <vector>
+#include <memory>
+#include <optional>
+
+#include <./raytracing/ray.h>
 #include <./raytracing/shapes/triangle.h>
 #include <./raytracing/aabb.h>
-#include <memory>
-#include <./raytracing/ray.h>
-#include <optional>
 
 namespace CRT
 {
@@ -26,6 +27,12 @@ namespace CRT
 			uint32_t Left = 0;
 			PrimitiveIndex First;
 		};
+	};
+
+	struct PrimitiveNode
+	{
+		AABB Bounds;
+		float3 Centroid;
 	};
 
 	struct SplitPoint
@@ -54,7 +61,7 @@ namespace CRT
 		TraversalResult GetNearest(const Ray& _ray, const PrimitiveRange& range) const;
 		
 		void Construct();
-		BVHNode SplitNode(BVHNode node, const std::vector<PrimitiveIndex>& _range);
+		BVHNode SplitChild(BVHNode _node, const std::vector<PrimitiveIndex>& _range, const std::vector<PrimitiveNode>& _primitiveNodes, AABB _centroidBounds);
 		SplitPoint CalculateSplitpoint(const std::vector<PrimitiveIndex>& _range) const;
 		int32_t GetSplitDimension(const std::vector<PrimitiveIndex>& _range) const;
 		float GetCost(std::vector<PrimitiveIndex>::const_iterator _start, 
@@ -67,5 +74,6 @@ namespace CRT
 		std::vector<uint32_t> m_PrimitiveIndices;
 		std::vector<BVHNode> m_Nodes;
 		BVHNode m_RootNode;
+		JobManager<> m_JobManager;
 	};
 }
