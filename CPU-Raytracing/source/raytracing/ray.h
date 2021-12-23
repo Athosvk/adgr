@@ -6,16 +6,31 @@
 #include <intrin.h>
 #include <xmmintrin.h>
 
+#define USE_RAYPACKET
 //#define USE_AVX
+
+#define RAYPACKET_WIDTH 16
+#define RAYPACKET_HEIGHT 16
+
+#define RAYPACKET_TOP_LEFT 0
+#define RAYPACKET_TOP_RIGHT 85
+#define RAYPACKET_BOTTOM_LEFT 171
+#define RAYPACKET_BOTTOM_RIGHT 255
 
 #if defined(USE_AVX)
 #define JOB_INC 8
 #else
+#if defined(USE_RAYPACKET)
+#define JOB_INC RAYPACKET_WIDTH*RAYPACKET_HEIGHT
+#else
 #define JOB_INC 1
+#endif
 #endif
 
 namespace CRT
 {
+
+
 	class Ray
 	{
 	public:
@@ -32,7 +47,63 @@ namespace CRT
 		float3 O;
 		float3 D;
 	};
-	
+
+	struct TraversalResultPacket
+	{
+	public:
+		TraversalResultPacket(const uint32_t _c)
+			: T(new float[_c])
+			, ID(new float[_c])
+		{
+			for (int i = 0; i < _c; i++)
+				T[i] = FLT_MAX;
+		}
+		~TraversalResultPacket()
+		{
+			delete[] T;
+			delete[] ID;
+		}
+
+		float* T;
+		float* ID;
+	};
+
+	class RayPacket
+	{
+	public:
+		RayPacket(float3 _o, float3* _d, const uint32_t _w, const uint32_t _h)
+			: Width(_w)
+			, Height(_h)
+			, O(_o)
+			, D(new float3[_w * _h])
+		{
+			for (int i = 0; i < Width * Height; i++)
+			{
+				D[i] = _d[i];
+			}
+
+			// Calculate frustum
+			float3 corners[] = { O + _d[RAYPACKET_TOP_RIGHT], O + _d[RAYPACKET_TOP_LEFT], O + _d[RAYPACKET_BOTTOM_LEFT], O + _d[RAYPACKET_BOTTOM_RIGHT], };
+			CalculateFrustum(corners);
+		}
+		~RayPacket()
+		{
+			delete[] D;
+		}
+
+		float3  O;
+		float3* D;
+
+		float3 P[4];
+		float DD[4];
+
+		uint32_t Width;
+		uint32_t Height;
+
+	private:
+		void CalculateFrustum(float3* _corners);
+	};
+
 	class TraversalResult__m256
 	{
 	public:
@@ -76,4 +147,15 @@ namespace CRT
 		__m256 rDy;
 		__m256 rDz;
 	};
+
+	inline uint64_t xy_to_morton(uint32_t x, uint32_t y)
+	{
+		return _pdep_u32(x, 0x55555555) | _pdep_u32(y, 0xaaaaaaaa);
+	}
+
+	inline void morton_to_xy(uint64_t m, uint32_t* x, uint32_t* y)
+	{
+		*x = _pext_u64(m, 0x5555555555555555);
+		*y = _pext_u64(m, 0xaaaaaaaaaaaaaaaa);
+	}
 }
