@@ -16,6 +16,8 @@ namespace CRT
 		float3 GetPosition() const;
 
 		Ray ConstructRay(int _id, int _x, int _y) const;
+		RayPacket ConstructRayPacket(int _id, int _x, int _y) const;
+
 		OctRay ConstructOctRay(int _id, int _x, int _y) const;
 
 		void SetDirection(float3 _direction);
@@ -40,15 +42,4 @@ namespace CRT
 
 		int m_AntiAliasing = 1;
 	};
-
-	inline uint64_t xy_to_morton(uint32_t x, uint32_t y)
-	{
-		return _pdep_u32(x, 0x55555555) | _pdep_u32(y, 0xaaaaaaaa);
-	}
-
-	inline void morton_to_xy(uint64_t m, uint32_t* x, uint32_t* y)
-	{
-		*x = _pext_u64(m, 0x5555555555555555);
-		*y = _pext_u64(m, 0xaaaaaaaaaaaaaaaa);
-	}
 }
