@@ -46,6 +46,11 @@ namespace CRT
 		return IntersectBounced(_r, 5);
 	}
 
+	void Scene::Intersect(const RayPacket& _r, float3* _ptr, int _id) const
+	{
+		IntersectBounced(_r, _ptr, _id);
+	}
+
 	void Scene::EnableBVH()
 	{
 		m_UseBVH = true;
@@ -79,7 +84,7 @@ namespace CRT
 		}
 		std::optional<Manifest> nearest = GetNearestIntersection(_r);
 		if (nearest)
-		{ 
+		{
 			float3 object_color;
 			if (nearest->M->Texture != nullptr)
 				object_color = nearest->M->Texture->GetValue(nearest->UV);
@@ -132,10 +137,10 @@ namespace CRT
 					float sinIncoming = sqrtf(1.0f - cosIncoming * cosIncoming);
 					// Calculate from sin using Snell's law
 					float cosOutgoing = sqrtf(1.0f - std::powf((refractionIndexRatio * sinIncoming), 2));
-					float reflectanceSPolarized = std::powf((n1 * cosIncoming - n2 * cosOutgoing) / 
-														   (n1 * cosIncoming + n2 * cosOutgoing), 2);
-					float reflectancePPolarized = std::powf((n1 * cosOutgoing - n2 * cosIncoming) / 
-														   (n1 * cosOutgoing + n2 * cosIncoming), 2);
+					float reflectanceSPolarized = std::powf((n1 * cosIncoming - n2 * cosOutgoing) /
+						(n1 * cosIncoming + n2 * cosOutgoing), 2);
+					float reflectancePPolarized = std::powf((n1 * cosOutgoing - n2 * cosIncoming) /
+						(n1 * cosOutgoing + n2 * cosIncoming), 2);
 					reflectance = 0.5f * (reflectanceSPolarized + reflectancePPolarized);
 				}
 				else
@@ -149,7 +154,7 @@ namespace CRT
 				float transmittance = 1.0f - reflectance;
 				if (transmittance > MinLightingComponent)
 				{
-					float3 refractionDirection = refractionIndexRatio * _r.D + 
+					float3 refractionDirection = refractionIndexRatio * _r.D +
 						normal * (refractionIndexRatio * cosIncoming - std::sqrtf(k));
 
 					// Make sure the refraction ray doesn't self-intersect
@@ -172,6 +177,49 @@ namespace CRT
 			return material_effect * object_color;
 		}
 		return BackgroundColor;
+	}
+
+	void Scene::IntersectBounced(const RayPacket& _r, float3* _ptr, int _id) const
+	{
+		if (m_UseBVH)
+		{
+			TraversalResultPacket packetResult(16 * 16);
+			m_BVH->GetNearestIntersection(_r, packetResult);
+
+			uint32_t x, y;
+			for (int i = 0; i < 16 * 16; i++)
+			{
+				// Retrieve morton index
+				morton_to_xy(_id + i, &x, &y);
+
+				//	Ray r(_r.O, _r.D[i]);
+				//	std::optional<Manifest> nearest = GetNearestIntersection(r);
+				if (packetResult.T[i] < 1000.0f)
+				{
+					float3 p = _r.O + _r.D[i] * packetResult.T[i];
+					float3 n = m_Triangles[packetResult.ID[i]].N;
+					float2 uv = m_Triangles[packetResult.ID[i]].GetUV(p, n);
+
+					float3 color = m_TriangleMaterials[packetResult.ID[i]]->Texture->GetValue(uv);
+
+					//	float3 lightdir = float3(0.0f, 1.0f, 1.0f).Normalize();
+					//	float diff = std::max(n.Dot(lightdir), 0.0f);
+					//	diff += 0.1f;
+					//
+					//	_ptr[x + y * 16] = float3(diff, diff, diff);
+
+					float3 material_effect;
+
+					Manifest m;
+					m.N = n;
+					m.T = packetResult.T[i];
+					m.UV = uv;
+					material_effect += GetTotalLightContribution(m);
+
+					_ptr[x + y * 16] = color * material_effect;
+				}
+			}
+		}
 	}
 
 	std::optional<Manifest> Scene::GetNearestIntersection(Ray _ray) const
