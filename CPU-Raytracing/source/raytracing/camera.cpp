@@ -30,7 +30,7 @@ namespace CRT
 		return m_Position;
 	}
 
-	Ray Camera::ConstructRay(float2 _uv) const
+	Ray Camera::ConstructRay(int _id, int _x, int _y) const
 	{
 		float3 focalDirection(0.0, 0.0, -1.0);
 		float3 cameraPlane = m_FocalLength * focalDirection;
@@ -38,11 +38,42 @@ namespace CRT
 		float3 p1 = cameraPlane + float3(1, 1, 0);
 		float3 p2 = cameraPlane + float3(-1, -1, 0);
 
-		float3 uv = p0 + (_uv.x * (p1 - p0)) + (_uv.y * (p2 - p0));
+		uint32_t xa, ya;
+		morton_to_xy(_id, &xa, &ya);
+
+		float u = ((float)xa + _x) / ((float)m_ViewportSize.x - 1.0f);
+		float v = ((float)ya + _y) / ((float)m_ViewportSize.y - 1.0f);
+
+		float3 uv = p0 + (u * (p1 - p0)) + (v * (p2 - p0));
 		float aspect_ratio = m_ViewportSize.x / (float)m_ViewportSize.y;
 		uv.x *= aspect_ratio;
 		float3 d = (Transform((uv), m_View)).Normalize();
 		return Ray(m_Position, d);
+	}
+
+	OctRay Camera::ConstructOctRay(int _id, int _x, int _y) const
+	{
+		float3 focalDirection(0.0, 0.0, -1.0);
+		float3 cameraPlane = m_FocalLength * focalDirection;
+		float3 p0 = cameraPlane + float3(-1, 1, 0);
+		float3 p1 = cameraPlane + float3(1, 1, 0);
+		float3 p2 = cameraPlane + float3(-1, -1, 0);
+
+		uint32_t xa, ya;
+		float3 dArr[8];
+		for (int i = 0; i < 8; i++)
+		{
+			morton_to_xy(_id + i, &xa, &ya);
+
+			float u = ((float)xa + _x) / ((float)m_ViewportSize.x - 1.0f);
+			float v = ((float)ya + _y) / ((float)m_ViewportSize.y - 1.0f);
+
+			float3 uv = p0 + (u * (p1 - p0)) + (v * (p2 - p0));
+			float aspect_ratio = m_ViewportSize.x / (float)m_ViewportSize.y;
+			uv.x *= aspect_ratio;
+			dArr[i] = (Transform((uv), m_View)).Normalize();
+		}
+		return OctRay(m_Position, dArr);
 	}
 
 	void Camera::SetDirection(float3 _direction)

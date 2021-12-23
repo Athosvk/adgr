@@ -27,4 +27,19 @@ namespace CRT
 	{
 		return O + D * _t;
 	}
+
+	void OctRay::Sample(float t, __m256& _x, __m256& _y, __m256& _z) const
+	{
+		const __m256 tp = _mm256_set1_ps(t);
+		_x = _mm256_add_ps(Ox, _mm256_mul_ps(Dx, tp));
+		_y = _mm256_add_ps(Oy, _mm256_mul_ps(Dy, tp));
+		_z = _mm256_add_ps(Oz, _mm256_mul_ps(Dz, tp));
+	}
+
+	void OctRay::Sample(__m256 t, __m256& _x, __m256& _y, __m256& _z) const
+	{
+		_x = _mm256_add_ps(Ox, _mm256_mul_ps(Dx, t));
+		_y = _mm256_add_ps(Oy, _mm256_mul_ps(Dy, t));
+		_z = _mm256_add_ps(Oz, _mm256_mul_ps(Dz, t));
+	}
 }
