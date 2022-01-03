@@ -6,7 +6,7 @@
 #include <intrin.h>
 #include <xmmintrin.h>
 
-#define USE_RAYPACKET
+// #define USE_RAYPACKET
 //#define USE_AVX
 
 #define RAYPACKET_WIDTH 16

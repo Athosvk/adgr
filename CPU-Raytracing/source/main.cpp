@@ -1,13 +1,11 @@
-#include <array>
 #include <iostream>
 
 #include "./core/window/window.h"
 #include "./core/graphics/render_device.h"
 #include "./core/graphics/color3.h"
 
-#include "./raytracing/scene.h"
 #include "./raytracing/camera.h"
-#include "./raytracing/shapes/plane.h"
+#include "./raytracing/raytracer.h"
 
 #include "./imgui/imgui.h"
 #include "./imgui/imgui_impl_glfw.h"
@@ -18,7 +16,6 @@
 #include "./scene/model_loading.h"
 #include "./benchmarking/rolling_sampler.h"
 #include "./benchmarking/timer.h"
-#include "raytracing/raytracer.h"
 
 using namespace CRT;
 
@@ -33,22 +30,12 @@ int main(char** argc, char** argv)
 	Texture* texture = new Texture("./assets/book/textures/Texture-base_baseColor.jpg");
 
 	Scene* scene = new Scene();
-	Material* material = new Material(Color::White, 0.0f, texture);
-	Material* spec_material = new Material(Color::White, 0.9f, nullptr);
-	Material* partial_spec_material = new Material(Color::White, 0.4f, nullptr);
-	Material* dielectric = new Material(Color::White, 0.0f, nullptr);
-	dielectric->type = Type::Dielectric;
-	dielectric->RefractionIndex = 1.52f;
+	Material* material = new Material(Color::White, 0.0f, nullptr);
+	Material* texturedMaterial = new Material(Color::White, 0.0f, texture);
 	
-	//scene->AddShape(new Plane(float3(7.0f, 0.0f, 0.0f), float3(-1.0f, 0.0f, 0.0f)), new Material(Color::Blue, 0.0f, nullptr));
-	//scene->AddShape(new Plane(float3(-7.0f, 0.0f, 0.0f), float3(1.0f, 0.0f, 0.0f)), new Material(Color::Red, 0.0f, nullptr));
-	// scene->AddShape(new Plane(float3(0.0f, -5.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)), new Material(Color::White, 0.0f, nullptr));
-	//scene->AddShape(new Plane(float3(0.0f, 5.0f, 0.0f), float3(0.0f, -1.0f, 0.0f)), new Material(float3{ 0.3f,0.3f,0.3f }, 0.0f, nullptr));
-	//scene->AddShape(new Plane(float3(0.0f, 0.0f, -12.f), float3(0.0f, 0.0f, 1.0f)), new Material(Color::White, 0.0f, nullptr));
-
-	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -150.0f), "./assets/book/scene.gltf");
-	//ModelLoading::LoadModel(scene, material, float3(5.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
-	//ModelLoading::LoadModel(scene, material, float3(-5.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
+	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -150.0f), "./assets/stenford_dragon_high.fbx");
+	ModelLoading::LoadModel(scene, material, float3(15.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
+	ModelLoading::LoadModel(scene, material, float3(-15.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
 
 	Timer::Duration bvhConstructionDuration;
 	{
@@ -58,8 +45,9 @@ int main(char** argc, char** argv)
 		std::cout << "Constructed BVH in " << bvhConstructionDuration.count() << " seconds";
 	}
 
-	scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, 2.5f), 3500.0f, Color::White });
-	//scene->AddPointLight(PointLight{ float3(-2.0f, 4.0f, 1.5f), 15000.0f, Color::White });
+	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -0.75f, -0.75f).Normalize(), 0.6f, Color::White });
+	scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, -120.f), 31155.0f, Color::White });
+	scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, 2.5f), 31155.0f, Color::White });
 
 	// IMGUI
 	ImGui::CreateContext();
