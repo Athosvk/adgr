@@ -1,5 +1,7 @@
 #include "./raytracing/shapes/triangle.h"
 
+#include <limits>
+
 namespace CRT
 {
     Triangle::Triangle()
@@ -14,7 +16,7 @@ namespace CRT
         , u0(_u0)
         , u1(_u1)
         , u2(_u2)
-        , N(_n)
+        , N1(_n)
     { }
 
     bool Triangle::Intersect(Ray _r, Manifest& _m) const
@@ -26,10 +28,10 @@ namespace CRT
 #ifdef CULLING 
         // if the determinant is negative the triangle is backfacing
         // if the determinant is close to 0, the ray misses the triangle
-        if (det < kEpsilon) return false;
+        if (det < std::numeric_limits<float>::epsilon()) return false;
 #else 
         // ray and triangle are parallel if det is close to 0
-        if (fabs(det) < 0.001) return false;
+        if (fabs(det) < std::numeric_limits<float>::epsilon()) return false;
 #endif 
         float invDet = 1 / det;
 
@@ -46,8 +48,8 @@ namespace CRT
         {
             _m.IntersectionPoint = _r.O + _r.D * t;
             _m.T = t;
-            _m.UV = GetUV(_m.IntersectionPoint, N);
-            _m.N = N;
+            _m.UV = GetUV(_m.IntersectionPoint, N1);
+            _m.N = N1;
             return true;
         }
 
@@ -65,10 +67,10 @@ namespace CRT
 #ifdef CULLING 
             // if the determinant is negative the triangle is backfacing
             // if the determinant is close to 0, the ray misses the triangle
-            if (det < kEpsilon) return false;
+            if (det < std::numeric_limits<float>::epsilon()) continue;
 #else 
             // ray and triangle are parallel if det is close to 0
-            if (fabs(det) < 0.001) continue;
+            if (fabs(det) < std::numeric_limits<float>::epsilon()) continue;
 #endif 
             float invDet = 1 / det;
 

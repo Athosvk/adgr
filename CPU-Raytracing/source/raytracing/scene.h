@@ -17,6 +17,17 @@ namespace CRT
 {
 	class Triangle;
 
+	enum class ETraversalDebugSetting
+	{
+		None,
+		/* Blend it with the scene coloring */
+		Blend,
+		/* Only debug draw the traversals that did not hit any objects, i.e. draw objects normally. Appear to be on top of the debug BVH */
+		ExcludeHits,
+		/* Only debug draw, do not draw objects */
+		TraversalOnly
+	};
+
 	class Scene
 	{
 	public:
@@ -34,14 +45,17 @@ namespace CRT
 
 		void EnableBVH();
 		void DisableBVH();
+		void SetBVHDebugSetting(ETraversalDebugSetting _debugSetting);
+		ETraversalDebugSetting GetBVHDebugSetting() const;
 		bool IsBVHEnabled() const;
 		uint64_t GetTriangleCount() const;
 		uint64_t GetBHVNodeCount() const;
 	private:
 		float3 IntersectBounced(Ray _r, unsigned _remainingBounces) const;
 		void IntersectBounced(const RayPacket& _r, float3* _ptr, int _id) const;
+		float3 RenderObject(Ray _r, const Manifest& _manifest, unsigned _remainingBounces) const;
 
-		std::optional<Manifest> GetNearestIntersection(Ray _ray) const;
+		TraversalResult GetNearestIntersection(Ray _ray) const;
 		float3 GetTotalLightContribution(const Manifest& _manifest) const;
 		float3 GetReflectance(Ray _r, const Manifest& _manifest, unsigned _remainingBounces) const;
 
@@ -49,7 +63,7 @@ namespace CRT
 		float3 GetLightContribution(const Manifest& _manifest, const TLight& _light) const
 		{
 			ShadowRay shadowRay = _light.ConstructShadowRay(_manifest);
-			std::optional<Manifest> possible_blocker = GetNearestIntersection(shadowRay.Ray);
+			std::optional<Manifest> possible_blocker = GetNearestIntersection(shadowRay.Ray).Manifest;
 			if (!possible_blocker || possible_blocker->T >= shadowRay.MaxT)
 			{
 				return _light.GetLightContribution(_manifest);
@@ -67,6 +81,7 @@ namespace CRT
 		std::vector<PointLight> m_PointLights;
 		std::vector<SpotLight> m_SpotLights;
 		std::vector<DirectionalLight> m_DirectionalLights;
+		ETraversalDebugSetting m_DebugSetting = ETraversalDebugSetting::None;
 		bool m_UseBVH = true;
 	};
 }

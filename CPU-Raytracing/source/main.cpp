@@ -33,21 +33,18 @@ int main(char** argc, char** argv)
 	Material* material = new Material(Color::White, 0.0f, nullptr);
 	Material* texturedMaterial = new Material(Color::White, 0.0f, texture);
 	
-	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, -150.0f), "./assets/stenford_dragon_high.fbx");
-	ModelLoading::LoadModel(scene, material, float3(15.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
-	ModelLoading::LoadModel(scene, material, float3(-15.0f, 0.0f, 0.0f), "./assets/suzanne.obj");
+	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, 2.f), "./assets/buddha.obj");
 
 	Timer::Duration bvhConstructionDuration;
 	{
 		Timer bvhConstructionTimer;
 		scene->ConstructBVH();
 		bvhConstructionDuration = bvhConstructionTimer.GetDuration();
-		std::cout << "Constructed BVH in " << bvhConstructionDuration.count() << " seconds";
 	}
 
 	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -0.75f, -0.75f).Normalize(), 0.6f, Color::White });
-	scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, -120.f), 31155.0f, Color::White });
-	scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, 2.5f), 31155.0f, Color::White });
+	//scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, -120.f), 31155.0f, Color::White });
+	//scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, 2.5f), 31155.0f, Color::White });
 
 	// IMGUI
 	ImGui::CreateContext();
@@ -61,7 +58,7 @@ int main(char** argc, char** argv)
 	float2 viewport(window->GetWidth(), window->GetHeight());
 	Camera camera(viewport);
 	CameraController controller(camera);
-	auto initialCameraPosition = float3 { 0.0f, 0.0f, 10.0f };
+	auto initialCameraPosition = float3 { 0.0f, 0.0f, 3.0f };
 	camera.SetPosition(initialCameraPosition);
 
 	Surface surface(window->GetWidth(), window->GetHeight());
@@ -71,6 +68,7 @@ int main(char** argc, char** argv)
 
 	auto previousCameraDirection = float3(std::numeric_limits<float>::infinity());
 	auto previousCameraPosition = previousCameraDirection;
+	bool sceneDirty = false;
 	while (!window->ShouldClose())
 	{
 		Timer frameTimer;
@@ -110,7 +108,10 @@ int main(char** argc, char** argv)
 				ImGui::Text("Tris: %u", scene->GetTriangleCount());
 				ImGui::Text("Nodes: %u", scene->GetBHVNodeCount());
 				bool bvh = scene->IsBVHEnabled();
-				ImGui::Checkbox("BVH Enabled", &bvh);
+				if (ImGui::Checkbox("BVH Enabled", &bvh))
+				{
+					sceneDirty = true;
+				}
 				if (bvh)
 				{
 					scene->EnableBVH();
@@ -125,17 +126,47 @@ int main(char** argc, char** argv)
 					Timer bvhTimer;
 					scene->ConstructBVH();
 					bvhConstructionDuration = bvhTimer.GetDuration();
+					sceneDirty = true;
+				}
+				
+				ImGui::Separator();
+				ImGui::Text("Debug draw setting");
+				ETraversalDebugSetting debug_setting = scene->GetBVHDebugSetting();
+				if (ImGui::RadioButton("None", debug_setting == ETraversalDebugSetting::None))
+				{
+					scene->SetBVHDebugSetting(ETraversalDebugSetting::None);
+					sceneDirty = true;
+				}
+				else if (ImGui::RadioButton("Traverse Only", debug_setting == ETraversalDebugSetting::TraversalOnly))
+				{
+					scene->SetBVHDebugSetting(ETraversalDebugSetting::TraversalOnly);
+					sceneDirty = true;
+				}
+				else if (ImGui::RadioButton("Blend", debug_setting == ETraversalDebugSetting::Blend))
+				{
+					scene->SetBVHDebugSetting(ETraversalDebugSetting::Blend);
+					sceneDirty = true;
+				}
+				else if (ImGui::RadioButton("Exclude Hits", debug_setting == ETraversalDebugSetting::ExcludeHits))
+				{
+					scene->SetBVHDebugSetting(ETraversalDebugSetting::ExcludeHits);
+					sceneDirty = true;
 				}
 			}
 			ImGui::End();
 		}
+		if (previousCameraPosition != camera.GetPosition() || previousCameraDirection != camera.GetFront())
+		{
+			sceneDirty = true;
+		}
 		
 		// Only update if our view changed
-		if (previousCameraPosition != camera.GetPosition() || previousCameraDirection != camera.GetFront())
+		if (sceneDirty)
 		{
 			Timer rtTimer;
 			raytracer.RenderFrame();
 			rtFrameSampler.AddSample(rtTimer.GetDuration());
+			sceneDirty = false;
 		}
 		previousCameraPosition = camera.GetPosition();
 		previousCameraDirection = camera.GetFront();

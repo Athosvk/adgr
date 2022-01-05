@@ -58,15 +58,15 @@ namespace CRT
 		void GetNearestIntersection(const RayPacket& ray, TraversalResultPacket& _result) const;
 
 		uint64_t GetNodeCount() const;
+		uint64_t GetMaxDepth() const;
 	private:
 		TraversalResult TraverseNode(const Ray& ray, const BVHNode& parentNode) const;
 		void TraverseNode(const RayPacket& ray, TraversalResultPacket& _result, const BVHNode& parentNode, int _firstActive)const;
 
-
 		TraversalResult GetNearest(const Ray& _ray, const PrimitiveRange& range) const;
 
 		void Construct();
-		BVHNode SplitChild(BVHNode _node, const std::vector<PrimitiveIndex>& _range, const std::vector<PrimitiveNode>& _primitiveNodes, AABB _centroidBounds);
+		BVHNode SplitChild(BVHNode _node, const std::vector<PrimitiveIndex>& _range, const std::vector<PrimitiveNode>& _primitiveNodes, AABB _centroidBounds, size_t _currenDepth);
 		SplitPoint CalculateSplitpoint(const std::vector<PrimitiveIndex>& _range) const;
 		int32_t GetSplitDimension(const std::vector<PrimitiveIndex>& _range) const;
 		float GetCost(std::vector<PrimitiveIndex>::const_iterator _start,
@@ -79,5 +79,6 @@ namespace CRT
 		std::vector<uint32_t> m_PrimitiveIndices;
 		std::vector<BVHNode> m_Nodes;
 		BVHNode m_RootNode;
+		uint64_t m_MaxDepth = 0;
 	};
 }

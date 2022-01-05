@@ -24,7 +24,10 @@ namespace CRT
 		float2 u1;
 		float2 u2;
 
-		float3 N;
+		float3 N0;
+		float3 N1;
+		float3 N2;
+
 		float GetSurfaceArea() const;
 		float3 GetCentroid() const;
 	private:

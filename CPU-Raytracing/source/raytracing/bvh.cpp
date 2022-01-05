@@ -39,10 +39,10 @@ namespace CRT
 			indices.emplace_back(i);
 		}
 		m_RootNode.Bounds = triangleBounds;
-		m_RootNode = SplitChild(m_RootNode, indices, primNodes, centroidBounds);
+		m_RootNode = SplitChild(m_RootNode, indices, primNodes, centroidBounds, 1);
 	}
 
-	BVHNode BVH::SplitChild(BVHNode _node, const std::vector<PrimitiveIndex>& _range, const std::vector<PrimitiveNode>& _primitiveNodes, AABB _centroidBounds)
+	BVHNode BVH::SplitChild(BVHNode _node, const std::vector<PrimitiveIndex>& _range, const std::vector<PrimitiveNode>& _primitiveNodes, AABB _centroidBounds, size_t _currentDepth)
 	{
 		if (_range.size() > 1)
 		{
@@ -65,6 +65,13 @@ namespace CRT
 				splitDimension = 2;
 			}
 			float splitWidth = centroidDimensions.f[splitDimension];
+			if (splitWidth == 0.0f)
+			{
+				_node.First = uint32_t(m_PrimitiveIndices.size());
+				m_PrimitiveIndices.insert(m_PrimitiveIndices.end(), _range.begin(), _range.end());
+				_node.Count = uint32_t(_range.size());
+				return _node;
+			}
 			
 			struct Bin
 			{
@@ -111,11 +118,13 @@ namespace CRT
 				}
 			}
 			
-			constexpr auto TraversalCost = 10.0f;
+			constexpr auto TraversalCostFactor = .45f;
 			const auto parentCost = _node.Bounds.GetSurfaceArea() * _range.size();
 			std::vector<PrimitiveIndex> leftPrimitives;
 			std::vector<PrimitiveIndex> rightPrimitives;
-			if (minCost + TraversalCost < parentCost)
+
+			// Increase the cost by a percentage to account for the cost of having another bounding box added
+			if (minCost * (1 + TraversalCostFactor) < parentCost)
 			{
 				AABB leftBounds = AABB::NegativeBox();
 				AABB rightBounds = AABB::NegativeBox();
@@ -142,17 +151,18 @@ namespace CRT
 				
 				BVHNode left;
 				left.Bounds = leftBounds;
-				left = SplitChild(left, leftPrimitives, _primitiveNodes, leftCentroidBounds);
+				left = SplitChild(left, leftPrimitives, _primitiveNodes, leftCentroidBounds, _currentDepth + 1);
 
 				BVHNode right;
 				right.Bounds = rightBounds;
-				right = SplitChild(right, rightPrimitives,_primitiveNodes, rightCentroidBounds);
+				right = SplitChild(right, rightPrimitives,_primitiveNodes, rightCentroidBounds, _currentDepth + 1);
 				_node.Left = uint32_t(m_Nodes.size());
 				m_Nodes.emplace_back(left);
 				m_Nodes.emplace_back(right);
 				return _node;
 			}
 		}
+		m_Depth = std::max(_currentDepth, m_Depth);
 		_node.First = uint32_t(m_PrimitiveIndices.size());
 		m_PrimitiveIndices.insert(m_PrimitiveIndices.end(), _range.begin(), _range.end());
 		_node.Count = uint32_t(_range.size());
@@ -189,6 +199,11 @@ namespace CRT
 		return m_Nodes.size();
 	}
 
+	uint64_t BVH::GetDepth() const
+	{
+		return m_Depth;
+	}
+
 	TraversalResult BVH::TraverseNode(const Ray& _ray, const BVHNode& _parentNode) const
 	{
 		if (_parentNode.Count > 0)
@@ -212,6 +227,10 @@ namespace CRT
 				{
 					result = resultRight;
 				}
+			}
+			if (resultRight.Traversals > result.Traversals)
+			{
+				result.Traversals = resultRight.Traversals;
 			}
 		}
 		result.Traversals++;
