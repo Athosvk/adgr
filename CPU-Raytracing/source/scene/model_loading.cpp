@@ -6,13 +6,22 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include <iostream>
+
 namespace CRT
 {
 	void ModelLoading::LoadModel(Scene* _scene, Material* material, float3 _offset, const std::string& _filepath)
 	{
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(_filepath, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
+		const aiScene* scene = importer.ReadFile(_filepath, aiProcessPreset_TargetRealtime_Quality
+			| aiProcess_ValidateDataStructure | aiProcess_FindDegenerates | aiProcess_FindInvalidData
+			| aiProcess_FixInfacingNormals);
 
+		std::string error = importer.GetErrorString();
+		if (!error.empty())
+		{
+			std::cout << "Error while loading mesh: " << error << "\n";
+		}
 		std::vector<Triangle> triangles;
 		for (size_t i = 0; i < scene->mNumMeshes; i++)
 		{
@@ -20,9 +29,19 @@ namespace CRT
 			int numFaces = mesh->mNumFaces;
 			triangles.reserve(numFaces);
 
+			if (!mesh->HasTextureCoords(0))
+			{
+				std::cout << "Mesh " << i << " of file " << _filepath << " has no texture coordinates\n";
+			}
+
 			for (int j = 0; j < numFaces; j++)
 			{
 				const aiFace& face = mesh->mFaces[j];
+				// Mesh might still have "lines"
+				if (face.mNumIndices < 3)
+				{
+					continue;
+				}
 				aiVector3D pos0 = mesh->mVertices[face.mIndices[0]];
 				aiVector3D pos1 = mesh->mVertices[face.mIndices[1]];
 				aiVector3D pos2 = mesh->mVertices[face.mIndices[2]];
