@@ -162,7 +162,7 @@ namespace CRT
 				return _node;
 			}
 		}
-		m_Depth = std::max(_currentDepth, m_Depth);
+		m_MaxDepth = std::max(_currentDepth, m_MaxDepth);
 		_node.First = uint32_t(m_PrimitiveIndices.size());
 		m_PrimitiveIndices.insert(m_PrimitiveIndices.end(), _range.begin(), _range.end());
 		_node.Count = uint32_t(_range.size());
@@ -199,9 +199,9 @@ namespace CRT
 		return m_Nodes.size();
 	}
 
-	uint64_t BVH::GetDepth() const
+	uint64_t BVH::GetMaxDepth() const
 	{
-		return m_Depth;
+		return m_MaxDepth;
 	}
 
 	TraversalResult BVH::TraverseNode(const Ray& _ray, const BVHNode& _parentNode) const
@@ -281,7 +281,7 @@ namespace CRT
 			if (primitive.Intersect(_ray, manifest) && (!result.Manifest || manifest.T < result.Manifest->T))
 			{
 				result.Manifest = manifest;
-				result.Index = i + range.FirstPrimitiveIndex;
+				result.Index = m_PrimitiveIndices[i + range.FirstPrimitiveIndex];
 			}
 		}
 		return result;
