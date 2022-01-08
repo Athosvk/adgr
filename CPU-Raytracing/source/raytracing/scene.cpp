@@ -98,7 +98,7 @@ namespace CRT
 		float3 debugColor = float3::Zero();
 		if (m_UseBVH)
 		{
-			debugColor = float3(0.0f, result.Traversals / (float)m_BVH->GetDepth(), 0.0f);
+			debugColor = float3(0.0f, result.Traversals / (float)m_BVH->GetMaxDepth(), 0.0f);
 		}
 		float3 color = BackgroundColor;
 
