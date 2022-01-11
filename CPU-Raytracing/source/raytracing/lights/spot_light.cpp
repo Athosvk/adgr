@@ -34,6 +34,6 @@ namespace CRT
 		float distance = lightDirection.MagnitudeSquared();
 		float contribution = Intensity / (4 * Pi<float>() * distance * distance);
 
-		return std::max(0.0f, _manifest.N.Dot(lightDirection.Normalize())) * Attenuation * intensity;
+		return std::max(0.0f, _manifest.ShadingNormal.Dot(lightDirection.Normalize())) * Attenuation * intensity;
 	}
 }

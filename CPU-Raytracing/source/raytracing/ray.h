@@ -55,7 +55,7 @@ namespace CRT
 			: T(new float[_c])
 			, ID(new float[_c])
 		{
-			for (int i = 0; i < _c; i++)
+			for (uint32_t i = 0; i < _c; i++)
 				T[i] = FLT_MAX;
 		}
 		~TraversalResultPacket()
@@ -77,7 +77,7 @@ namespace CRT
 			, O(_o)
 			, D(new float3[_w * _h])
 		{
-			for (int i = 0; i < Width * Height; i++)
+			for (uint32_t i = 0; i < Width * Height; i++)
 			{
 				D[i] = _d[i];
 			}

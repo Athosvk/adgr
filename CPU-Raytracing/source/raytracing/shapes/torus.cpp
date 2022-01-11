@@ -94,7 +94,8 @@ namespace CRT
 		_m.IntersectionPoint = localp;
 		_m.T = minRealRoot;
 		_m.UV = GetUV(localp, float3(1.0f, 1.0f, 1.0).Normalize());
-		_m.N = float3(transformedNormal.x, transformedNormal.y, transformedNormal.z).Normalize();
+		_m.ShadingNormal = float3(transformedNormal.x, transformedNormal.y, transformedNormal.z).Normalize();
+		_m.SurfaceNormal = _m.ShadingNormal;
 		//getUV(rec);
 		return true;
 	}

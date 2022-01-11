@@ -22,9 +22,10 @@ namespace CRT
 			if (t >= 0.0f)
 			{
 				_m.T = t;
-				_m.N = Normal;
+				_m.SurfaceNormal = Normal;
+				_m.ShadingNormal = Normal;
 				_m.IntersectionPoint = _r.Sample(t);
-				_m.UV = GetUV(_r.O+_r.D*_m.T, _m.N);
+				_m.UV = GetUV(_r.O+_r.D*_m.T, _m.SurfaceNormal);
 				return true;
 			}
 			return false;

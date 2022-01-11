@@ -7,6 +7,6 @@ namespace CRT
 	{
 		// Add bias for shadow rays, shifted along surface normal to guarantee self-intersection doesn't happen
 		const float bias = 1e-4f;
-		return _manifest.IntersectionPoint + _manifest.N * bias;
+		return _manifest.IntersectionPoint + _manifest.SurfaceNormal * bias;
 	}
 }
