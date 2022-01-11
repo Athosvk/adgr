@@ -163,7 +163,7 @@ namespace CRT
 					float3 material_effect;
 
 					Manifest m;
-					m.N = n;
+					m.ShadingNormal = n;
 					m.T = packetResult.T[i];
 					m.UV = uv;
 					material_effect += GetTotalLightContribution(m);
@@ -183,7 +183,7 @@ namespace CRT
 			object_color = _manifest.M->Color;
 		float specularity = _manifest.M->Specularity;
 
-		float3 material_effect;
+		float3 material_effect = float3::Zero();
 		const float MinLightingComponent = 0.001f;
 		if (_manifest.M->type == Type::Basic)
 		{
@@ -202,8 +202,8 @@ namespace CRT
 		{
 			// Get the cosine of the angle between the normal and the incoming ray
 			// by inverting the incoming ray's direction
-			float cosIncoming = ((-_r.D)).Dot(_manifest.N);
-			float3 normal = _manifest.N;
+			float cosIncoming = ((-_r.D)).Dot(_manifest.ShadingNormal);
+			float3 normal = _manifest.ShadingNormal;
 			bool front_face = cosIncoming > 0.0f;
 			if (!front_face)
 			{
@@ -333,11 +333,11 @@ namespace CRT
 	{
 		// Make sure the refraction ray doesn't self-intersect
 		const float SelfIntersectionDelta = 0.001f;
-		// Displace into opposite direction since we're moving into the new medium
-		const float3 Displacement = SelfIntersectionDelta * _manifest.N;
+		// Displace into opposite direction along surface normal since we're moving into the new medium
+		const float3 Displacement = SelfIntersectionDelta * _manifest.SurfaceNormal;
 
-		Ray reflectedRay = _r.Reflect(_manifest.N);
-		reflectedRay.O = _manifest.IntersectionPoint;
+		Ray reflectedRay = _r.Reflect(_manifest.ShadingNormal);
+		reflectedRay.O = _manifest.IntersectionPoint + Displacement;
 		return IntersectBounced(reflectedRay, _remainingBounces - 1);
 	}
 }

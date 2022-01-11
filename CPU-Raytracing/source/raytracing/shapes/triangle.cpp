@@ -8,7 +8,7 @@ namespace CRT
         : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
     {  }
 
-    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n)
+    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n0, float3 _n1, float3 _n2)
         : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
         , V0(_v0)
         , V1(_v1)
@@ -16,9 +16,10 @@ namespace CRT
         , u0(_u0)
         , u1(_u1)
         , u2(_u2)
-        , N1(_n)
+        , N0(_n0)
+        , N1(_n1)
+        , N2(_n2)
     { }
-
     bool Triangle::Intersect(Ray _r, Manifest& _m) const
     {
         float3 v0v1 = V1 - V0;
@@ -28,10 +29,10 @@ namespace CRT
 #ifdef CULLING 
         // if the determinant is negative the triangle is backfacing
         // if the determinant is close to 0, the ray misses the triangle
-        if (det < std::numeric_limits<float>::epsilon()) return false;
+        if (det <= 0.0f) return false;
 #else 
         // ray and triangle are parallel if det is close to 0
-        if (fabs(det) < std::numeric_limits<float>::epsilon()) return false;
+        if (det == 0.0f) return false;
 #endif 
         float invDet = 1 / det;
 
@@ -46,10 +47,14 @@ namespace CRT
         float t = qvec.Dot(v0v2) * invDet;
         if (t > 0.0f && t < _m.T)
         {
-            _m.IntersectionPoint = _r.O + _r.D * t;
+            float3 barycentric {1.0f - u - v, u, v };
+            _m.IntersectionPoint = _r.Sample(t);
             _m.T = t;
-            _m.UV = GetUV(_m.IntersectionPoint, N1);
-            _m.N = N1;
+            _m.SurfaceNormal = (V1 - V2).Cross(V1 - V0).Normalize();
+            _m.UV = (barycentric.x * u0) + (barycentric.y * u1) + (barycentric.z * u2);
+            _m.ShadingNormal =  (N0 * barycentric.x
+                               + N1 * barycentric.y 
+                               + N2 * barycentric.z).Normalize();
             return true;
         }
 
@@ -100,27 +105,9 @@ namespace CRT
     {
         return (V0 + V1 + V2) / 3.0f;
     }
-
-    float3 Triangle::Barycentric(float3 _point) const
-    {
-        float3 v0 = V1 - V0, v1 = V2 - V0, v2 = _point - V0;
-        float d00 = v0.Dot(v0);
-        float d01 = v0.Dot(v1);
-        float d11 = v1.Dot(v1);
-        float d20 = v2.Dot(v0);
-        float d21 = v2.Dot(v1);
-        float denom = d00 * d11 - d01 * d01;
-
-        float v = (d11 * d20 - d01 * d21) / denom;
-        float w = (d00 * d21 - d01 * d20) / denom;
-        float u = 1.0f - v - w;
-
-        return float3(u, v, w);
-    }
-
     float2 Triangle::GetUV(float3 _point, float3 _normal) const
     {
-        float3 barycentric = Barycentric(_point);
-        return (barycentric.x * u0) + (barycentric.y * u1) + (barycentric.z * u2);
+		// Calculated during intersection
+        return float2{};
     }
 }

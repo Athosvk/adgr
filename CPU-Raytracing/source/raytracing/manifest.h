@@ -11,7 +11,8 @@ namespace CRT
 		Manifest() = default;
 
 		float     T = FLT_MAX;
-		float3	  N;
+		float3	  SurfaceNormal;
+		float3	  ShadingNormal;
 		float2    UV;
 		Material* M;
 		float3 IntersectionPoint;

@@ -20,6 +20,6 @@ namespace CRT
 
 	float3 DirectionalLight::GetLightContribution(const Manifest& _manifest) const
 	{
-		return std::max(0.0f, _manifest.N.Dot(-Direction)) * Intensity * Attenuation;
+		return std::max(0.0f, _manifest.ShadingNormal.Dot(-Direction)) * Intensity * Attenuation;
 	}
 }

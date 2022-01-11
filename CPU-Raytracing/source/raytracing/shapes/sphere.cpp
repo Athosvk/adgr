@@ -34,10 +34,11 @@ namespace CRT
 		{
 			_m.T = t;
 			float3 p = (_r.O + (_r.D * t));
-			_m.N = (p - Position).Normalize();
+			_m.ShadingNormal = (p - Position).Normalize();
+			_m.SurfaceNormal = (p - Position).Normalize();
 			_m.IntersectionPoint = p;
 
-			_m.UV = GetUV(p - Position, _m.N);
+			_m.UV = GetUV(p - Position, _m.SurfaceNormal);
 			return true;
 		}
 		return false;
@@ -73,8 +74,9 @@ namespace CRT
 			std::swap(t0, t1);
 		_m.T = t0;
 		_m.IntersectionPoint = _r.Sample(_m.T);
-		_m.N = (_m.IntersectionPoint - Position).Normalize();
-		_m.UV = GetUV(_m.IntersectionPoint - Position, _m.N);
+		_m.ShadingNormal = (_m.IntersectionPoint - Position).Normalize();
+		_m.SurfaceNormal = _m.ShadingNormal;
+		_m.UV = GetUV(_m.IntersectionPoint - Position, _m.SurfaceNormal);
 		return true;
 	}
 
