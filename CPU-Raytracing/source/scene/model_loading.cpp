@@ -14,7 +14,7 @@ namespace CRT
 	{
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(_filepath, aiProcessPreset_TargetRealtime_Quality
-			| aiProcess_ValidateDataStructure | aiProcess_FindDegenerates | aiProcess_FindInvalidData
+			| aiProcess_FindDegenerates | aiProcess_FindInvalidData
 			| aiProcess_FixInfacingNormals);
 
 		std::string error = importer.GetErrorString();
@@ -61,8 +61,18 @@ namespace CRT
 					uv1 = aiVector3D(0.0f, 0.0f, 0.0f);
 					uv2 = aiVector3D(0.0f, 0.0f, 0.0f);
 				}
-
-				aiVector3D normal = mesh->HasNormals() ? mesh->mNormals[face.mIndices[0]] : aiVector3D(1.0f, 1.0f, 1.0f);
+				
+				aiVector3D n1, n2, n3;
+				if (mesh->HasNormals())
+				{
+					n1 = mesh->mNormals[face.mIndices[0]];
+					n2 = mesh->mNormals[face.mIndices[1]];
+					n3 = mesh->mNormals[face.mIndices[2]];
+				}
+				else
+				{
+					n1 = n2 = n3 = aiVector3D(0.0f, 0.0f, 0.0f);
+				}
 
 				triangles.emplace_back(
 					float3(pos0.x, pos0.y, pos0.z) + _offset,
@@ -71,7 +81,10 @@ namespace CRT
 					float2(uv0.x, uv0.y),
 					float2(uv1.x, uv1.y),
 					float2(uv2.x, uv2.y),
-					float3(normal.x, normal.y, normal.z));
+					float3(n1.x, n1.y, n1.z),
+					float3(n2.x, n2.y, n2.z),
+					float3(n3.x, n3.y, n3.z)
+					);
 			}
 			for (const Triangle& triangle : triangles)
 			{
