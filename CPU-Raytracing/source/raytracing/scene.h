@@ -62,11 +62,15 @@ namespace CRT
 		template<typename TLight>
 		float3 GetLightContribution(const Manifest& _manifest, const TLight& _light) const
 		{
-			ShadowRay shadowRay = _light.ConstructShadowRay(_manifest);
-			std::optional<Manifest> possible_blocker = GetNearestIntersection(shadowRay.Ray).Manifest;
-			if (!possible_blocker || possible_blocker->T >= shadowRay.MaxT)
+			auto contribution = _light.GetLightContribution(_manifest);
+			if (contribution > 0.001f)
 			{
-				return _light.GetLightContribution(_manifest);
+				ShadowRay shadowRay = _light.ConstructShadowRay(_manifest);
+				std::optional<Manifest> possible_blocker = GetNearestIntersection(shadowRay.Ray).Manifest;
+				if (!possible_blocker || possible_blocker->T >= shadowRay.MaxT)
+				{
+					return contribution;
+				}
 			}
 			return 0.0f;
 		}
