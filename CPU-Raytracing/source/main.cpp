@@ -69,6 +69,7 @@ int main(char** argc, char** argv)
 	auto previousCameraDirection = float3(std::numeric_limits<float>::infinity());
 	auto previousCameraPosition = previousCameraDirection;
 	bool sceneDirty = false;
+	bool staticRenderOnly = true;
 	while (!window->ShouldClose())
 	{
 		Timer frameTimer;
@@ -76,6 +77,7 @@ int main(char** argc, char** argv)
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		sceneDirty = !staticRenderOnly;
 		if (showImgui)
 		{
 			ImGui::Begin("Window", &showImgui);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
@@ -101,6 +103,8 @@ int main(char** argc, char** argv)
 					camera.SetPosition(initialCameraPosition);
 					controller.Reset();
 				}
+
+				ImGui::Checkbox("Static Render Only", &staticRenderOnly);
 			}
 			if (ImGui::CollapsingHeader("BVH"))
 			{
