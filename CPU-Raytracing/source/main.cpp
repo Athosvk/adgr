@@ -27,13 +27,15 @@ int main(char** argc, char** argv)
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
 
-	Texture* texture = new Texture("./assets/book/textures/Texture-base_baseColor.jpg");
+	Texture* texture = new Texture("./assets/test_texture.png");
+	Texture* heightMap = new Texture("./assets/heightmap.png");
 
 	Scene* scene = new Scene();
 	Material* material = new Material(Color::White, 0.0f, nullptr);
 	Material* texturedMaterial = new Material(Color::White, 0.0f, texture);
+	Material* heightMapMaterial = new Material(Color::White, 0.0f, texture, heightMap);
 	
-	ModelLoading::LoadModel(scene, material, float3(0.0f, 0.0f, 2.f), "./assets/buddha.obj");
+	ModelLoading::LoadModel(scene, heightMapMaterial, float3(0.0f, -1.0f, 2.f), "./assets/plane.obj");
 
 	Timer::Duration bvhConstructionDuration;
 	{
