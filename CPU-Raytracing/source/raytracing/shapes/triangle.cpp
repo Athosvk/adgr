@@ -61,6 +61,103 @@ namespace CRT
         return false;
     }
 
+    void Triangle::Barycentric(float3& _vertex, float3& _normal, float2& _uv, float3 _bary) const
+    {
+        _vertex = V0 * _bary.x + V1 * _bary.y + V2 * _bary.z;
+        _normal = (N0 * _bary.x + N1 * _bary.y + N2 * _bary.z).Normalize();
+        _uv = u0 * _bary.x + u1 * _bary.y + u2 * _bary.z;
+    }
+
+    bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, Texture* _heightmap) const
+    {
+        //(A*a + B*b + C*c) / (a + b + c)
+        {
+            // (0, 0, 1)
+            float3 t0p0 = float3(0, 0, 1);
+            float3 t0p1 = float3(0, 0.5, 0.5);
+            float3 t0p2 = float3(0.5, 0, 0.5);
+
+            float3 v0t0, n0t0; float2 u0t0;
+            float3 v0t1, n0t1; float2 u0t1;
+            float3 v0t2, n0t2; float2 u0t2;
+            Barycentric(v0t0, n0t0, u0t0, t0p0);
+            Barycentric(v0t1, n0t1, u0t1, t0p1);
+            Barycentric(v0t2, n0t2, u0t2, t0p2);
+
+            // WE ONLY CARE ABOUT THE GREY_SCALE VALUE
+            float d0t0 = _heightmap->GetValue(u0t0).x;
+            float d0t1 = _heightmap->GetValue(u0t1).x;
+            float d0t2 = _heightmap->GetValue(u0t2).x;
+
+            // Displaced VertexCoordinates
+            float3 vn0t0 = v0t0 + (n0t0*d0t0);
+            float3 vn0t1 = v0t1 + (n0t1*d0t1);
+            float3 vn0t2 = v0t2 + (n0t2*d0t1);
+
+            // (0, 0, 0)
+            float3 t1p0 = t0p2;
+            float3 t1p1 = t0p1;
+            float3 t1p2 = float3(0.5, 0.5, 0);
+
+            float3 v1t0 = v0t2, n1t0 = n0t2; float2 u1t0 = u0t2;
+            float3 v1t1 = v0t1, n1t1 = n0t1; float2 u1t1 = u0t1;
+            float3 v1t2, n1t2; float2 u1t2;
+            Barycentric(v1t2, n1t2, u1t2, t1p2);
+
+            // WE ONLY CARE ABOUT THE GREY_SCALE VALUE
+            float d1t0 = d0t2;
+            float d1t1 = d0t1;
+            float d1t2 = _heightmap->GetValue(u1t2).x;
+
+            // Displaced VertexCoordinates
+            float3 vn1t0 = vn0t2;
+            float3 vn1t1 = vn0t1;
+            float3 vn1t2 = v1t2 + (n1t2*d1t1);
+
+            // (1, 0, 0)
+            float3 t2p0 = t0p2;
+            float3 t2p1 = t1p2;
+            float3 t2p2 = float3(1, 0, 0);
+
+            float3 v2t0 = v0t2, n2t0 = n0t2; float2 u2t0 = u0t2;
+            float3 v2t1 = v1t2, n2t1 = n1t2; float2 u2t1 = u1t2;
+            float3 v2t2, n2t2;  float2 u2t2;
+            Barycentric(v2t2, n2t2, u2t2, t2p2);
+
+            // WE ONLY CARE ABOUT THE GREY_SCALE VALUE
+            float d2t0 = d0t2;
+            float d2t1 = d1t2;
+            float d2t2 = _heightmap->GetValue(u2t2).x;
+
+            // Displaced VertexCoordinates
+            float3 vn2t0 = vn0t2;
+            float3 vn2t1 = vn1t2;
+            float3 vn2t2 = v2t2 + (n2t2 * d2t1);
+
+            // (0, 1, 0)
+            float3 t3p0 = t0p1;
+            float3 t3p1 = float3(0, 1, 0);
+            float3 t3p2 = t1p2;
+
+            float3 v3t0 = v0t1, n3t0 = n0t1; float2 u3t0 = u0t1;
+            float3 v3t1, n3t1; float2 u3t1;
+            float3 v3t2 = v1t2, n3t2 = n1t2; float2 u3t2 = u1t2;
+            Barycentric(v3t1, n3t1, u3t1, t3p1);
+
+            // WE ONLY CARE ABOUT THE GREY_SCALE VALUE
+            float d3t0 = d0t1;
+            float d3t1 = _heightmap->GetValue(u3t1).x;
+            float d3t2 = d1t2;
+
+            // Displaced VertexCoordinates
+            float3 vn2t0 = vn0t1;
+            float3 vn2t1 = v2t1 + (n2t1*d2t1);
+            float3 vn2t2 = vn1t2;
+        }
+
+        return false;
+    }
+
     void Triangle::Intersect(const RayPacket& ray, TraversalResultPacket& _result, int _first, int _id)
     {
         for (int i = _first; i < 16 * 16; i++)
