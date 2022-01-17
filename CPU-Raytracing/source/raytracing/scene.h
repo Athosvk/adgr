@@ -86,6 +86,6 @@ namespace CRT
 		std::vector<SpotLight> m_SpotLights;
 		std::vector<DirectionalLight> m_DirectionalLights;
 		ETraversalDebugSetting m_DebugSetting = ETraversalDebugSetting::None;
-		bool m_UseBVH = true;
+		bool m_UseBVH = false;
 	};
 }
