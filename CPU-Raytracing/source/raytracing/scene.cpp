@@ -285,7 +285,8 @@ namespace CRT
 			for (uint32_t i = 0; i < m_Triangles.size(); i++)
 			{
 				Manifest manifest;
-				if (m_Triangles[i].Intersect(_ray, manifest) && (!nearest || manifest.T < nearest->T))
+				if (m_Triangles[i].IntersectDisplaced(_ray, manifest, m_TriangleMaterials[i]->HeightMap) 
+					&& (!nearest || manifest.T < nearest->T))
 				{
 					manifest.M = m_TriangleMaterials[i];
 					nearest = manifest;
