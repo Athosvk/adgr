@@ -23,12 +23,12 @@ namespace CRT
 		{
 			std::cout << "Error while loading mesh: " << error << "\n";
 		}
+		std::vector<Triangle> triangles;
 		for (size_t i = 0; i < scene->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[i];
 			int numFaces = mesh->mNumFaces;
-			std::vector<Triangle> triangles;
-			triangles.reserve(numFaces);
+			triangles.reserve(triangles.size() + numFaces);
 
 			if (!mesh->HasTextureCoords(0))
 			{
@@ -87,7 +87,7 @@ namespace CRT
 					float3(n3.x, n3.y, n3.z)
 					);
 			}
-			_scene->AddMesh(Mesh(std::move(triangles), material));
 		}
+		_scene->AddMesh(Mesh(std::move(triangles), material));
 	}
 }
