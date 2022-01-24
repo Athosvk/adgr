@@ -44,21 +44,19 @@ namespace CRT
 
 	struct TraversalResult
 	{
-		PrimitiveIndex Index = 0;
 		std::optional<Manifest> Manifest;
-		uint32_t Traversals = 0;
+		float Depth = 0.0f;
 	};
 
 	class BVH
 	{
 	public:
-		BVH(std::vector<Primitive> primitives);
+		BVH(const std::vector<Primitive>& primitives);
 
 		TraversalResult GetNearestIntersection(const Ray& ray) const;
 		void GetNearestIntersection(const RayPacket& ray, TraversalResultPacket& _result) const;
 
 		uint64_t GetNodeCount() const;
-		uint64_t GetMaxDepth() const;
 	private:
 		TraversalResult TraverseNode(const Ray& ray, const BVHNode& parentNode) const;
 		void TraverseNode(const RayPacket& ray, TraversalResultPacket& _result, const BVHNode& parentNode, int _firstActive)const;

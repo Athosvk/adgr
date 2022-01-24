@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\raytracing\shapes\mesh.cpp" />
     <ClCompile Include="source\benchmarking\timer.cpp" />
     <ClCompile Include="source\raytracing\aabb.cpp" />
     <ClCompile Include="source\raytracing\bvh.cpp" />
@@ -180,6 +181,7 @@
     <ClCompile Include="source\scene\model_loading.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\raytracing\shapes\mesh.h" />
     <ClInclude Include="source\benchmarking\rolling_sampler.h" />
     <ClInclude Include="source\core\job_manager.h" />
     <ClInclude Include="source\benchmarking\timer.h" />

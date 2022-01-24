@@ -15,10 +15,9 @@ namespace CRT
 		m_Materials.push_back(_material);
 	}
 
-	void Scene::AddTriangle(Triangle _triangle, Material* _material)
+	void Scene::AddMesh(Mesh _mesh)
 	{
-		m_Triangles.push_back(_triangle);
-		m_TriangleMaterials.push_back(_material);
+		m_Meshes.emplace_back(std::make_unique<Mesh>(std::move(_mesh)));
 	}
 
 	void Scene::AddDirectionalLight(DirectionalLight _light)
@@ -34,11 +33,6 @@ namespace CRT
 	void Scene::AddPointLight(PointLight _light)
 	{
 		m_PointLights.emplace_back(std::move(_light));
-	}
-
-	void Scene::ConstructBVH()
-	{
-		m_BVH = std::make_unique<BVH>(m_Triangles);
 	}
 
 	float3 Scene::Intersect(Ray _r) const
@@ -78,12 +72,22 @@ namespace CRT
 
 	uint64_t Scene::GetTriangleCount() const
 	{
-		return m_Triangles.size();
+		uint64_t triangleCount = 0ull;
+		for (const auto& mesh : m_Meshes)
+		{
+			triangleCount += mesh->GetTriangleCount();
+		}
+		return triangleCount;
 	}
 
 	uint64_t Scene::GetBHVNodeCount() const
 	{
-		return m_BVH->GetNodeCount();
+		uint64_t nodeCount = 0ull;
+		for (const auto& mesh : m_Meshes)
+		{
+			nodeCount += mesh->GetBVHNodeCount();
+		}
+		return nodeCount;
 	}
 
 	float3 Scene::IntersectBounced(Ray _r, unsigned _remainingBounces) const
@@ -98,7 +102,7 @@ namespace CRT
 		float3 debugColor = float3::Zero();
 		if (m_UseBVH)
 		{
-			debugColor = float3(0.0f, result.Traversals / (float)m_BVH->GetMaxDepth(), 0.0f);
+			debugColor = float3(0.0f, result.Depth, 0.0f);
 		}
 		float3 color = BackgroundColor;
 
@@ -111,7 +115,7 @@ namespace CRT
 			}
 		}
 		// Only render bvh nodes, i.e. there was at least one traversal
-		else if (m_DebugSetting != ETraversalDebugSetting::None && result.Traversals > 0)
+		else if (m_DebugSetting != ETraversalDebugSetting::None && result.Depth > 0.f)
 		{
 			color += debugColor;
 		}
@@ -125,53 +129,53 @@ namespace CRT
 
 	void Scene::IntersectBounced(const RayPacket& _r, float3* _ptr, int _id) const
 	{
-		if (m_UseBVH)
-		{
-			TraversalResultPacket packetResult(16 * 16);
-			m_BVH->GetNearestIntersection(_r, packetResult);
+		//if (m_UseBVH)
+		//{
+		//	TraversalResultPacket packetResult(16 * 16);
+		//	m_BVH->GetNearestIntersection(_r, packetResult);
 
-			uint32_t x, y;
-			for (int i = 0; i < 16 * 16; i++)
-			{
-				// Retrieve morton index
-				morton_to_xy(_id + i, &x, &y);
+		//	uint32_t x, y;
+		//	for (int i = 0; i < 16 * 16; i++)
+		//	{
+		//		// Retrieve morton index
+		//		morton_to_xy(_id + i, &x, &y);
 
-				//	Ray r(_r.O, _r.D[i]);
-				//	std::optional<Manifest> nearest = GetNearestIntersection(r);
-				if (packetResult.T[i] < 1000.0f)
-				{
-					float3 p = _r.O + _r.D[i] * packetResult.T[i];
-					float3 n = m_Triangles[packetResult.ID[i]].N1;
-					float2 uv = m_Triangles[packetResult.ID[i]].GetUV(p, n);
+		//		//	Ray r(_r.O, _r.D[i]);
+		//		//	std::optional<Manifest> nearest = GetNearestIntersection(r);
+		//		if (packetResult.T[i] < 1000.0f)
+		//		{
+		//			float3 p = _r.O + _r.D[i] * packetResult.T[i];
+		//			float3 n = m_Triangles[packetResult.ID[i]].N1;
+		//			float2 uv = m_Triangles[packetResult.ID[i]].GetUV(p, n);
 
-					float3 color;
-					Material* mat = m_TriangleMaterials[packetResult.ID[i]];
-					if (mat != nullptr)
-					{
-						if (mat->Texture != nullptr)
-							color = mat->Texture->GetValue(uv);
-						else
-							color = mat->Color;
-					}
+		//			float3 color;
+		//			Material* mat = m_TriangleMaterials[packetResult.ID[i]];
+		//			if (mat != nullptr)
+		//			{
+		//				if (mat->Texture != nullptr)
+		//					color = mat->Texture->GetValue(uv);
+		//				else
+		//					color = mat->Color;
+		//			}
 
-					//	float3 lightdir = float3(0.0f, 1.0f, 1.0f).Normalize();
-					//	float diff = std::max(n.Dot(lightdir), 0.0f);
-					//	diff += 0.1f;
-					//
-					//	_ptr[x + y * 16] = float3(diff, diff, diff);
+		//			//	float3 lightdir = float3(0.0f, 1.0f, 1.0f).Normalize();
+		//			//	float diff = std::max(n.Dot(lightdir), 0.0f);
+		//			//	diff += 0.1f;
+		//			//
+		//			//	_ptr[x + y * 16] = float3(diff, diff, diff);
 
-					float3 material_effect;
+		//			float3 material_effect;
 
-					Manifest m;
-					m.ShadingNormal = n;
-					m.T = packetResult.T[i];
-					m.UV = uv;
-					material_effect += GetTotalLightContribution(m);
+		//			Manifest m;
+		//			m.ShadingNormal = n;
+		//			m.T = packetResult.T[i];
+		//			m.UV = uv;
+		//			material_effect += GetTotalLightContribution(m);
 
-					_ptr[x + y * 16] = color * material_effect;
-				}
-			}
-		}
+		//			_ptr[x + y * 16] = color * material_effect;
+		//		}
+		//	}
+		//}
 	}
 
 	float3 Scene::RenderObject(Ray _r, const Manifest& _manifest, unsigned _remainingBounces) const
@@ -273,24 +277,24 @@ namespace CRT
 		TraversalResult result;
 		if (m_UseBVH)
 		{
-			result = m_BVH->GetNearestIntersection(_ray);
-			if (result.Manifest)
+			for (const auto& mesh : m_Meshes)
 			{
-				result.Manifest->M = m_TriangleMaterials[result.Index];
+				TraversalResult possibleNearest = mesh->FindBVHIntersection(_ray);
+				if (possibleNearest.Manifest && (!result.Manifest || possibleNearest.Manifest->T < result.Manifest->T))
+				{
+					result = possibleNearest;
+				}
 			}
 		}
 		else
 		{
 			std::optional<Manifest> nearest;
-			for (uint32_t i = 0; i < m_Triangles.size(); i++)
+			for (const auto& mesh : m_Meshes)
 			{
-				Manifest manifest;
-				if (m_Triangles[i].IntersectDisplaced(_ray, manifest, m_TriangleMaterials[i]->HeightMap) 
-					&& (!nearest || manifest.T < nearest->T))
+				std::optional<Manifest> manifest = mesh->FindIntersection(_ray);
+				if (mesh->FindIntersection(_ray) && (!nearest || manifest->T < nearest->T))
 				{
-					manifest.M = m_TriangleMaterials[i];
 					nearest = manifest;
-					result.Index = i;
 				}
 			}
 			result.Manifest = std::move(nearest);
@@ -303,7 +307,6 @@ namespace CRT
 			{
 				manifest.M = m_Materials[i];
 				nearest = manifest;
-				result.Index = i;
 			}
 		}
 		result.Manifest = std::move(nearest);

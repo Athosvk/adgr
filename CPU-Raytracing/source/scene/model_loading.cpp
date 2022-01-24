@@ -1,6 +1,7 @@
 #include "./scene/model_loading.h"
 #include "./core/graphics/color3.h"
 #include "./raytracing/bvh.h"
+#include "./raytracing/shapes/mesh.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -22,11 +23,11 @@ namespace CRT
 		{
 			std::cout << "Error while loading mesh: " << error << "\n";
 		}
-		std::vector<Triangle> triangles;
 		for (size_t i = 0; i < scene->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[i];
 			int numFaces = mesh->mNumFaces;
+			std::vector<Triangle> triangles;
 			triangles.reserve(numFaces);
 
 			if (!mesh->HasTextureCoords(0))
@@ -86,11 +87,7 @@ namespace CRT
 					float3(n3.x, n3.y, n3.z)
 					);
 			}
-			for (const Triangle& triangle : triangles)
-			{
-				_scene->AddTriangle(triangle, material);
-			}
-			triangles.clear();
+			_scene->AddMesh(Mesh(std::move(triangles), material));
 		}
 	}
 }

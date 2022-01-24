@@ -9,9 +9,11 @@
 #include "./raytracing/lights/spot_light.h"
 #include "./raytracing/lights/point_light.h"
 #include "./raytracing/bvh.h"
+#include <./raytracing/shapes/mesh.h>
 
 #include <vector>
 #include <optional>
+#include <memory>
 
 namespace CRT
 {
@@ -34,11 +36,10 @@ namespace CRT
 		Scene() = default;
 
 		void AddShape(Shape* _shape, Material* _material);
-		void AddTriangle(Triangle _triangle, Material* _material);
+		void AddMesh(Mesh _mesh);
 		void AddDirectionalLight(DirectionalLight _light);
 		void AddSpotLight(SpotLight _light);
 		void AddPointLight(PointLight _light);
-		void ConstructBVH();
 
 		float3 Intersect(Ray _r) const;
 		void Intersect(const RayPacket& _r, float3* _ptr, int _id) const;
@@ -77,9 +78,7 @@ namespace CRT
 
 		const static float3 BackgroundColor;
 
-		std::unique_ptr<BVH> m_BVH;
-		std::vector<Triangle> m_Triangles;
-		std::vector<Material*> m_TriangleMaterials;
+		std::vector<std::unique_ptr<Mesh>> m_Meshes;
 		std::vector<Shape*>    m_Shapes;
 		std::vector<Material*> m_Materials;
 		std::vector<PointLight> m_PointLights;

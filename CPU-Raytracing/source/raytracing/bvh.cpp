@@ -6,7 +6,7 @@
 
 namespace CRT
 {
-	BVH::BVH(std::vector<Primitive> _primitives) :
+	BVH::BVH(const std::vector<Primitive>& _primitives) :
 		m_Primitives(_primitives)
 	{
 		Construct();
@@ -105,7 +105,7 @@ namespace CRT
 			totalPrims = 0;
 			totalBounds = AABB::NegativeBox();
 			std::vector<float> rightPartitionCosts;
-			for (uint32_t i = bins.size() - 1; i > 0; i--)
+			for (uint32_t i = uint32_t(bins.size() - 1); i > 0; i--)
 			{
 				totalBounds = totalBounds.Extend(bins[i].Bounds);
 				totalPrims += bins[i].PrimitiveCount;
@@ -175,7 +175,9 @@ namespace CRT
 		{
 			return {};
 		}
-		return TraverseNode(_ray, m_RootNode);
+		TraversalResult result = TraverseNode(_ray, m_RootNode);
+		result.Depth += 1.0f / m_MaxDepth;
+		return result;
 	}
 
 	void BVH::GetNearestIntersection(const RayPacket& ray, TraversalResultPacket& _result) const
@@ -196,12 +198,8 @@ namespace CRT
 
 	uint64_t BVH::GetNodeCount() const
 	{
-		return m_Nodes.size();
-	}
-
-	uint64_t BVH::GetMaxDepth() const
-	{
-		return m_MaxDepth;
+		// Add one for the root node
+		return m_Nodes.size() + 1;
 	}
 
 	TraversalResult BVH::TraverseNode(const Ray& _ray, const BVHNode& _parentNode) const
@@ -228,12 +226,12 @@ namespace CRT
 					result = resultRight;
 				}
 			}
-			if (resultRight.Traversals > result.Traversals)
+			if (resultRight.Depth > result.Depth)
 			{
-				result.Traversals = resultRight.Traversals;
+				result.Depth = resultRight.Depth;
 			}
 		}
-		result.Traversals++;
+		result.Depth += 1.0f / m_MaxDepth;
 		return result;
 	}
 
@@ -281,7 +279,6 @@ namespace CRT
 			if (primitive.Intersect(_ray, manifest) && (!result.Manifest || manifest.T < result.Manifest->T))
 			{
 				result.Manifest = manifest;
-				result.Index = m_PrimitiveIndices[i + range.FirstPrimitiveIndex];
 			}
 		}
 		return result;

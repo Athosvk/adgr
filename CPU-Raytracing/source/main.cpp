@@ -35,12 +35,10 @@ int main(char** argc, char** argv)
 	Material* texturedMaterial = new Material(Color::White, 0.0f, texture);
 	Material* heightMapMaterial = new Material(Color::White, 0.0f, texture, heightMap);
 	
-	ModelLoading::LoadModel(scene, heightMapMaterial, float3(0.0f, -1.0f, 2.f), "./assets/plane.obj");
-
 	Timer::Duration bvhConstructionDuration;
 	{
 		Timer bvhConstructionTimer;
-		scene->ConstructBVH();
+		ModelLoading::LoadModel(scene, heightMapMaterial, float3(0.0f, -1.0f, 2.f), "./assets/plane.obj");
 		bvhConstructionDuration = bvhConstructionTimer.GetDuration();
 	}
 
@@ -125,14 +123,6 @@ int main(char** argc, char** argv)
 				else
 				{
 					scene->DisableBVH();
-				}
-				
-				if (ImGui::Button("Reconstruct BVH"))
-				{
-					Timer bvhTimer;
-					scene->ConstructBVH();
-					bvhConstructionDuration = bvhTimer.GetDuration();
-					sceneDirty = true;
 				}
 				
 				ImGui::Separator();
