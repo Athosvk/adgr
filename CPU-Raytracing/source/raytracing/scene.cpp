@@ -114,8 +114,7 @@ namespace CRT
 				color += debugColor;
 			}
 		}
-		// Only render bvh nodes, i.e. there was at least one traversal
-		else if (m_DebugSetting != ETraversalDebugSetting::None && result.Depth > 0.f)
+		else if (m_DebugSetting != ETraversalDebugSetting::None)
 		{
 			color += debugColor;
 		}
@@ -284,6 +283,9 @@ namespace CRT
 				{
 					result = possibleNearest;
 				}
+
+				// Always keep the highest traversal, rendered or not
+				result.Depth = std::max(possibleNearest.Depth, result.Depth);
 			}
 		}
 		else
