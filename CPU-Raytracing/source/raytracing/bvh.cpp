@@ -9,6 +9,10 @@ namespace CRT
 	BVH::BVH(const std::vector<Primitive>& _primitives) :
 		m_Primitives(_primitives)
 	{
+		if (_primitives.empty())
+		{
+			throw std::exception("No primitives provided");
+		}
 		Construct();
 	}
 
