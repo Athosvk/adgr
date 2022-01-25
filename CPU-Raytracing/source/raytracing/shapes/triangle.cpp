@@ -68,7 +68,7 @@ namespace CRT
         _uv = u0 * _bary.x + u1 * _bary.y + u2 * _bary.z;
     }
 
-    bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, Texture* _heightmap) const
+    bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const
     {
         std::array<Triangle, 4> triangles;
         //(A*a + B*b + C*c) / (a + b + c)
@@ -215,5 +215,32 @@ namespace CRT
     float3 Triangle::GetCentroid() const
     {
         return (V0 + V1 + V2) / 3.0f;
+    }
+
+    AABB Triangle::GetBounds() const
+    {
+        AABB bounds;
+        bounds.Min = float3::ComponentMin({ V0, V1, V2 });
+        bounds.Max = float3::ComponentMax({ V0, V1, V2 });
+        return bounds;
+    }
+
+    AABB Triangle::GetDisplacedBounds(float _maxHeight) const
+    {
+        std::array<float3, 3> vertices { V0, V1, V2 };
+        std::array<float3, 3> normals { N0, N1, N2 };
+        std::array<float3, 3> displacedVerticesMin;
+        std::array<float3, 3> displacedVerticesMax;
+            
+        for (int i = 0; i < vertices.size(); i++)
+        {
+            displacedVerticesMin[i] = vertices[i] - (normals[i] * _maxHeight);
+            displacedVerticesMax[i] = vertices[i] + (normals[i] * _maxHeight);
+        }
+
+        AABB bounds;
+        bounds.Min = float3::ComponentMin({ displacedVerticesMin[0], displacedVerticesMin[1], displacedVerticesMin[2] });
+        bounds.Max = float3::ComponentMax({ displacedVerticesMax[0], displacedVerticesMax[1], displacedVerticesMax[2] });
+        return bounds;
     }
 }

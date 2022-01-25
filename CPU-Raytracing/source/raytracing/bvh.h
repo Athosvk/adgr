@@ -11,6 +11,7 @@ namespace CRT
 {
 	using Primitive = Triangle;
 	using PrimitiveIndex = uint32_t;
+	class Texture;
 
 	struct PrimitiveRange
 	{
@@ -51,7 +52,7 @@ namespace CRT
 	class BVH
 	{
 	public:
-		BVH(const std::vector<Primitive>& primitives);
+		BVH(const std::vector<Primitive>& _primitives, const Texture* _heightMap);
 
 		TraversalResult GetNearestIntersection(const Ray& ray) const;
 		void GetNearestIntersection(const RayPacket& ray, TraversalResultPacket& _result) const;
@@ -73,6 +74,7 @@ namespace CRT
 			std::vector<PrimitiveIndex>::const_iterator _end) const;
 
 		constexpr static uint32_t MaxBins = 16u;
+		const Texture* m_Heightmap;
 		std::vector<Primitive> m_Primitives;
 		std::vector<uint32_t> m_PrimitiveIndices;
 		std::vector<BVHNode> m_Nodes;

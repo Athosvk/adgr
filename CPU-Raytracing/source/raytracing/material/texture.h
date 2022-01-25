@@ -11,7 +11,7 @@ namespace CRT
 	public:
 		Texture(const std::string& _filepath);
 
-		float4 GetValue(float2 _uv);
+		float4 GetValue(float2 _uv) const;
 
 	private:
 		int m_Width;

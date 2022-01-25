@@ -6,8 +6,9 @@
 
 namespace CRT
 {
-	BVH::BVH(const std::vector<Primitive>& _primitives) :
-		m_Primitives(_primitives)
+	BVH::BVH(const std::vector<Primitive>& _primitives, const Texture* _heightMap) :
+		m_Primitives(_primitives),
+		m_Heightmap(_heightMap)
 	{
 		if (_primitives.empty())
 		{
@@ -26,8 +27,7 @@ namespace CRT
 		for (const Primitive& prim : m_Primitives)
 		{
 			PrimitiveNode node;
-			node.Bounds.Min = float3::ComponentMin({ prim.V0, prim.V1, prim.V2 });
-			node.Bounds.Max = float3::ComponentMax({ prim.V0, prim.V1, prim.V2 });
+			node.Bounds = prim.GetDisplacedBounds(1.0f);
 			node.Centroid = prim.GetCentroid();
 			triangleBounds = triangleBounds.Extend(node.Bounds);
 			centroidBounds = centroidBounds.Extend(node.Centroid);
@@ -280,7 +280,8 @@ namespace CRT
 		{
 			auto primitive = m_Primitives[m_PrimitiveIndices[i + range.FirstPrimitiveIndex]];
 			Manifest manifest;
-			if (primitive.Intersect(_ray, manifest) && (!result.Manifest || manifest.T < result.Manifest->T))
+			if (primitive.IntersectDisplaced(_ray, manifest, m_Heightmap)
+				&& (!result.Manifest || manifest.T < result.Manifest->T))
 			{
 				result.Manifest = manifest;
 			}

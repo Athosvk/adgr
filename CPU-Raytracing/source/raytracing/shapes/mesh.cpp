@@ -3,7 +3,7 @@
 namespace CRT
 {
 	Mesh::Mesh(std::vector<Triangle> _triangles, Material* _material) : 
-		m_BVH(_triangles),
+		m_BVH(_triangles, _material->HeightMap),
 		m_Triangles(_triangles),
 		m_Material(_material)
 	{

@@ -25,7 +25,7 @@ namespace CRT
 		}
 	}
 
-	float4 Texture::GetValue(float2 _uv)
+	float4 Texture::GetValue(float2 _uv) const
 	{
 		int x = int(float(m_Width - 1) * _uv.x);
 		int y = int(float(m_Height - 1) * _uv.y);
