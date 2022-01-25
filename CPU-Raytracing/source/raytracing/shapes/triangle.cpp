@@ -6,12 +6,10 @@
 namespace CRT
 {
     Triangle::Triangle()
-        : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
     {  }
 
-    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n0, float3 _n1, float3 _n2)
-        : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
-        , V0(_v0)
+    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n0, float3 _n1, float3 _n2) :
+          V0(_v0)
         , V1(_v1)
         , V2(_v2)
         , u0(_u0)
@@ -214,18 +212,8 @@ namespace CRT
         }
     }
 
-    float Triangle::GetSurfaceArea() const
-    {
-        return (V1 - V0).Cross(V2 - V0).Magnitude() * 0.5f;
-    }
-
     float3 Triangle::GetCentroid() const
     {
         return (V0 + V1 + V2) / 3.0f;
-    }
-    float2 Triangle::GetUV(float3 _point, float3 _normal) const
-    {
-		// Calculated during intersection
-        return float2{};
     }
 }

@@ -5,20 +5,18 @@ namespace CRT
 {
 	class Material;
 
-	class Triangle final : public Shape
+	class Triangle
 	{
 	public:
 		Triangle();
 		Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n0, float3 _n1, float3 _n2);
 
-		virtual bool Intersect(Ray _r, Manifest& _m) const override;
+		bool Intersect(Ray _r, Manifest& _m) const;
 		bool IntersectDisplaced(Ray _r, Manifest& _m, Texture* _heightmap) const;
 		
 		void Barycentric(float3& _vertex, float3& _normal, float2& _uv, float3 _bary) const;
 		
 		void Intersect(const RayPacket& ray, TraversalResultPacket& _result, int _first, int _id);
-
-		float2 GetUV(float3 _point, float3 _normal) const;
 
 		float3 V0;
 		float3 V1;
@@ -32,7 +30,6 @@ namespace CRT
 		float3 N1;
 		float3 N2;
 
-		float GetSurfaceArea() const;
 		float3 GetCentroid() const;
 	};
 }
