@@ -1,15 +1,17 @@
 #include "./raytracing/shapes/triangle.h"
+#include "./raytracing/shapes/plane.h"
 
 #include <limits>
-#include <array>
 
 namespace CRT
 {
     Triangle::Triangle()
+        : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
     {  }
 
-    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n0, float3 _n1, float3 _n2) :
-          V0(_v0)
+    Triangle::Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n0, float3 _n1, float3 _n2)
+        : Shape(ShapeType::SHAPE_TYPE_TRIANGLE)
+        , V0(_v0)
         , V1(_v1)
         , V2(_v2)
         , u0(_u0)
@@ -19,7 +21,6 @@ namespace CRT
         , N1(_n1)
         , N2(_n2)
     { }
-
     bool Triangle::Intersect(Ray _r, Manifest& _m) const
     {
         float3 v0v1 = V1 - V0;
@@ -61,6 +62,122 @@ namespace CRT
         return false;
     }
 
+    bool Triangle::InitializeDisplaced(Ray _r, float3& _inter0, float3& _inter1, float3& _bary) const
+    {
+        float m = 1.0f;
+        float tes = 4.0f;
+        float3 inter0, inter1, bary;
+        float t0 = FLT_MAX, t1 = FLT_MAX;
+        {
+            if (IntersectSidePLane(_r, V0, V1, N0, N1, inter1, t1))
+            {
+                if (t1 < t0)
+                {
+                    SwapIntersection(inter0, t0, inter1, t1);
+
+                    float len = (V1 - V0).Magnitude();
+                    float3 nx = (V1 - V0).Normalize();
+                    float  nb = (inter0 - V0).Dot(nx) / len;
+
+                    bary.x = 1.0f-nb;
+                    bary.y = nb;
+                    bary.z = 0.0f;
+                }
+            }
+            if (IntersectSidePLane(_r, V1, V2, N1, N2, inter1, t1))
+            {
+                if (t1 < t0)
+                {
+                    SwapIntersection(inter0, t0, inter1, t1);
+                    
+                    float len = (V2 - V1).Magnitude();
+                    float3 nx = (V2 - V1).Normalize();
+                    float  nb = (inter0 - V1).Dot(nx) / len;
+
+                    bary.x = 0.0f;
+                    bary.y = 1.0f-nb;
+                    bary.z = nb;
+                }
+            }
+            if (IntersectSidePLane(_r, V2, V0, N2, N0, inter1, t1))
+            {
+                if (t1 < t0)
+                {
+                    SwapIntersection(inter0, t0, inter1, t1);
+                    
+                    float len = (V0 - V2).Magnitude();
+                    float3 nx = (V0 - V2).Normalize();
+                    float  nb = (inter0 - V2).Dot(nx) / len;
+
+                    bary.x = nb;
+                    bary.y = 0.0f;
+                    bary.z = 1.0f-nb;
+                }
+            }
+
+            Triangle tr(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
+            Manifest ma;
+            if (tr.Intersect(_r, ma))
+            {
+                inter1 = ma.IntersectionPoint;
+                t1 = ma.T;
+                if (t1 < t0)
+                {
+                    SwapIntersection(inter0, t0, inter1, t1);
+                    ComputeBaryCentric(bary, inter0);
+                }
+            }
+            Triangle tr(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, N0, N1, N2);
+            if (tr.Intersect(_r, ma))
+            {
+                inter1 = ma.IntersectionPoint;
+                t1 = ma.T;
+                if (t1 < t0)
+                {
+                    SwapIntersection(inter0, t0, inter1, t1);
+                    ComputeBaryCentric(bary, inter0);
+                }
+            }
+        }
+        if (inter0 < FLT_MAX && inter1 < FLT_MAX)
+        {
+            _inter0 = inter0;
+            _inter1 = inter1;
+            _bary = float3(floor(bary.x * tes), floor(bary.y * tes), floor(bary.z * tes));
+            return true;
+        }
+        return false;
+    }
+
+    void Triangle::SwapIntersection(float3& _inter0, float& _t0, float3& _inter1, float& _t1) const
+    {
+        if (_t0 < FLT_MAX)
+        {
+            std::swap(_t0, _t1);
+            std::swap(_inter0.x, _inter1.x);
+            std::swap(_inter0.y, _inter1.y);
+            std::swap(_inter0.z, _inter1.z);
+        }
+        else
+        {
+            _t0 = _t1;
+            _inter0 = _inter1;
+        }
+    }
+
+    bool Triangle::IntersectSidePLane(Ray _r, float3 _p0, float3 _p1, float3 _n0, float3 _n1, float3& _p, float& _t) const
+    {
+        float3 n = (_p0 - _p1).Cross((_n0 + _n1).Normalize());
+        float3 p = _p0;
+        Plane pl(p, n);
+        Manifest m;
+        if (pl.Intersect(_r, m))
+        {
+            _p = m.IntersectionPoint;
+            _t = m.T;
+        }
+    }
+
     void Triangle::Barycentric(float3& _vertex, float3& _normal, float2& _uv, float3 _bary) const
     {
         _vertex = V0 * _bary.x + V1 * _bary.y + V2 * _bary.z;
@@ -68,9 +185,31 @@ namespace CRT
         _uv = u0 * _bary.x + u1 * _bary.y + u2 * _bary.z;
     }
 
-    bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const
+    void Triangle::ComputeBaryCentric(float3& _bary, float3 _p) const
     {
-        std::array<Triangle, 4> triangles;
+        float3 v0 = V1 - V0;
+        float3 v1 = V2 - V0;
+        float3 v2 = _p - V0;
+
+        float d00 = v0.Dot(v0);
+        float d01 = v0.Dot(v1);
+        float d11 = v1.Dot(v1);
+        float d20 = v2.Dot(v0);
+        float d21 = v2.Dot(v1);
+
+        float denom = d00 * d11 - d01 * d01;
+        _bary.x = (d11 * d20 - d01 * d21) / denom;
+        _bary.y = (d00 * d21 - d01 * d20) / denom;
+        _bary.z = 1.0f - _bary.x - _bary.y;
+    }
+
+    bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, Texture* _heightmap) const
+    {
+        // Initialization
+       // InitializeDisplaced(_r);
+
+      
+
         //(A*a + B*b + C*c) / (a + b + c)
         {
             // (0, 0, 1)
@@ -91,11 +230,9 @@ namespace CRT
             float d0t2 = _heightmap->GetValue(u0t2).x;
 
             // Displaced VertexCoordinates
-            float3 vn0t0 = v0t0 + (n0t0 * d0t0);
-            float3 vn0t1 = v0t1 + (n0t1 * d0t1);
-            float3 vn0t2 = v0t2 + (n0t2 * d0t2);
-
-            triangles[0] = Triangle(vn0t2, vn0t1, vn0t0, u0t2, u0t1, u0t0, n0t2, n0t1, n0t0);
+            float3 vn0t0 = v0t0 + (n0t0*d0t0);
+            float3 vn0t1 = v0t1 + (n0t1*d0t1);
+            float3 vn0t2 = v0t2 + (n0t2*d0t1);
 
             // (0, 0, 0)
             float3 t1p0 = t0p2;
@@ -115,9 +252,7 @@ namespace CRT
             // Displaced VertexCoordinates
             float3 vn1t0 = vn0t2;
             float3 vn1t1 = vn0t1;
-            float3 vn1t2 = v1t2 + (n1t2 * d1t2);
-
-            triangles[1] = Triangle(vn1t2, vn1t1, vn1t0, u1t2, u1t1, u1t0, n1t2, n1t1, n1t0);
+            float3 vn1t2 = v1t2 + (n1t2*d1t1);
 
             // (1, 0, 0)
             float3 t2p0 = t0p2;
@@ -137,9 +272,7 @@ namespace CRT
             // Displaced VertexCoordinates
             float3 vn2t0 = vn0t2;
             float3 vn2t1 = vn1t2;
-            float3 vn2t2 = v2t2 + (n2t2 * d2t2);
-
-            triangles[2] = Triangle(vn2t2, vn2t1, vn2t0, u2t2, u2t1, u2t0, n2t2, n2t1, n2t0);
+            float3 vn2t2 = v2t2 + (n2t2 * d2t1);
 
             // (0, 1, 0)
             float3 t3p0 = t0p1;
@@ -157,24 +290,12 @@ namespace CRT
             float d3t2 = d1t2;
 
             // Displaced VertexCoordinates
-            float3 vn3t0 = vn0t1;
-            float3 vn3t1 = v3t1 + (n3t1 * d3t1);
-            float3 vn3t2 = vn1t2;
-
-            triangles[3] = Triangle(vn3t2, vn3t1, vn3t0, u3t2, u3t1, u3t0, n3t2, n3t1, n3t0);
+            float3 vn2t0 = vn0t1;
+            float3 vn2t1 = v2t1 + (n2t1*d2t1);
+            float3 vn2t2 = vn1t2;
         }
 
-        Manifest nearest;
-        bool intersected = false;
-        for (const Triangle& triangle : triangles)
-        {
-            if (triangle.Intersect(_r, nearest))
-            {
-                intersected = true;
-                _m = nearest;
-            }
-        }
-        return intersected;
+        return false;
     }
 
     void Triangle::Intersect(const RayPacket& ray, TraversalResultPacket& _result, int _first, int _id)
@@ -212,35 +333,18 @@ namespace CRT
         }
     }
 
+    float Triangle::GetSurfaceArea() const
+    {
+        return (V1 - V0).Cross(V2 - V0).Magnitude() * 0.5f;
+    }
+
     float3 Triangle::GetCentroid() const
     {
         return (V0 + V1 + V2) / 3.0f;
     }
-
-    AABB Triangle::GetBounds() const
+    float2 Triangle::GetUV(float3 _point, float3 _normal) const
     {
-        AABB bounds;
-        bounds.Min = float3::ComponentMin({ V0, V1, V2 });
-        bounds.Max = float3::ComponentMax({ V0, V1, V2 });
-        return bounds;
-    }
-
-    AABB Triangle::GetDisplacedBounds(float _maxHeight) const
-    {
-        std::array<float3, 3> vertices { V0, V1, V2 };
-        std::array<float3, 3> normals { N0, N1, N2 };
-        std::array<float3, 3> displacedVerticesMin;
-        std::array<float3, 3> displacedVerticesMax;
-            
-        for (int i = 0; i < vertices.size(); i++)
-        {
-            displacedVerticesMin[i] = vertices[i] - (normals[i] * _maxHeight);
-            displacedVerticesMax[i] = vertices[i] + (normals[i] * _maxHeight);
-        }
-
-        AABB bounds;
-        bounds.Min = float3::ComponentMin({ displacedVerticesMin[0], displacedVerticesMin[1], displacedVerticesMin[2] });
-        bounds.Max = float3::ComponentMax({ displacedVerticesMax[0], displacedVerticesMax[1], displacedVerticesMax[2] });
-        return bounds;
+		// Calculated during intersection
+        return float2{};
     }
 }
