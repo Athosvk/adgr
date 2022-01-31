@@ -1,5 +1,6 @@
 #pragma once
 #include "./raytracing/shapes/shape.h"
+#include "./raytracing/aabb.h"
 
 namespace CRT
 {
@@ -12,7 +13,7 @@ namespace CRT
 		Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n0, float3 _n1, float3 _n2);
 
 		virtual bool Intersect(Ray _r, Manifest& _m) const override;
-		bool IntersectDisplaced(Ray _r, Manifest& _m, Texture* _heightmap) const;
+		bool IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const;
 
 		bool InitializeDisplaced(Ray _r, float3& _inter0, float3& _inter1, float3& _bary) const;
 		void SwapIntersection(float3& _inter0, float& _t0, float3& _inter1, float& _t1) const;
@@ -37,7 +38,8 @@ namespace CRT
 		float3 N1;
 		float3 N2;
 
-		float GetSurfaceArea() const;
 		float3 GetCentroid() const;
+		AABB GetBounds() const;
+		AABB GetDisplacedBounds(float _maxHeight) const;
 	};
 }
