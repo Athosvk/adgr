@@ -15,6 +15,8 @@ namespace CRT
 		virtual bool Intersect(Ray _r, Manifest& _m) const override;
 		bool IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const;
 
+		bool IntersectTriangularSide(Ray _r, Triangle _tr, float& t0, float& t1, float3& inter0, float3& inter1, float3& _bary, float _tesselation) const;
+		Triangle GetCell(float3 _bary, unsigned _tesselation) const;
 		bool InitializeDisplaced(Ray _r, float3& _inter0, float3& _inter1, float3& _bary) const;
 		void SwapIntersection(float3& _inter0, float& _t0, float3& _inter1, float& _t1) const;
 		bool IntersectSidePLane(Ray _r, float3 _p0, float3 _p1, float3 _n0, float3 _n1, float3& _p, float& _t) const;

@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <array>
+#include <cstdint>
 
 namespace CRT
 {
@@ -62,7 +63,86 @@ namespace CRT
         }
 
         return false;
-    }bool Triangle::InitializeDisplaced(Ray _r, float3& _inter0, float3& _inter1, float3& _bary) const
+    }
+
+    bool Triangle::IntersectTriangularSide(Ray _r, Triangle _tr, float& t0, float& t1, float3& inter0, float3& inter1, float3& _bary, float _tesselation) const
+    {
+        Manifest ma;
+		if (_tr.Intersect(_r, ma))
+		{
+			inter1 = ma.IntersectionPoint;
+			t1 = ma.T;
+			if (t1 < t0)
+			{
+				SwapIntersection(inter0, t0, inter1, t1);
+				ComputeBaryCentric(_bary, inter0);
+			}
+
+            Triangle cell = GetCell(_bary, _tesselation);
+
+            // Determine the sideplane from which we entered the cell
+			float3 cellIntersectionPoint;
+            float t;
+			if (IntersectSidePLane(_r, cell.V0, cell.V1, _tr.N0, _tr.N1, cellIntersectionPoint, t))
+			{
+				float len = (_tr.V1 - _tr.V0).Magnitude();
+				float3 nx = (_tr.V1 - _tr.V0).Normalize();
+				float  nb = (inter0 - _tr.V0).Dot(nx) / len;
+
+				_bary.x = 1.0f - nb;
+				_bary.y = nb;
+				_bary.z = 0.0f;
+			}
+			if (IntersectSidePLane(_r, cell.V1, cell.V2, _tr.N1, _tr.N2, cellIntersectionPoint, t))
+			{
+				if (t1 < t0)
+				{
+					SwapIntersection(inter0, t0, inter1, t1);
+
+					float len = (_tr.V2 - _tr.V1).Magnitude();
+					float3 nx = (_tr.V2 - _tr.V1).Normalize();
+					float  nb = (inter0 - _tr.V1).Dot(nx) / len;
+
+					_bary.x = 0.0f;
+					_bary.y = 1.0f - nb;
+					_bary.z = nb;
+				}
+			}
+            return true;
+		}
+    }
+
+    Triangle Triangle::GetCell(float3 _bary, unsigned _tesselation) const
+    {
+        // _bary contains indices in order i, j, k
+       _bary = float3(floor(_bary.x * _tesselation), floor(_bary.y * _tesselation), 
+           floor(_bary.z * _tesselation));
+
+        Triangle triangle;
+        // if lower triangle
+        // The "upperleft" vertex of the microtriangle
+        float3 uvV0 = float3(_bary.x, _bary.y, _bary.z + 1) / _tesselation;
+        triangle.V0 = uvV0.x * V0 + uvV0.y * V1 + uvV0.z * V2;
+
+        // The "lowerright" vertex of the microtriangle
+        float3 uvV1 = float3(_bary.x, _bary.y + 1, _bary.z) / _tesselation;
+        triangle.V1 = uvV0.x * V0 + uvV0.y * V1 + uvV0.z * V2;
+
+        // Every upper triangle is adjacent to lower triangles only. Therefore, every other
+        // triangle is an upper triangle. (0,0,0) is an upper triangle in every tesselation
+        // dividable by 2
+        bool isUpperTriangle = unsigned(_bary.x + _bary.y + _bary.z) % 2 == 0 && _tesselation % 2 == 0;
+        // The "lowerleft" or "upperright" vertex of the microtriangle, depending on wehther
+        // this is the lower or upper triangle
+        float3 uvV2 = (isUpperTriangle ?    float3(_bary.x, _bary.y + 1, _bary.z + 1) :
+                                            float3(_bary.x, _bary.y, _bary.z))
+                      / _tesselation;
+        triangle.V2 = uvV0.x * V0 + uvV0.y * V1 + uvV0.z * V2;
+
+        return triangle;
+    }
+    
+    bool Triangle::InitializeDisplaced(Ray _r, float3& _inter0, float3& _inter1, float3& _bary) const
     {
         float m = 1.0f;
         float tes = 4.0f;
@@ -124,20 +204,13 @@ namespace CRT
                 if (t1 < t0)
                 {
                     SwapIntersection(inter0, t0, inter1, t1);
+                    // Use from intersection?
                     ComputeBaryCentric(bary, inter0);
+                    
+                    float3 cell = float3(floor(bary.x * tes), floor(bary.y * tes), floor(bary.z * tes));
                 }
             }
             tr = Triangle(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, N0, N1, N2);
-            if (tr.Intersect(_r, ma))
-            {
-                inter1 = ma.IntersectionPoint;
-                t1 = ma.T;
-                if (t1 < t0)
-                {
-                    SwapIntersection(inter0, t0, inter1, t1);
-                    ComputeBaryCentric(bary, inter0);
-                }
-            }
         }
         if (inter0 < FLT_MAX && inter1 < FLT_MAX)
         {
@@ -207,111 +280,136 @@ namespace CRT
 
     bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const
     {
-        std::array<Triangle, 4> triangles;
-        //(A*a + B*b + C*c) / (a + b + c)
+        float3 startCell;
+        float3 stopCell;
+        float3 baryStartCell;
+        if (!InitializeDisplaced(_r, startCell, stopCell, baryStartCell))
         {
-            // (0, 0, 1)
-            float3 t0p0 = float3(0, 0, 1);
-            float3 t0p1 = float3(0, 0.5, 0.5);
-            float3 t0p2 = float3(0.5, 0, 0.5);
-
-            float3 v0t0, n0t0; float2 u0t0;
-            float3 v0t1, n0t1; float2 u0t1;
-            float3 v0t2, n0t2; float2 u0t2;
-            Barycentric(v0t0, n0t0, u0t0, t0p0);
-            Barycentric(v0t1, n0t1, u0t1, t0p1);
-            Barycentric(v0t2, n0t2, u0t2, t0p2);
-
-            // WE ONLY CARE ABOUT THE GREY_SCALE VALUE
-            float d0t0 = _heightmap->GetValue(u0t0).x;
-            float d0t1 = _heightmap->GetValue(u0t1).x;
-            float d0t2 = _heightmap->GetValue(u0t2).x;
-
-            // Displaced VertexCoordinates
-            float3 vn0t0 = v0t0 + (n0t0 * d0t0);
-            float3 vn0t1 = v0t1 + (n0t1 * d0t1);
-            float3 vn0t2 = v0t2 + (n0t2 * d0t2);
-
-            triangles[0] = Triangle(vn0t2, vn0t1, vn0t0, u0t2, u0t1, u0t0, n0t2, n0t1, n0t0);
-
-            // (0, 0, 0)
-            float3 t1p0 = t0p2;
-            float3 t1p1 = t0p1;
-            float3 t1p2 = float3(0.5, 0.5, 0);
-
-            float3 v1t0 = v0t2, n1t0 = n0t2; float2 u1t0 = u0t2;
-            float3 v1t1 = v0t1, n1t1 = n0t1; float2 u1t1 = u0t1;
-            float3 v1t2, n1t2; float2 u1t2;
-            Barycentric(v1t2, n1t2, u1t2, t1p2);
-
-            // WE ONLY CARE ABOUT THE GREY_SCALE VALUE
-            float d1t0 = d0t2;
-            float d1t1 = d0t1;
-            float d1t2 = _heightmap->GetValue(u1t2).x;
-
-            // Displaced VertexCoordinates
-            float3 vn1t0 = vn0t2;
-            float3 vn1t1 = vn0t1;
-            float3 vn1t2 = v1t2 + (n1t2 * d1t2);
-
-            triangles[1] = Triangle(vn1t2, vn1t1, vn1t0, u1t2, u1t1, u1t0, n1t2, n1t1, n1t0);
-
-            // (1, 0, 0)
-            float3 t2p0 = t0p2;
-            float3 t2p1 = t1p2;
-            float3 t2p2 = float3(1, 0, 0);
-
-            float3 v2t0 = v0t2, n2t0 = n0t2; float2 u2t0 = u0t2;
-            float3 v2t1 = v1t2, n2t1 = n1t2; float2 u2t1 = u1t2;
-            float3 v2t2, n2t2;  float2 u2t2;
-            Barycentric(v2t2, n2t2, u2t2, t2p2);
-
-            // WE ONLY CARE ABOUT THE GREY_SCALE VALUE
-            float d2t0 = d0t2;
-            float d2t1 = d1t2;
-            float d2t2 = _heightmap->GetValue(u2t2).x;
-
-            // Displaced VertexCoordinates
-            float3 vn2t0 = vn0t2;
-            float3 vn2t1 = vn1t2;
-            float3 vn2t2 = v2t2 + (n2t2 * d2t2);
-
-            triangles[2] = Triangle(vn2t2, vn2t1, vn2t0, u2t2, u2t1, u2t0, n2t2, n2t1, n2t0);
-
-            // (0, 1, 0)
-            float3 t3p0 = t0p1;
-            float3 t3p1 = float3(0, 1, 0);
-            float3 t3p2 = t1p2;
-
-            float3 v3t0 = v0t1, n3t0 = n0t1; float2 u3t0 = u0t1;
-            float3 v3t1, n3t1; float2 u3t1;
-            float3 v3t2 = v1t2, n3t2 = n1t2; float2 u3t2 = u1t2;
-            Barycentric(v3t1, n3t1, u3t1, t3p1);
-
-            // WE ONLY CARE ABOUT THE GREY_SCALE VALUE
-            float d3t0 = d0t1;
-            float d3t1 = _heightmap->GetValue(u3t1).x;
-            float d3t2 = d1t2;
-
-            // Displaced VertexCoordinates
-            float3 vn3t0 = vn0t1;
-            float3 vn3t1 = v3t1 + (n3t1 * d3t1);
-            float3 vn3t2 = vn1t2;
-
-            triangles[3] = Triangle(vn3t2, vn3t1, vn3t0, u3t2, u3t1, u3t0, n3t2, n3t1, n3t0);
+            return false;
         }
-
         Manifest nearest;
-        bool intersected = false;
-        for (const Triangle& triangle : triangles)
+
+        // Alpha corresponds to I coordinate, beta to K coordinate and 
+        // gamma to J
+        enum class EGridChange : uint8_t
         {
-            if (triangle.Intersect(_r, nearest))
-            {
-                intersected = true;
-                _m = nearest;
-            }
+            IPlus   = 0,
+            JMin    = 1,
+            KPlus   = 2, 
+            IMin    = 3,
+            JPlus   = 4,
+            KMin    = 5
+        } change;
+
+        struct Cell
+        {
+            uint32_t i, j, k;
+        } currentCell;
+        currentCell = Cell{ uint32_t(startCell.x), uint32_t(startCell.y), uint32_t(startCell.z) };
+
+        uint32_t numSubdivisions = 2;
+        
+        float2 entrance;
+        std::array<float2, 3> barycentricPositions;
+        // The first change in the grid is from "outside the triangle" into it, which
+        // is dependent on which side we enter the triangle from. 
+		if (entrance.x == 0)
+		{
+            change = EGridChange::KPlus;
+            currentCell.k = 0;
+		}
+        else if (entrance.y == 0)
+        {
+            change = EGridChange::JPlus;
+            currentCell.j = 0;
         }
-        return intersected;
+        else if (1 - entrance.x - entrance.y == 0.0)
+        {
+            change = EGridChange::IPlus;
+            currentCell.i = 0;
+        }
+
+        // This means the ray entered from the top or the bottom side
+        else
+        {
+            // Initialize the initial change using the stop cell
+        }
+        Triangle microTriangle; 
+        float delta = 1.0f / numSubdivisions;
+        bool exitedGrid = false;
+        
+		Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, barycentricPositions[0]);
+		Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, barycentricPositions[1]);
+
+        microTriangle.V0 += _heightmap->GetValue(barycentricPositions[0]).x * microTriangle.N0;
+        microTriangle.V1 += _heightmap->GetValue(barycentricPositions[1]).x * microTriangle.N1;
+        while(!exitedGrid)
+        {
+            Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, barycentricPositions[2]);
+            microTriangle.V2 += _heightmap->GetValue(barycentricPositions[2]).x * microTriangle.N2;
+
+            // First get the vector perpendicular to the V2 normal and the direction towards the ray origin.
+            // If the incoming ray projects to the right of V2, which is where this cross product should be aimed to,
+            // then we consider the ray to be the right of V2.
+            bool isToRightOfV2 = ((microTriangle.N2.Cross(_r.O - microTriangle.V2).Dot(_r.D) > 0));
+            if (microTriangle.Intersect(_r, nearest))
+            {
+                return true;
+            }
+
+            // Our ray either passes through v0-v2 or v1-v2. If it passes through v0-v2,
+            // then the current v1 is the only vertex that is not the same for the next triangle.
+            // Since we always assume entering through v0-v1, v2 becomes v1 for the next triangle
+            // and the next triangle's v2 is calculated from our heightmap data and the grid
+            // location that we have not visited before.
+            if (isToRightOfV2)
+            {
+                microTriangle.V0 = microTriangle.V2;
+                barycentricPositions[0] = barycentricPositions[2];
+            }
+            else
+            {
+                microTriangle.V1 = microTriangle.V2;
+                barycentricPositions[1] = barycentricPositions[2];
+            }
+
+            // +5 is the same as -1, but doesn't produce negative numbers when using modulo
+            change = EGridChange(((uint32_t)change + (isToRightOfV2 ? 1 : 5)) % 6);
+            switch (change)
+            {
+            case EGridChange::IPlus:
+                if (++currentCell.i > numSubdivisions)
+                    exitedGrid = true;
+                barycentricPositions[2] = float2((currentCell.j + 1) * delta, (currentCell.k + 1) * delta);
+                break;
+            case EGridChange::JMin:
+                if (--currentCell.j < 0)
+                    exitedGrid = true;
+                barycentricPositions[2] = float2(currentCell.j * delta, currentCell.k * delta);
+                break;
+            case EGridChange::KPlus:
+                if (++currentCell.k > numSubdivisions)
+                    exitedGrid = true;
+                barycentricPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
+                break;
+            case EGridChange::IMin:
+                if (--currentCell.i < 0)
+                    exitedGrid = true;
+                barycentricPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
+                break;
+            case EGridChange::JPlus:
+                if (++currentCell.j > numSubdivisions) 
+                    exitedGrid = true;
+                barycentricPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
+                break;
+            case EGridChange::KMin:
+                if (--currentCell.k < 0) 
+                    exitedGrid = true;
+                barycentricPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
+                break;
+            }
+        } 
+        return false;
     }
 
     void Triangle::Intersect(const RayPacket& ray, TraversalResultPacket& _result, int _first, int _id)
