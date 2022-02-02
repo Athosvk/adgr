@@ -80,7 +80,10 @@ namespace CRT
 
             Triangle cell = GetCell(_bary, _tesselation);
 
-            // Determine the sideplane from which we entered the cell
+            // Determine the sideplane from which we entered the cell.
+            // The side-plane is specific to upper triangles and lower triangles
+            // If lower triangle, V0-V1 = iplus, V0-V2 = kplus, V1-V2 = jplus
+            // If upper triangle, V0-V1 = imin, V0-V2 = kmin, V1-V2 = jmin
 			float3 cellIntersectionPoint;
             float t;
 			if (IntersectSidePLane(_r, cell.V0, cell.V1, _tr.N0, _tr.N1, cellIntersectionPoint, t))
@@ -95,18 +98,24 @@ namespace CRT
 			}
 			if (IntersectSidePLane(_r, cell.V1, cell.V2, _tr.N1, _tr.N2, cellIntersectionPoint, t))
 			{
-				if (t1 < t0)
-				{
-					SwapIntersection(inter0, t0, inter1, t1);
+				float len = (_tr.V2 - _tr.V1).Magnitude();
+				float3 nx = (_tr.V2 - _tr.V1).Normalize();
+				float  nb = (inter0 - _tr.V1).Dot(nx) / len;
 
-					float len = (_tr.V2 - _tr.V1).Magnitude();
-					float3 nx = (_tr.V2 - _tr.V1).Normalize();
-					float  nb = (inter0 - _tr.V1).Dot(nx) / len;
+				_bary.x = 0.0f;
+				_bary.y = 1.0f - nb;
+				_bary.z = nb;
+			}
 
-					_bary.x = 0.0f;
-					_bary.y = 1.0f - nb;
-					_bary.z = nb;
-				}
+			if (IntersectSidePLane(_r, cell.V0, cell.V2, _tr.N0, _tr.N2, cellIntersectionPoint, t))
+			{
+				float len = (_tr.V0 - _tr.V2).Magnitude();
+				float3 nx = (_tr.V0 - _tr.V2).Normalize();
+				float  nb = (inter0 - _tr.V2).Dot(nx) / len;
+
+				_bary.x = 0.0f;
+				_bary.y = 1.0f - nb;
+				_bary.z = nb;
 			}
             return true;
 		}
@@ -289,17 +298,6 @@ namespace CRT
         }
         Manifest nearest;
 
-        // Alpha corresponds to I coordinate, beta to K coordinate and 
-        // gamma to J
-        enum class EGridChange : uint8_t
-        {
-            IPlus   = 0,
-            JMin    = 1,
-            KPlus   = 2, 
-            IMin    = 3,
-            JPlus   = 4,
-            KMin    = 5
-        } change;
 
         struct Cell
         {
