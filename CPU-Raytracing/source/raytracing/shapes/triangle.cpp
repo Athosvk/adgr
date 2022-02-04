@@ -89,7 +89,7 @@ namespace CRT
                     uvV1 = float2((j + 1) * delta, k * delta);
                     if (uvV1.x + uvV1.y > 1) continue;
                     // Upper triangle test
-                    if ((i + j + k) % 2 == 0 && numSubdivisions % 2 == 0)
+                    if ((i + j + k) % 2 == 0)
                     {
                         // Upper right
                         uvV2 = float2((j + 1) * delta, (k + 1) * delta);
