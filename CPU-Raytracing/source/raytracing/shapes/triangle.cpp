@@ -112,6 +112,7 @@ namespace CRT
                     Manifest manifest;
                     if (microTriangle.Intersect(_r, manifest))
                     {
+			_m = manifest;
                         return true;
                     }
                 }
