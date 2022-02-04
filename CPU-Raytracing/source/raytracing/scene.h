@@ -68,7 +68,7 @@ namespace CRT
 			{
 				ShadowRay shadowRay = _light.ConstructShadowRay(_manifest);
 				std::optional<Manifest> possible_blocker = GetNearestIntersection(shadowRay.Ray).Manifest;
-				if (!possible_blocker || possible_blocker->T >= shadowRay.MaxT)
+			//	if (!possible_blocker || possible_blocker->T >= shadowRay.MaxT)
 				{
 					return contribution;
 				}
