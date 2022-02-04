@@ -33,6 +33,27 @@ namespace CRT
 		return false;
 	}
 
+	bool Plane::IntersectLine(Ray _r, Manifest& _m)
+	{
+		float cosTheta = Normal.Dot(_r.D);
+		// Backface check; if plane normal faces opposite direction of 
+		// ray direction, the normal is facing the ray so it's a front face.
+		if (-cosTheta > 1e-6)
+		{
+			float3 p0l0 = Point - _r.O;
+			float t = p0l0.Dot(Normal) / cosTheta;
+
+			_m.T = t;
+			_m.SurfaceNormal = Normal;
+			_m.ShadingNormal = Normal;
+			_m.IntersectionPoint = _r.Sample(t);
+			_m.UV = GetUV(_r.O + _r.D * _m.T, _m.SurfaceNormal);
+			return true;
+
+		}
+		return false;
+	}
+
 	float2 Plane::GetUV(float3 _point, float3 _normal) const
 	{
 		if (_point.x > 1.0f)
