@@ -73,20 +73,25 @@ namespace CRT
         bool exitedGrid = false;
         
         Manifest nearest;
+        int numTriangles = 0;
+        std::array<Triangle, 8> microTriangles;
+        std::array<float2, 8> uv1;
+        std::array<float2, 8> uv2;
+        std::array<float2, 8> uv3;
         for (int j = 0; j < numSubdivisions; j++)
         {
             for (int k = 0; k < numSubdivisions; k++)
             {
                 bool isEdgeTriangle = (j >= numSubdivisions - 1) || (k >= numSubdivisions - 1);
-                for (int i = 0; i < (isEdgeTriangle ? 1 : 2); i++)
+                for (int i = 0; i < numSubdivisions; i++)
                 {
-                    float3 uvV0, uvV1, uvV2;
+                    float2 uvV0, uvV1, uvV2;
                     // Upper left
-                    uvV0 = float2(j * delta, (k * 1) * delta);
+                    uvV0 = float2(j * delta, (k + 1) * delta);
                     // Lower right
                     uvV1 = float2((j + 1) * delta, k * delta);
                     // Upper triangle test
-                    if (i % 2 == 0 && numSubdivisions % 2 == 0)
+                    if ((i + j + k) % 2 == 0 && numSubdivisions % 2 == 0)
                     {
                         // Upper right
                         uvV2 = float2((j + 1) * delta, (k + 1) * delta);
@@ -97,16 +102,21 @@ namespace CRT
                         uvV2 = float2(j * delta, k * delta);
                     }
                     Triangle microTriangle;
-                    Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, uvV0);
-                    Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, uvV1);
-                    Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, uvV2);
+                    Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, float3(1.0 - uvV0.x - uvV0.y, uvV0.x, uvV0.y));
+                    Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, float3(1.0 - uvV1.x - uvV1.y, uvV1.x, uvV1.y));
+                    Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, float3(1.0 - uvV2.x - uvV2.y, uvV2.x, uvV2.y));
 
-                    microTriangle.V0 += _heightmap->GetValue(microTriangle.u0).x * microTriangle.N0;
-                    microTriangle.V1 += _heightmap->GetValue(microTriangle.u1).x * microTriangle.N1;
-                    microTriangle.V2 += _heightmap->GetValue(microTriangle.u2).x * microTriangle.N2;
+                    microTriangle.V0;// += _heightmap->GetValue(microTriangle.u0).x * microTriangle.N0;
+                    microTriangle.V1;// += _heightmap->GetValue(microTriangle.u1).x * microTriangle.N1;
+                    microTriangle.V2;// += _heightmap->GetValue(microTriangle.u2).x * microTriangle.N2;
+
+                    uv1[numTriangles] = uvV0;
+                    uv2[numTriangles] = uvV1;
+                    uv3[numTriangles] = uvV2;
+                    microTriangles[numTriangles++] = microTriangle;
 
                     Manifest manifest;
-                    if (microTriangle.Intersect(_r, manifest) && manifest.T < nearest.T)
+                    if (microTriangle.Intersect(_r, manifest))
                     {
                         return true;
                     }
@@ -186,7 +196,7 @@ namespace CRT
 
         // The "lowerright" vertex of the microtriangle
         float3 uvV1 = float3(_bary.x, _bary.y + 1, _bary.z) / _tesselation;
-        triangle.V1 = uvV0.x * V0 + uvV0.y * V1 + uvV0.z * V2;
+        triangle.V1 = uvV1.x * V0 + uvV1.y * V1 + uvV1.z * V2;
 
         // Every upper triangle is adjacent to lower triangles only. Therefore, every other
         // triangle is an upper triangle. (0,0,0) is an upper triangle in every tesselation
@@ -197,7 +207,7 @@ namespace CRT
         float3 uvV2 = (isUpperTriangle ?    float3(_bary.x, _bary.y + 1, _bary.z + 1) :
                                             float3(_bary.x, _bary.y, _bary.z))
                       / _tesselation;
-        triangle.V2 = uvV0.x * V0 + uvV0.y * V1 + uvV0.z * V2;
+        triangle.V2 = uvV2.x * V0 + uvV2.y * V1 + uvV2.z * V2;
 
         return triangle;
     }
