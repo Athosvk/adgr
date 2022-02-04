@@ -122,57 +122,60 @@ namespace CRT
         return false;
     }
 
-    bool Triangle::IntersectTriangularSide(Ray _r, Triangle _tr, float& t0, float& t1, float3& inter0, float3& inter1, float3& _bary, float _tesselation) const
+    bool Triangle::IntersectTriangularSide(Ray _r, Triangle _tr, float& t0, float& t1, float3& inter0, float3& inter1, float3& _bary0, float3& _bary1, EGridChange& _startChange, float _tesselation) const
     {
         Manifest ma;
 		if (_tr.Intersect(_r, ma))
 		{
 			inter1 = ma.IntersectionPoint;
 			t1 = ma.T;
+            ComputeBaryCentric(_bary1, inter1);
+
 			if (t1 < t0)
 			{
-				//SwapIntersection(inter0, t0, inter1, t1);
-				ComputeBaryCentric(_bary, inter0);
-			}
+				SwapIntersection(inter0, t0, _bary0, inter1, t1, _bary1);
 
-            Triangle cell = GetCell(_bary, _tesselation);
+                Triangle cell = GetCell(_bary0, _tesselation);
+                // Get the normals
+                float3 baryt;
+                ComputeBaryCentric(baryt, cell.V0);
+                cell.N0 = ((_tr.N0 * baryt.x) + (_tr.N1 * baryt.y) + (_tr.N2 * baryt.z)).Normalize();
+                ComputeBaryCentric(baryt, cell.V1);
+                cell.N1 = ((_tr.N0 * baryt.x) + (_tr.N1 * baryt.y) + (_tr.N2 * baryt.z)).Normalize();
+                ComputeBaryCentric(baryt, cell.V2);
+                cell.N2 = ((_tr.N0 * baryt.x) + (_tr.N1 * baryt.y) + (_tr.N2 * baryt.z)).Normalize();
 
-            // Determine the sideplane from which we entered the cell.
-            // The side-plane is specific to upper triangles and lower triangles
-            // If lower triangle, V0-V1 = iplus, V0-V2 = kplus, V1-V2 = jplus
-            // If upper triangle, V0-V1 = imin, V0-V2 = kmin, V1-V2 = jmin
-			float3 cellIntersectionPoint;
-            float t;
-			if (IntersectSidePLane(_r, cell.V0, cell.V1, _tr.N0, _tr.N1, cellIntersectionPoint, t))
-			{
-				float len = (_tr.V1 - _tr.V0).Magnitude();
-				float3 nx = (_tr.V1 - _tr.V0).Normalize();
-				float  nb = (inter0 - _tr.V0).Dot(nx) / len;
+                // Determine the sideplane from which we entered the cell.
+                // The side-plane is specific to upper triangles and lower triangles
+                // If lower triangle, V0-V1 = iplus, V0-V2 = kplus, V1-V2 = jplus
+                // If upper triangle, V0-V1 = imin, V0-V2 = kmin, V1-V2 = jmin
+                float3 cellIntersectionPoint;
+                float t, t00 = FLT_MAX;
+                if (IntersectSidePLane(_r, cell.V0, cell.V1, cell.N0, cell.N1, cellIntersectionPoint, t))
+                {
+                    if (t < t00)
+                    {
+                        t00 = t;
+                        _startChange = EGridChange::KPlus;
+                    }
+                }
+                if (IntersectSidePLane(_r, cell.V1, cell.V2, cell.N1, cell.N2, cellIntersectionPoint, t))
+                {
+                    if (t < t00)
+                    {
+                        t00 = t;
+                        _startChange = EGridChange::IPlus;
+                    }
+                }
 
-				_bary.x = 1.0f - nb;
-				_bary.y = nb;
-				_bary.z = 0.0f;
-			}
-			if (IntersectSidePLane(_r, cell.V1, cell.V2, _tr.N1, _tr.N2, cellIntersectionPoint, t))
-			{
-				float len = (_tr.V2 - _tr.V1).Magnitude();
-				float3 nx = (_tr.V2 - _tr.V1).Normalize();
-				float  nb = (inter0 - _tr.V1).Dot(nx) / len;
-
-				_bary.x = 0.0f;
-				_bary.y = 1.0f - nb;
-				_bary.z = nb;
-			}
-
-			if (IntersectSidePLane(_r, cell.V0, cell.V2, _tr.N0, _tr.N2, cellIntersectionPoint, t))
-			{
-				float len = (_tr.V0 - _tr.V2).Magnitude();
-				float3 nx = (_tr.V0 - _tr.V2).Normalize();
-				float  nb = (inter0 - _tr.V2).Dot(nx) / len;
-
-				_bary.x = 0.0f;
-				_bary.y = 1.0f - nb;
-				_bary.z = nb;
+                if (IntersectSidePLane(_r, cell.V0, cell.V2, cell.N0, cell.N2, cellIntersectionPoint, t))
+                {
+                    if (t < t00)
+                    {
+                        t00 = t;
+                        _startChange = EGridChange::JPlus;
+                    }
+                }
 			}
             return true;
 		}
@@ -264,24 +267,13 @@ namespace CRT
                 }
             }
 
-            //Triangle tr(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
-            //Manifest ma;
-            //if (tr.Intersect(_r, ma))
-            //{
-            //    inter1 = ma.IntersectionPoint;
-            //    t1 = ma.T;
-            //    if (t1 < t0)
-            //    {
-            //        SwapIntersection(inter0, t0, inter1, t1);
-            //        // Use from intersection?
-            //        ComputeBaryCentric(bary, inter0);
-            //        
-            //        float3 cell = float3(floor(bary.x * tes), floor(bary.y * tes), floor(bary.z * tes));
-            //    }
-            //}
-            //tr = Triangle(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, N0, N1, N2);
+           	Triangle tr0(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
+            IntersectTriangularSide(_r, tr0, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
+
+            Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
+            IntersectTriangularSide(_r, tr1, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
         }
-        if (inter0 < FLT_MAX && inter1 < FLT_MAX)
+        if (t0 < FLT_MAX && t1 < FLT_MAX)
         {
             _start = Cell{ int32_t(bary0.x * tes), int32_t(bary0.y * tes), int32_t(bary0.z * tes) };
             _stop = Cell{ int32_t(bary1.x * tes), int32_t(bary1.y * tes), int32_t(bary1.z * tes) };

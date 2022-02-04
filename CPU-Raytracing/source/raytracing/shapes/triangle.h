@@ -37,7 +37,7 @@ namespace CRT
 		bool IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap) const;
 		bool IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const;
 
-		bool IntersectTriangularSide(Ray _r, Triangle _tr, float& t0, float& t1, float3& inter0, float3& inter1, float3& _bary, float _tesselation) const;
+		bool IntersectTriangularSide(Ray _r, Triangle _tr, float& t0, float& t1, float3& inter0, float3& inter1, float3& _bary0, float3& _bary1, EGridChange& _startChange, float _tesselation) const;
 		Triangle GetCell(float3 _bary, unsigned _tesselation) const;
 		bool InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, EGridChange& _startChange) const;
 		void SwapIntersection(float3& _inter0, float& _t0, float3& _bary0, float3& _inter1, float& _t1, float3 _bary1) const;
