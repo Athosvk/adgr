@@ -67,29 +67,27 @@ namespace CRT
 
     bool Triangle::IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap) const
     {
-        uint32_t numSubdivisions = 2;
+        uint32_t numSubdivisions = 4;
 
         float delta = 1.0f / numSubdivisions;
         bool exitedGrid = false;
         
         Manifest nearest;
         int numTriangles = 0;
-        std::array<Triangle, 8> microTriangles;
-        std::array<float2, 8> uv1;
-        std::array<float2, 8> uv2;
-        std::array<float2, 8> uv3;
         for (int j = 0; j < numSubdivisions; j++)
         {
             for (int k = 0; k < numSubdivisions; k++)
             {
-                bool isEdgeTriangle = (j >= numSubdivisions - 1) || (k >= numSubdivisions - 1);
                 for (int i = 0; i < numSubdivisions; i++)
                 {
                     float2 uvV0, uvV1, uvV2;
                     // Upper left
                     uvV0 = float2(j * delta, (k + 1) * delta);
+                    if (uvV0.x + uvV0.y > 1) continue;
+
                     // Lower right
                     uvV1 = float2((j + 1) * delta, k * delta);
+                    if (uvV1.x + uvV1.y > 1) continue;
                     // Upper triangle test
                     if ((i + j + k) % 2 == 0 && numSubdivisions % 2 == 0)
                     {
@@ -101,19 +99,15 @@ namespace CRT
                         // Lower left
                         uvV2 = float2(j * delta, k * delta);
                     }
+                    if (uvV2.x + uvV2.y > 1) continue;
                     Triangle microTriangle;
                     Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, float3(1.0 - uvV0.x - uvV0.y, uvV0.x, uvV0.y));
                     Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, float3(1.0 - uvV1.x - uvV1.y, uvV1.x, uvV1.y));
                     Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, float3(1.0 - uvV2.x - uvV2.y, uvV2.x, uvV2.y));
 
-                    microTriangle.V0;// += _heightmap->GetValue(microTriangle.u0).x * microTriangle.N0;
-                    microTriangle.V1;// += _heightmap->GetValue(microTriangle.u1).x * microTriangle.N1;
-                    microTriangle.V2;// += _heightmap->GetValue(microTriangle.u2).x * microTriangle.N2;
-
-                    uv1[numTriangles] = uvV0;
-                    uv2[numTriangles] = uvV1;
-                    uv3[numTriangles] = uvV2;
-                    microTriangles[numTriangles++] = microTriangle;
+                    microTriangle.V0 += _heightmap->GetValue(microTriangle.u0).x * microTriangle.N0;
+                    microTriangle.V1 += _heightmap->GetValue(microTriangle.u1).x * microTriangle.N1;
+                    microTriangle.V2 += _heightmap->GetValue(microTriangle.u2).x * microTriangle.N2;
 
                     Manifest manifest;
                     if (microTriangle.Intersect(_r, manifest))
