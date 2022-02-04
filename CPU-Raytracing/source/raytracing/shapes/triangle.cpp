@@ -67,15 +67,6 @@ namespace CRT
 
     bool Triangle::IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap) const
     {
-        Cell currentCell;
-        Cell stopCell;
-        EGridChange change;
-        if (!InitializeDisplaced(_r, currentCell, stopCell, change))
-        {
-            return false;
-        }
-        Manifest nearest;
-
         uint32_t numSubdivisions = 2;
 
         float delta = 1.0f / numSubdivisions;
@@ -87,22 +78,23 @@ namespace CRT
             for (int k = 0; k < numSubdivisions; k++)
             {
                 bool isEdgeTriangle = (j >= numSubdivisions - 1) || (k >= numSubdivisions - 1);
-                for (int i = 0; i < isEdgeTriangle ? 1 : 2; i++)
+                for (int i = 0; i < (isEdgeTriangle ? 1 : 2); i++)
                 {
                     float3 uvV0, uvV1, uvV2;
                     // Upper left
-                    uvV0 = float2(currentCell.j * delta, (currentCell.k * 1) * delta);
+                    uvV0 = float2(j * delta, (k * 1) * delta);
                     // Lower right
-                    uvV1 = float2((currentCell.j + 1) * delta, currentCell.k * delta);
+                    uvV1 = float2((j + 1) * delta, k * delta);
                     // Upper triangle test
                     if (i % 2 == 0 && numSubdivisions % 2 == 0)
                     {
                         // Upper right
-                        uvV2 = float2((currentCell.j + 1) * delta, (currentCell.k + 1) * delta);
+                        uvV2 = float2((j + 1) * delta, (k + 1) * delta);
                     }
                     else
                     {
-                        uvV2 = float2(currentCell.j * delta, currentCell.k * delta);
+                        // Lower left
+                        uvV2 = float2(j * delta, k * delta);
                     }
                     Triangle microTriangle;
                     Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, uvV0);
@@ -354,6 +346,8 @@ namespace CRT
 
     bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const
     {
+        return IntersectDisplacedNaive(_r, _m, _heightmap);
+
         Cell currentCell;
         Cell stopCell;
         EGridChange change;
