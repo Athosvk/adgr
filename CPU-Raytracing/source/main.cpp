@@ -28,7 +28,7 @@ int main(char** argc, char** argv)
 	RenderDevice* renderDevice = new RenderDevice(window);
 
 	Texture* texture = new Texture("./assets/test_texture.png");
-	Texture* heightMap = new Texture("./assets/heightmap.png");
+	Texture* heightMap = new Texture("./assets/heightmap.jpeg");
 
 	Scene* scene = new Scene();
 	Material* material = new Material(Color::White, 0.0f, nullptr);

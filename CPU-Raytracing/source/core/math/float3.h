@@ -89,6 +89,8 @@ namespace CRT
 
 		float3 Abs() const; 
 
+		static float3 Lerp(float3 v1, float3 v2, float t);
+
 		std::string ToString() const;
 
 		union

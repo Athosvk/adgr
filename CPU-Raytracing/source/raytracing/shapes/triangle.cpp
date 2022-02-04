@@ -1,5 +1,6 @@
 #include "./raytracing/shapes/triangle.h"
 #include "./raytracing/shapes/plane.h"
+#include "./raytracing/shapes/bilinear_patch.h"
 
 #include <limits>
 #include <array>
@@ -217,62 +218,73 @@ namespace CRT
         float tes = 4.0f;
         float3 inter0, inter1, bary0, bary1;
         float t0 = FLT_MAX, t1 = FLT_MAX;
-        {
-            if (IntersectSidePLane(_r, V0, V1, N0, N1, inter1, t1))
-            {
-                if (t1 < t0 && (N0 + N1).Normalize().Dot(inter1) - ((V0 + V1) / 2.0f) < m)
-                {
-                    SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
+        
+        Manifest manifest;
+        BilinearPatch patch1(V0 + N0 * m, V1 + N1 * m, V0 - N0 * m, V1 - N1 * m);
+		if (patch1.Intersect(_r, manifest))
+		{
+            // To Pepijn I leave this message: This should use the manifest t
+			if (t1 < t0)
+			{
+                inter1 = manifest.IntersectionPoint;
+				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 
-                    float len = (V1 - V0).Magnitude();
-                    float3 nx = (V1 - V0).Normalize();
-                    float  nb = (inter0 - V0).Dot(nx) / len;
+				float len = (V1 - V0).Magnitude();
+				float3 nx = (V1 - V0).Normalize();
+				float  nb = (inter0 - V0).Dot(nx) / len;
 
-                    bary0.x = 1.0f - nb;
-                    bary0.y = nb;
-                    bary0.z = 0.0f;
-                    _startChange = EGridChange::KPlus;
-                }
-            }
-            if (IntersectSidePLane(_r, V1, V2, N1, N2, inter1, t1))
-            {
-                if (t1 < t0 && (N1 + N2).Normalize().Dot(inter1) - ((V1 + V2) / 2.0f) < m)
-                {
-                    SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
+				bary0.x = 1.0f - nb;
+				bary0.y = nb;
+				bary0.z = 0.0f;
+				_startChange = EGridChange::KPlus;
+			}
+		}
+        BilinearPatch patch2(V1 + N1 * m, V2 + N2 * m, V1 - N1 * m, V2 - N2 * m);
+		if (patch2.Intersect(_r, manifest))
+		{
+            // To Pepijn I leave this message: This should use the manifest t
+			if (t1 < t0)
+			{
+                inter1 = manifest.IntersectionPoint;
+				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 
-                    float len = (V2 - V1).Magnitude();
-                    float3 nx = (V2 - V1).Normalize();
-                    float  nb = (inter0 - V1).Dot(nx) / len;
+				float len = (V2 - V1).Magnitude();
+				float3 nx = (V2 - V1).Normalize();
+				float  nb = (inter0 - V1).Dot(nx) / len;
 
-                    bary0.x = 0.0f;
-                    bary0.y = 1.0f - nb;
-                    bary0.z = nb;
-                    _startChange = EGridChange::IPlus;
-                }
-            }
-            if (IntersectSidePLane(_r, V2, V0, N2, N0, inter1, t1))
-            {
-                if (t1 < t0 && (N2 + N0).Normalize().Dot(inter1) - ((V2 + V0) / 2.0f) < m)
-                {
-                    SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
+				bary0.x = 0.0f;
+				bary0.y = 1.0f - nb;
+				bary0.z = nb;
+				_startChange = EGridChange::IPlus;
+			}
+		}
+        BilinearPatch patch3(V2 + N2 * m, V0 + N0 * m, V2 - N2 * m, V0 - N0 * m);
+		if (patch3.Intersect(_r, manifest))
+		{
+            // To Pepijn I leave this message: This should use the manifest t
+			if (t1 < t0)
+			{
+                inter1 = manifest.IntersectionPoint;
+				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 
-                    float len = (V0 - V2).Magnitude();
-                    float3 nx = (V0 - V2).Normalize();
-                    float  nb = (inter0 - V2).Dot(nx) / len;
+				float len = (V0 - V2).Magnitude();
+				float3 nx = (V0 - V2).Normalize();
+				float  nb = (inter0 - V2).Dot(nx) / len;
 
-                    bary0.x = nb;
-                    bary0.y = 0.0f;
-                    bary0.z = 1.0f - nb;
-                    _startChange = EGridChange::JPlus;
-                }
-            }
+				bary0.x = nb;
+				bary0.y = 0.0f;
+				bary0.z = 1.0f - nb;
+				_startChange = EGridChange::JPlus;
+			}
+		}
 
-           	Triangle tr0(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
-            IntersectTriangularSide(_r, tr0, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
+		Triangle tr0(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
+        // Uncomment this once its verified that the bilinear patches are being intersected correctly
+		//IntersectTriangularSide(_r, tr0, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
 
-            Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
-            IntersectTriangularSide(_r, tr1, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
-        }
+		Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
+		//IntersectTriangularSide(_r, tr1, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
+
         if (t0 < FLT_MAX && t1 < FLT_MAX)
         {
             _start = Cell{ int32_t(bary0.x * tes), int32_t(bary0.y * tes), int32_t(bary0.z * tes) };
@@ -344,12 +356,10 @@ namespace CRT
 
     bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const
     {
-        return IntersectDisplacedNaive(_r, _m, _heightmap);
-
         Cell currentCell;
         Cell stopCell;
         EGridChange change;
-        if (!InitializeDisplaced(_r, currentCell, stopCell, change))
+        return InitializeDisplaced(_r, currentCell, stopCell, change);
         {
             return false;
         }
