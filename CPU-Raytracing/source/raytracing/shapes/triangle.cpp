@@ -290,6 +290,10 @@ namespace CRT
         {
             _start = Cell{ int32_t(bary0.x * tes), int32_t(bary0.y * tes), int32_t(bary0.z * tes) };
             _stop = Cell{ int32_t(bary1.x * tes), int32_t(bary1.y * tes), int32_t(bary1.z * tes) };
+            if (_start == _stop)
+            {
+                _startChange = EGridChange::None;
+            }
             return true;
         }
         return false;
@@ -361,7 +365,10 @@ namespace CRT
         EGridChange change;
         float t;
         bool b = InitializeDisplaced(_r, currentCell, stopCell, t, change);
-        _m.ShadingNormal = float3(change == EGridChange::IMin ? 0.5f : change == EGridChange::IPlus ? 1.0f : 0.0f, change == EGridChange::JMin ? 0.5f : change == EGridChange::JPlus ? 1.0f : 0.0f, change == EGridChange::KMin ? 0.5f : change == EGridChange::KPlus ? 1.0f : 0.0f);
+        if (change != EGridChange::None)
+            _m.ShadingNormal = float3(change == EGridChange::IMin ? 0.5f : change == EGridChange::IPlus ? 1.0f : 0.0f, change == EGridChange::JMin ? 0.5f : change == EGridChange::JPlus ? 1.0f : 0.0f, change == EGridChange::KMin ? 0.5f : change == EGridChange::KPlus ? 1.0f : 0.0f);
+        else
+            _m.ShadingNormal = float3::One();
         _m.T = t;
         return b;
         {
