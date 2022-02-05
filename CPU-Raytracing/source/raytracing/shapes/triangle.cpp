@@ -153,7 +153,10 @@ namespace CRT
                 float3 cellIntersectionPoint;
                 float t, t00 = FLT_MAX;
 
-                if (IntersectSidePatch(_r, cellTriangle.V0, cellTriangle.V1, cellTriangle.N0, cellTriangle.N1, _m, t, inter1))
+                // Simulate a wedge, as we want to know if the ray intersected the cell planes in the upper and lower extents as it may
+                // be near orthogonal to the cell, in which case it intersected the cell plane at some far far away point
+                float prismWedgeExtents = 100.f;
+                if (IntersectSidePatch(_r, cellTriangle.V0, cellTriangle.V1, cellTriangle.N0, cellTriangle.N1, prismWedgeExtents, t, inter1))
                 {
                     if (t < t00)
                     {
@@ -161,7 +164,7 @@ namespace CRT
                         _startChange = EGridChange::KPlus;
                     }
                 }
-                if (IntersectSidePatch(_r, cellTriangle.V1, cellTriangle.V2, cellTriangle.N1, cellTriangle.N2, _m, t, inter1))
+                if (IntersectSidePatch(_r, cellTriangle.V1, cellTriangle.V2, cellTriangle.N1, cellTriangle.N2, prismWedgeExtents, t, inter1))
                 {
                     if (t < t00)
                     {
@@ -170,7 +173,7 @@ namespace CRT
                     }
                 }
 
-                if (IntersectSidePatch(_r, cellTriangle.V2, cellTriangle.V0, cellTriangle.N2, cellTriangle.N0, _m, t, inter1))
+                if (IntersectSidePatch(_r, cellTriangle.V2, cellTriangle.V0, cellTriangle.N2, cellTriangle.N0, prismWedgeExtents, t, inter1))
                 {
                     if (t < t00)
                     {
