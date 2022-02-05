@@ -231,32 +231,32 @@ namespace CRT
         BilinearPatch patch1(V0 + N0 * m, V1 + N1 * m, V0 - N0 * m, V1 - N1 * m);
 		if (IntersectSidePatch(_r, V0, V1, N0, N1, m, t1, inter1))
 		{
+			float len = (V1 - V0).Magnitude();
+			float3 nx = (V1 - V0).Normalize();
+			float  nb = (inter0 - V0).Dot(nx) / len;
+
+			bary1.x = nb;
+			bary1.y = 0.0f;
+			bary1.z = 1.0f - nb;
+                
 			if (t1 < t0)
 			{
-				float len = (V1 - V0).Magnitude();
-				float3 nx = (V1 - V0).Normalize();
-				float  nb = (inter0 - V0).Dot(nx) / len;
-
-				bary1.x = nb;
-				bary1.y = 0.0f;
-				bary1.z = 1.0f - nb;
-                
 				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 				_startChange = EGridChange::JPlus;
 			}
 		}
 		if (IntersectSidePatch(_r, V1, V2, N1, N2, m, t1, inter1))
 		{
+			float len = (V2 - V1).Magnitude();
+			float3 nx = (V2 - V1).Normalize();
+			float  nb = (inter0 - V1).Dot(nx) / len;
+
+			bary1.x = 1.0f - nb;
+			bary1.y = nb;
+			bary1.z = 0.0f;
+
 			if (t1 < t0)
 			{
-				float len = (V2 - V1).Magnitude();
-				float3 nx = (V2 - V1).Normalize();
-				float  nb = (inter0 - V1).Dot(nx) / len;
-
-				bary1.x = 1.0f - nb;
-				bary1.y = nb;
-				bary1.z = 0.0f;
-
 				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 				_startChange = EGridChange::KPlus;
 			}
@@ -264,16 +264,16 @@ namespace CRT
         BilinearPatch patch3(V2 + N2 * m, V0 + N0 * m, V2 - N2 * m, V0 - N0 * m);
 		if (IntersectSidePatch(_r, V2, V0, N2, N0, m, t1, inter1))
 		{
+			float len = (V0 - V2).Magnitude();
+			float3 nx = (V0 - V2).Normalize();
+			float  nb = (inter0 - V2).Dot(nx) / len;
+
+			bary1.x = 0.0f;
+			bary1.y = 1.0f - nb;
+			bary1.z = nb;
+
 			if (t1 < t0)
 			{
-				float len = (V0 - V2).Magnitude();
-				float3 nx = (V0 - V2).Normalize();
-				float  nb = (inter0 - V2).Dot(nx) / len;
-
-				bary1.x = 0.0f;
-				bary1.y = 1.0f - nb;
-				bary1.z = nb;
-
 				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 				_startChange = EGridChange::IPlus;
 			}
