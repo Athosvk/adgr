@@ -69,7 +69,7 @@ namespace CRT
 
     bool Triangle::IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap, Cell& _cell) const
     {
-        uint32_t numSubdivisions = 2;
+        uint32_t numSubdivisions = 8;
 
         float delta = 1.0f / numSubdivisions;
         bool exitedGrid = false;
@@ -241,7 +241,7 @@ namespace CRT
         float oldT0 = t0;
         Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
         if (IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes)
-            && t0 != oldT0) 
+            && t0 != oldT0)
         {
             _intersection = EIntersection::Lower;
         }
@@ -251,11 +251,11 @@ namespace CRT
             float len = (V1 - V0).Magnitude();
             float3 nx = (V1 - V0).Normalize();
             float  nb = (inter1 - V0).Dot(nx) / len;
-       
+
             bary1.x = 1.0f - nb;
             bary1.y = nb;
             bary1.z = 0.0f;
-       
+
             if (t1 < t0)
             {
                 _intersection = EIntersection::Patch1;
@@ -268,11 +268,11 @@ namespace CRT
             float len = (V2 - V1).Magnitude();
             float3 nx = (V2 - V1).Normalize();
             float  nb = (inter1 - V1).Dot(nx) / len;
-       
+
             bary1.x = 0.0f;
             bary1.y = nb;
             bary1.z = 1.0f - nb;
-       
+
             if (t1 < t0)
             {
                 _intersection = EIntersection::Patch2;
@@ -285,11 +285,11 @@ namespace CRT
             float len = (V0 - V2).Magnitude();
             float3 nx = (V0 - V2).Normalize();
             float  nb = (inter1 - V2).Dot(nx) / len;
-       
+
             bary1.x = nb;
             bary1.y = 0.0f;
             bary1.z = 1.0f - nb;
-       
+
             if (t1 < t0)
             {
                 _intersection = EIntersection::Patch3;
@@ -373,6 +373,9 @@ namespace CRT
 
     bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const
     {
+        Cell c;
+        return IntersectDisplacedNaive(_r, _m, _heightmap, c);
+
         Cell currentCell;
         Cell stopCell;
         EGridChange change;
@@ -411,45 +414,45 @@ namespace CRT
         switch (change)
         {
         case CRT::EGridChange::IPlus:
-			uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-			uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-			uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
+            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
             break;
         case CRT::EGridChange::JMin:
-			uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-			uvPositions[1] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
-			uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[1] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+            uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / tesselation;
             break;
         case CRT::EGridChange::KPlus:
-			uvPositions[0] = float2(currentCell.j, currentCell.k) / tesselation;
-			uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-			uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[0] = float2(currentCell.j, currentCell.k) / tesselation;
+            uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / tesselation;
             break;
         case CRT::EGridChange::IMin:
-			uvPositions[0] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-			uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-			uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+            uvPositions[0] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
             break;
         case CRT::EGridChange::JPlus:
-			uvPositions[0] = float2(currentCell.j, currentCell.k) / tesselation;
-			uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-			uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[0] = float2(currentCell.j, currentCell.k) / tesselation;
+            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / tesselation;
             break;
         case CRT::EGridChange::KMin:
-			uvPositions[0] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
-			uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-			uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[0] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / tesselation;
             break;
         default:
-			uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-			uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
             if (currentCell.IsUpperTriangle(tesselation))
             {
-			    uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+                uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
             }
             else
             {
-			    uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
+                uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
             }
             break;
         }
@@ -623,7 +626,7 @@ namespace CRT
 
     float3 Triangle::UVToBarycentric(float2 _uv) const
     {
-        return float3 { 1.0f - _uv.x - _uv.y, _uv.x, _uv.y };
+        return float3{ 1.0f - _uv.x - _uv.y, _uv.x, _uv.y };
     }
 
     Cell Cell::FromBarycentric(float3 _baryCentric, float _tesselation)
