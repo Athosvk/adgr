@@ -405,7 +405,7 @@ namespace CRT
         //microTriangle.V1 += _heightmap->GetValue(barycentricPositions[1]).x * microTriangle.N1;
         int iteration = 0;
 
-        std::array<Triangle, 16> triangles;
+        std::array<Triangle, 4> triangles;
         size_t numTriangles = 0;
         while (!exitedGrid && numTriangles < tesselation * tesselation)
         {
@@ -416,12 +416,12 @@ namespace CRT
             Manifest nearest;
             if (microTriangle.Intersect(_r, nearest))
             {
-                //_m = nearest;
-                //return true;
+                _m = nearest;
+                return true;
             }
             if (currentCell == stopCell)
             {
-                exitedGrid = true;
+                break;
             }
 
             // First get the vector perpendicular to the V2 normal and the direction towards the ray origin.
@@ -437,11 +437,15 @@ namespace CRT
             if (isToRightOfV2)
             {
                 microTriangle.V0 = microTriangle.V2;
+                microTriangle.N0 = microTriangle.N2;
+                microTriangle.u0 = microTriangle.u2;
                 uvPositions[0] = uvPositions[2];
             }
             else
             {
                 microTriangle.V1 = microTriangle.V2;
+                microTriangle.N1 = microTriangle.N2;
+                microTriangle.u1 = microTriangle.u2;
                 uvPositions[1] = uvPositions[2];
             }
 
