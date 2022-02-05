@@ -155,7 +155,7 @@ namespace CRT
 
                 // Simulate a wedge, as we want to know if the ray intersected the cell planes in the upper and lower extents as it may
                 // be near orthogonal to the cell, in which case it intersected the cell plane at some far far away point
-                float prismWedgeExtents = 100.f;
+                float prismWedgeExtents = 1.f;
                 if (IntersectSidePatch(_r, cellTriangle.V0, cellTriangle.V1, cellTriangle.N0, cellTriangle.N1, prismWedgeExtents, t, inter1))
                 {
                     if (t < t00)
@@ -236,7 +236,7 @@ namespace CRT
 		{
 			float len = (V1 - V0).Magnitude();
 			float3 nx = (V1 - V0).Normalize();
-			float  nb = (inter1 - V0).Dot(nx) / len;
+			float  nb = (inter0 - V0).Dot(nx) / len;
 
 			bary1.x = nb;
 			bary1.y = 0.0f;
@@ -252,7 +252,7 @@ namespace CRT
 		{
 			float len = (V2 - V1).Magnitude();
 			float3 nx = (V2 - V1).Normalize();
-			float  nb = (inter1 - V1).Dot(nx) / len;
+			float  nb = (inter0 - V1).Dot(nx) / len;
 
 			bary1.x = 1.0f - nb;
 			bary1.y = nb;
@@ -264,11 +264,12 @@ namespace CRT
 				_startChange = EGridChange::KPlus;
 			}
 		}
+        BilinearPatch patch3(V2 + N2 * m, V0 + N0 * m, V2 - N2 * m, V0 - N0 * m);
 		if (IntersectSidePatch(_r, V2, V0, N2, N0, m, t1, inter1))
 		{
 			float len = (V0 - V2).Magnitude();
 			float3 nx = (V0 - V2).Normalize();
-			float  nb = (inter1 - V2).Dot(nx) / len;
+			float  nb = (inter0 - V2).Dot(nx) / len;
 
 			bary1.x = 0.0f;
 			bary1.y = 1.0f - nb;
@@ -282,10 +283,10 @@ namespace CRT
 		}
 
 		Triangle tr0(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
-		IntersectTriangularSide(_r, tr0, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
+		//IntersectTriangularSide(_r, tr0, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
 
 		Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
-		IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
+		//IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
 
         _t = t0;
         if (t0 < FLT_MAX && t1 < FLT_MAX)
