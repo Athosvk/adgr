@@ -223,10 +223,10 @@ namespace CRT
         BilinearPatch patch1(V0 + N0 * m, V1 + N1 * m, V0 - N0 * m, V1 - N1 * m);
 		if (patch1.Intersect(_r, manifest))
 		{
-            // To Pepijn I leave this message: This should use the manifest t
+            t1 = manifest.T;
+            inter1 = manifest.IntersectionPoint;
 			if (t1 < t0)
 			{
-                inter1 = manifest.IntersectionPoint;
 				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 
 				float len = (V1 - V0).Magnitude();
@@ -242,7 +242,8 @@ namespace CRT
         BilinearPatch patch2(V1 + N1 * m, V2 + N2 * m, V1 - N1 * m, V2 - N2 * m);
 		if (patch2.Intersect(_r, manifest))
 		{
-            // To Pepijn I leave this message: This should use the manifest t
+            t1 = manifest.T;
+            inter1 = manifest.IntersectionPoint;
 			if (t1 < t0)
 			{
                 inter1 = manifest.IntersectionPoint;
@@ -261,7 +262,8 @@ namespace CRT
         BilinearPatch patch3(V2 + N2 * m, V0 + N0 * m, V2 - N2 * m, V0 - N0 * m);
 		if (patch3.Intersect(_r, manifest))
 		{
-            // To Pepijn I leave this message: This should use the manifest t
+            t1 = manifest.T;
+            inter1 = manifest.IntersectionPoint;
 			if (t1 < t0)
 			{
                 inter1 = manifest.IntersectionPoint;
@@ -279,11 +281,10 @@ namespace CRT
 		}
 
 		Triangle tr0(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
-        // Uncomment this once its verified that the bilinear patches are being intersected correctly
-		//IntersectTriangularSide(_r, tr0, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
+		IntersectTriangularSide(_r, tr0, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
 
 		Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
-		//IntersectTriangularSide(_r, tr1, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
+		IntersectTriangularSide(_r, tr1, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
 
         if (t0 < FLT_MAX && t1 < FLT_MAX)
         {
