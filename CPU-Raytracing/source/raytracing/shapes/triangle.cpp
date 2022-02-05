@@ -212,7 +212,7 @@ namespace CRT
         return triangle;
     }
     
-    bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, EGridChange& _startChange) const
+    bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, float& _t, EGridChange& _startChange) const
     {
         float m = 1.0f;
         float tes = 4.0f;
@@ -236,7 +236,7 @@ namespace CRT
 				bary0.x = nb;
 				bary0.y = 0.0f;
 				bary0.z = 1.0f - nb;
-				_startChange = EGridChange::KPlus;
+				_startChange = EGridChange::JPlus;
 			}
 		}
         BilinearPatch patch2(V1 + N1 * m, V2 + N2 * m, V1 - N1 * m, V2 - N2 * m);
@@ -256,7 +256,7 @@ namespace CRT
 				bary0.x = 1.0f - nb;
 				bary0.y = nb;
 				bary0.z = 0.0f;
-				_startChange = EGridChange::IPlus;
+				_startChange = EGridChange::KPlus;
 			}
 		}
         BilinearPatch patch3(V2 + N2 * m, V0 + N0 * m, V2 - N2 * m, V0 - N0 * m);
@@ -276,7 +276,7 @@ namespace CRT
 				bary0.x = 0.0f;
 				bary0.y = 1.0f - nb;
 				bary0.z = nb;
-				_startChange = EGridChange::JPlus;
+				_startChange = EGridChange::IPlus;
 			}
 		}
 
@@ -286,6 +286,7 @@ namespace CRT
 		Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
 		IntersectTriangularSide(_r, tr1, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
 
+        _t = t0;
         if (t0 < FLT_MAX && t1 < FLT_MAX)
         {
             _start = Cell{ int32_t(bary0.x * tes), int32_t(bary0.y * tes), int32_t(bary0.z * tes) };
@@ -360,9 +361,10 @@ namespace CRT
         Cell currentCell;
         Cell stopCell;
         EGridChange change;
+        float t;
         bool b = InitializeDisplaced(_r, currentCell, stopCell, t, change);
-        //_m.ShadingNormal = float3(currentCell.i / 4.0f, currentCell.j / 4.0f, currentCell.k / 4.0f);
-        //_m.T = t;
+        _m.ShadingNormal = float3(change == EGridChange::IMin ? 0.5f : change == EGridChange::IPlus ? 1.0f : 0.0f, change == EGridChange::JMin ? 0.5f : change == EGridChange::JPlus ? 1.0f : 0.0f, change == EGridChange::KMin ? 0.5f : change == EGridChange::KPlus ? 1.0f : 0.0f);
+        _m.T = t;
         return b;
         {
             return false;
