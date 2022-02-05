@@ -27,8 +27,8 @@ int main(char** argc, char** argv)
 	// Render Stuff
 	RenderDevice* renderDevice = new RenderDevice(window);
 
-	Texture* texture = new Texture("./assets/test_texture.png");
-	Texture* heightMap = new Texture("./assets/heightmap.jpeg");
+	Texture* texture = new Texture("./assets/texture.png");
+	Texture* heightMap = new Texture("./assets/heightmap.png");
 
 	Scene* scene = new Scene();
 	Material* material = new Material(Color::White, 0.0f, nullptr);
@@ -38,12 +38,12 @@ int main(char** argc, char** argv)
 	Timer::Duration bvhConstructionDuration;
 	{
 		Timer bvhConstructionTimer;
-		ModelLoading::LoadModel(scene, heightMapMaterial, float3(0.0f, -1.0f, 2.f), "./assets/plane.obj");
+		ModelLoading::LoadModel(scene, heightMapMaterial, float3(0.0f, -1.0f, 0.5f), "./assets/plane.obj");
 		bvhConstructionDuration = bvhConstructionTimer.GetDuration();
 	}
 
-	scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -0.75f, -0.75f).Normalize(), 0.6f, Color::White });
-	//scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, -120.f), 31155.0f, Color::White });
+	//scene->AddDirectionalLight(DirectionalLight{ float3(0.0f, -0.75f, -0.75f).Normalize(), 0.6f, Color::White });
+	scene->AddPointLight(PointLight{ float3(0.0f, 1.0f, 0.5f), 100.0f, Color::White });
 	//scene->AddPointLight(PointLight{ float3(0.0f, 1.5f, 2.5f), 31155.0f, Color::White });
 
 	// IMGUI
