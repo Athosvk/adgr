@@ -453,33 +453,33 @@ namespace CRT
             change = EGridChange(((uint32_t)change + (isToRightOfV2 ? 1 : 5)) % 6);
             switch (change)
             {
-            case EGridChange::IPlus:
-                if (++currentCell.i > tesselation)
+            case EGridChange::IMin:
+                if (--currentCell.i < 0)
                     exitedGrid = true;
                 uvPositions[2] = float2((currentCell.j + 1) * delta, (currentCell.k + 1) * delta);
+                break;
+            case EGridChange::IPlus:
+                if (++currentCell.i >= tesselation)
+                    exitedGrid = true;
+                uvPositions[2] = float2(currentCell.j * delta, currentCell.k * delta);
                 break;
             case EGridChange::JMin:
                 if (--currentCell.j < 0)
                     exitedGrid = true;
-                uvPositions[2] = float2(currentCell.j * delta, currentCell.k * delta);
-                break;
-            case EGridChange::KPlus:
-                if (++currentCell.k > tesselation)
-                    exitedGrid = true;
                 uvPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
                 break;
-            case EGridChange::IMin:
-                if (--currentCell.i < 0)
-                    exitedGrid = true;
-                uvPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
-                break;
             case EGridChange::JPlus:
-                if (++currentCell.j > tesselation)
+                if (++currentCell.j >= tesselation)
                     exitedGrid = true;
                 uvPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
                 break;
             case EGridChange::KMin:
                 if (--currentCell.k < 0)
+                    exitedGrid = true;
+                uvPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
+                break;
+            case EGridChange::KPlus:
+                if (++currentCell.k >= tesselation)
                     exitedGrid = true;
                 uvPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
                 break;
