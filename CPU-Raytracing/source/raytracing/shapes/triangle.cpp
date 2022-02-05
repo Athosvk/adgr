@@ -224,7 +224,7 @@ namespace CRT
         return triangle;
     }
 
-    bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, float& _t, EGridChange& _startChange) const
+    bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, float& _t, EGridChange& _startChange, EIntersection& _intersection) const
     {
         float m = 1.0f;
         float tes = 2.0f;
@@ -232,26 +232,34 @@ namespace CRT
         float t0 = FLT_MAX, t1 = FLT_MAX;
 
         Triangle tr0(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
-        IntersectTriangularSide(_r, tr0, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
+        if (IntersectTriangularSide(_r, tr0, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes))
+        {
+            _intersection = EIntersection::Upper;
+        }
 
+        float oldT0 = t0;
         Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
-        IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
+        if (IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes)
+            && t0 != oldT0) 
+        {
+            _intersection = EIntersection::Lower;
+        }
 
-        BilinearPatch patch1(V0 + N0 * m, V1 + N1 * m, V0 - N0 * m, V1 - N1 * m);
         if (IntersectSidePatch(_r, V0, V1, N0, N1, m, t1, inter1))
         {
             float len = (V1 - V0).Magnitude();
             float3 nx = (V1 - V0).Normalize();
             float  nb = (inter1 - V0).Dot(nx) / len;
        
-            bary1.x = nb;
-            bary1.y = 0.0f;
-            bary1.z = 1.0f - nb;
+            bary1.x = 1.0f - nb;
+            bary1.y = nb;
+            bary1.z = 0.0f;
        
             if (t1 < t0)
             {
+                _intersection = EIntersection::Patch1;
                 SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
-                _startChange = EGridChange::JPlus;
+                _startChange = EGridChange::KPlus;
             }
         }
         if (IntersectSidePatch(_r, V1, V2, N1, N2, m, t1, inter1))
@@ -260,14 +268,15 @@ namespace CRT
             float3 nx = (V2 - V1).Normalize();
             float  nb = (inter1 - V1).Dot(nx) / len;
        
-            bary1.x = 1.0f - nb;
+            bary1.x = 0.0f;
             bary1.y = nb;
-            bary1.z = 0.0f;
+            bary1.z = 1.0f - nb;
        
             if (t1 < t0)
             {
+                _intersection = EIntersection::Patch2;
                 SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
-                _startChange = EGridChange::KPlus;
+                _startChange = EGridChange::IPlus;
             }
         }
         if (IntersectSidePatch(_r, V2, V0, N2, N0, m, t1, inter1))
@@ -276,14 +285,15 @@ namespace CRT
             float3 nx = (V0 - V2).Normalize();
             float  nb = (inter1 - V2).Dot(nx) / len;
        
-            bary1.x = 0.0f;
-            bary1.y = 1.0f - nb;
-            bary1.z = nb;
+            bary1.x = nb;
+            bary1.y = 0.0f;
+            bary1.z = 1.0f - nb;
        
             if (t1 < t0)
             {
+                _intersection = EIntersection::Patch3;
                 SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
-                _startChange = EGridChange::IPlus;
+                _startChange = EGridChange::JPlus;
             }
         }
 
@@ -367,23 +377,29 @@ namespace CRT
         EGridChange change;
         uint32_t tesselation = 2;
         float t;
-        if (!InitializeDisplaced(_r, currentCell, stopCell, t, change))
+        EIntersection intersection;
+        if (!InitializeDisplaced(_r, currentCell, stopCell, t, change, intersection))
         {
             return false;
         }
-       // _m.ShadingNormal = float3(currentCell.i / 4.0f, currentCell.j / 4.0f, currentCell.k / 4.0f);
-       // if (currentCell == stopCell)
-       //     _m.ShadingNormal = float3(1.0f, 1.0f, 1.0f);
-       // //_m.ShadingNormal = float3(stopCell.i / 4.0f, stopCell.j / 4.0f, stopCell.k / 4.0f);
-       // //if (change != EGridChange::None)
-       // //    _m.ShadingNormal = float3(change == EGridChange::IMin ? 0.5f : change == EGridChange::IPlus ? 1.0f : 0.0f, change == EGridChange::JMin ? 0.5f : change == EGridChange::JPlus ? 1.0f : 0.0f, change == EGridChange::KMin ? 0.5f : change == EGridChange::KPlus ? 1.0f : 0.0f);
-       // //else
-       // //    _m.ShadingNormal = float3::One();
-       // _m.T = t;
-       // return b;
-       //{
-       //   return false;
-       //}
+        // _m.ShadingNormal = float3(currentCell.i / 4.0f, currentCell.j / 4.0f, currentCell.k / 4.0f);
+        // if (currentCell == stopCell)
+        //     _m.ShadingNormal = float3(1.0f, 1.0f, 1.0f);
+        // //_m.ShadingNormal = float3(stopCell.i / 4.0f, stopCell.j / 4.0f, stopCell.k / 4.0f);
+        // //if (change != EGridChange::None)
+        // //    _m.ShadingNormal = float3(change == EGridChange::IMin ? 0.5f : change == EGridChange::IPlus ? 1.0f : 0.0f, change == EGridChange::JMin ? 0.5f : change == EGridChange::JPlus ? 1.0f : 0.0f, change == EGridChange::KMin ? 0.5f : change == EGridChange::KPlus ? 1.0f : 0.0f);
+        // //else
+        // //    _m.ShadingNormal = float3::One();
+        // _m.T = t;
+        // return b;
+        //{
+        //   return false;
+        //}
+
+        if (currentCell == stopCell)
+        {
+            __debugbreak();
+        }
 
         std::array<float2, 3> uvPositions;
 
@@ -613,7 +629,8 @@ namespace CRT
 
     bool Cell::IsUpperTriangle(uint32_t _tesselation) const
     {
-        return (i + j + k) % 2 == 0 && _tesselation % 2 == 0;
+        // Indicies for upper triangles sum to N - 2
+        return (i + j + k) == _tesselation - 1;
     }
 
     bool Cell::operator==(const Cell& other) const
