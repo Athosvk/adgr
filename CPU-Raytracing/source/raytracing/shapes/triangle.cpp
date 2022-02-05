@@ -233,15 +233,15 @@ namespace CRT
 		{
 			if (t1 < t0)
 			{
-				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
-
 				float len = (V1 - V0).Magnitude();
 				float3 nx = (V1 - V0).Normalize();
 				float  nb = (inter0 - V0).Dot(nx) / len;
 
-				bary0.x = nb;
-				bary0.y = 0.0f;
-				bary0.z = 1.0f - nb;
+				bary1.x = nb;
+				bary1.y = 0.0f;
+				bary1.z = 1.0f - nb;
+                
+				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 				_startChange = EGridChange::JPlus;
 			}
 		}
@@ -249,15 +249,15 @@ namespace CRT
 		{
 			if (t1 < t0)
 			{
-				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
-
 				float len = (V2 - V1).Magnitude();
 				float3 nx = (V2 - V1).Normalize();
 				float  nb = (inter0 - V1).Dot(nx) / len;
 
-				bary0.x = 1.0f - nb;
-				bary0.y = nb;
-				bary0.z = 0.0f;
+				bary1.x = 1.0f - nb;
+				bary1.y = nb;
+				bary1.z = 0.0f;
+
+				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 				_startChange = EGridChange::KPlus;
 			}
 		}
@@ -266,15 +266,15 @@ namespace CRT
 		{
 			if (t1 < t0)
 			{
-				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
-
 				float len = (V0 - V2).Magnitude();
 				float3 nx = (V0 - V2).Normalize();
 				float  nb = (inter0 - V2).Dot(nx) / len;
 
-				bary0.x = 0.0f;
-				bary0.y = 1.0f - nb;
-				bary0.z = nb;
+				bary1.x = 0.0f;
+				bary1.y = 1.0f - nb;
+				bary1.z = nb;
+
+				SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
 				_startChange = EGridChange::IPlus;
 			}
 		}
