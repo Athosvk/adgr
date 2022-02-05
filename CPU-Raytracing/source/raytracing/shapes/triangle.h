@@ -49,7 +49,7 @@ namespace CRT
 		Triangle(float3 _v0, float3 _v1, float3 _v2, float2 _u0, float2 _u1, float2 _u2, float3 _n0, float3 _n1, float3 _n2);
 
 		virtual bool Intersect(Ray _r, Manifest& _m) const override;
-		bool IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap) const;
+		bool IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap, Cell& cell) const;
 		bool IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const;
 
 		bool IntersectTriangularSide(Ray _r, Triangle _tr, float _m, float& t0, float& t1, float3& inter0, float3& inter1, float3& _bary0, float3& _bary1, EGridChange& _startChange, float _tesselation) const;

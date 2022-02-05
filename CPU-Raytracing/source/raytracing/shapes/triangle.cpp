@@ -67,9 +67,9 @@ namespace CRT
         return false;
     }
 
-    bool Triangle::IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap) const
+    bool Triangle::IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap, Cell& _cell) const
     {
-        uint32_t numSubdivisions = 4;
+        uint32_t numSubdivisions = 2;
 
         float delta = 1.0f / numSubdivisions;
         bool exitedGrid = false;
@@ -114,6 +114,7 @@ namespace CRT
                     Manifest manifest;
                     if (microTriangle.Intersect(_r, manifest))
                     {
+                        _cell = Cell{ i, j, k };
                         _m = manifest;
                         return true;
                     }
@@ -396,10 +397,14 @@ namespace CRT
         //   return false;
         //}
 
-        if (currentCell == stopCell)
-        {
-            __debugbreak();
-        }
+        Cell cell;
+        //if (IntersectDisplacedNaive(_r, _m, _heightmap, cell))
+        //{
+        //}
+        //else
+        //{
+        //    return false;
+        //}
 
         std::array<float2, 3> uvPositions;
 
@@ -482,7 +487,7 @@ namespace CRT
             // First get the vector perpendicular to the V2 normal and the direction towards the ray origin.
             // If the incoming ray projects to the right of V2, which is where this cross product should be aimed to,
             // then we consider the ray to be the right of V2.
-            bool isToRightOfV2 = microTriangle.N2.Cross(_r.O - microTriangle.V2).Dot(_r.D) < 0;
+            bool isToRightOfV2 = microTriangle.N2.Cross(_r.O - microTriangle.V2).Dot(_r.D) > 0;
 
             // Our ray either passes through v0-v2 or v1-v2. If it passes through v0-v2,
             // then the current v1 is the only vertex that is not the same for the next triangle.
