@@ -179,96 +179,97 @@ namespace CRT
 
 	float3 Scene::RenderObject(Ray _r, const Manifest& _manifest, unsigned _remainingBounces) const
 	{
-		float3 object_color;
-		if (_manifest.M->Texture != nullptr)
-			object_color = _manifest.M->Texture->GetValue(_manifest.UV);
-		else
-			object_color = _manifest.M->Color;
-		float specularity = _manifest.M->Specularity;
-
-		float3 material_effect = float3::Zero();
-		const float MinLightingComponent = 0.001f;
-		if (_manifest.M->type == Type::Basic)
-		{
-			if (specularity > MinLightingComponent)
-			{
-				material_effect += GetReflectance(_r, _manifest, _remainingBounces) * specularity;
-			}
-
-			float diffuseness = 1.0f - specularity;
-			if (diffuseness > MinLightingComponent)
-			{
-				material_effect += GetTotalLightContribution(_manifest) * diffuseness;
-			}
-		}
-		else if (_manifest.M->type == Type::Dielectric)
-		{
-			// Get the cosine of the angle between the normal and the incoming ray
-			// by inverting the incoming ray's direction
-			float cosIncoming = ((-_r.D)).Dot(_manifest.ShadingNormal);
-			float3 normal = _manifest.ShadingNormal;
-			bool front_face = cosIncoming > 0.0f;
-			if (!front_face)
-			{
-				// Moving outside the object, so computed cosine and normal should be the other way
-				normal = -normal;
-				cosIncoming = -cosIncoming;
-			}
-
-			float n1 = 1.0f;
-			float n2 = _manifest.M->RefractionIndex;
-			if (!front_face)
-				std::swap(n1, n2);
-
-			float refractionIndexRatio = n1 / n2;
-			float k = 1.0f - (refractionIndexRatio * refractionIndexRatio) * (1.0f - (cosIncoming * cosIncoming));
-			float reflectance = 0.0f;
-
-			// Not past critical angle, refract ray
-			if (k >= 0.f)
-			{
-				// Fresnel
-				float sinIncoming = sqrtf(1.0f - cosIncoming * cosIncoming);
-				// Calculate from sin using Snell's law
-				float cosOutgoing = sqrtf(1.0f - std::powf((refractionIndexRatio * sinIncoming), 2));
-				float reflectanceSPolarized = std::powf((n1 * cosIncoming - n2 * cosOutgoing) /
-					(n1 * cosIncoming + n2 * cosOutgoing), 2);
-				float reflectancePPolarized = std::powf((n1 * cosOutgoing - n2 * cosIncoming) /
-					(n1 * cosOutgoing + n2 * cosIncoming), 2);
-				reflectance = 0.5f * (reflectanceSPolarized + reflectancePPolarized);
-			}
-			else
-			{
-				reflectance = 1.0f;
-			}
-			if (reflectance > MinLightingComponent)
-			{
-				material_effect += GetReflectance(_r, _manifest, _remainingBounces) * reflectance;
-			}
-			float transmittance = 1.0f - reflectance;
-			if (transmittance > MinLightingComponent)
-			{
-				float3 refractionDirection = refractionIndexRatio * _r.D +
-					normal * (refractionIndexRatio * cosIncoming - std::sqrtf(k));
-
-				// Make sure the refraction ray doesn't self-intersect
-				const float SelfIntersectionDelta = 0.001f;
-				// Displace into opposite direction since we're moving into the new medium
-				const float3 Displacement = SelfIntersectionDelta * normal;
-
-				float3 transmittedColor = IntersectBounced(Ray(_manifest.IntersectionPoint - Displacement,
-					refractionDirection), _remainingBounces - 1);
-				if (!front_face)
-				{
-					// Beer's law. Divided by 5 to reduce the effect
-					transmittedColor.x *= std::expf(-transmittedColor.x * (_manifest.T / 5));
-					transmittedColor.y *= std::expf(-transmittedColor.y * (_manifest.T / 5));
-					transmittedColor.z *= std::expf(-transmittedColor.z * (_manifest.T / 5));
-				}
-				material_effect += transmittedColor * transmittance;
-			}
-		}
-		return material_effect * object_color;
+		//float3 object_color;
+		//if (_manifest.M->Texture != nullptr)
+		//	object_color = _manifest.M->Texture->GetValue(_manifest.UV);
+		//else
+		//	object_color = _manifest.M->Color;
+		//float specularity = _manifest.M->Specularity;
+		//
+		//float3 material_effect = float3::Zero();
+		//const float MinLightingComponent = 0.001f;
+		//if (_manifest.M->type == Type::Basic)
+		//{
+		//	if (specularity > MinLightingComponent)
+		//	{
+		//		material_effect += GetReflectance(_r, _manifest, _remainingBounces) * specularity;
+		//	}
+		//
+		//	float diffuseness = 1.0f - specularity;
+		//	if (diffuseness > MinLightingComponent)
+		//	{
+		//		material_effect += GetTotalLightContribution(_manifest) * diffuseness;
+		//	}
+		//}
+		//else if (_manifest.M->type == Type::Dielectric)
+		//{
+		//	// Get the cosine of the angle between the normal and the incoming ray
+		//	// by inverting the incoming ray's direction
+		//	float cosIncoming = ((-_r.D)).Dot(_manifest.ShadingNormal);
+		//	float3 normal = _manifest.ShadingNormal;
+		//	bool front_face = cosIncoming > 0.0f;
+		//	if (!front_face)
+		//	{
+		//		// Moving outside the object, so computed cosine and normal should be the other way
+		//		normal = -normal;
+		//		cosIncoming = -cosIncoming;
+		//	}
+		//
+		//	float n1 = 1.0f;
+		//	float n2 = _manifest.M->RefractionIndex;
+		//	if (!front_face)
+		//		std::swap(n1, n2);
+		//
+		//	float refractionIndexRatio = n1 / n2;
+		//	float k = 1.0f - (refractionIndexRatio * refractionIndexRatio) * (1.0f - (cosIncoming * cosIncoming));
+		//	float reflectance = 0.0f;
+		//
+		//	// Not past critical angle, refract ray
+		//	if (k >= 0.f)
+		//	{
+		//		// Fresnel
+		//		float sinIncoming = sqrtf(1.0f - cosIncoming * cosIncoming);
+		//		// Calculate from sin using Snell's law
+		//		float cosOutgoing = sqrtf(1.0f - std::powf((refractionIndexRatio * sinIncoming), 2));
+		//		float reflectanceSPolarized = std::powf((n1 * cosIncoming - n2 * cosOutgoing) /
+		//			(n1 * cosIncoming + n2 * cosOutgoing), 2);
+		//		float reflectancePPolarized = std::powf((n1 * cosOutgoing - n2 * cosIncoming) /
+		//			(n1 * cosOutgoing + n2 * cosIncoming), 2);
+		//		reflectance = 0.5f * (reflectanceSPolarized + reflectancePPolarized);
+		//	}
+		//	else
+		//	{
+		//		reflectance = 1.0f;
+		//	}
+		//	if (reflectance > MinLightingComponent)
+		//	{
+		//		material_effect += GetReflectance(_r, _manifest, _remainingBounces) * reflectance;
+		//	}
+		//	float transmittance = 1.0f - reflectance;
+		//	if (transmittance > MinLightingComponent)
+		//	{
+		//		float3 refractionDirection = refractionIndexRatio * _r.D +
+		//			normal * (refractionIndexRatio * cosIncoming - std::sqrtf(k));
+		//
+		//		// Make sure the refraction ray doesn't self-intersect
+		//		const float SelfIntersectionDelta = 0.001f;
+		//		// Displace into opposite direction since we're moving into the new medium
+		//		const float3 Displacement = SelfIntersectionDelta * normal;
+		//
+		//		float3 transmittedColor = IntersectBounced(Ray(_manifest.IntersectionPoint - Displacement,
+		//			refractionDirection), _remainingBounces - 1);
+		//		if (!front_face)
+		//		{
+		//			// Beer's law. Divided by 5 to reduce the effect
+		//			transmittedColor.x *= std::expf(-transmittedColor.x * (_manifest.T / 5));
+		//			transmittedColor.y *= std::expf(-transmittedColor.y * (_manifest.T / 5));
+		//			transmittedColor.z *= std::expf(-transmittedColor.z * (_manifest.T / 5));
+		//		}
+		//		material_effect += transmittedColor * transmittance;
+		//	}
+		//}
+		//return material_effect * object_color;
+		return _manifest.ShadingNormal;
 	}
 
 	TraversalResult Scene::GetNearestIntersection(Ray _ray) const

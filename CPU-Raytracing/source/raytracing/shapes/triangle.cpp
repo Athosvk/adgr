@@ -221,7 +221,7 @@ namespace CRT
         return triangle;
     }
     
-    bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, EGridChange& _startChange) const
+    bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, float& _t, EGridChange& _startChange) const
     {
         float m = 1.0f;
         float tes = 4.0f;
@@ -239,10 +239,10 @@ namespace CRT
 				float3 nx = (V1 - V0).Normalize();
 				float  nb = (inter0 - V0).Dot(nx) / len;
 
-				bary0.x = 1.0f - nb;
-				bary0.y = nb;
-				bary0.z = 0.0f;
-				_startChange = EGridChange::KPlus;
+				bary0.x = nb;
+				bary0.y = 0.0f;
+				bary0.z = 1.0f - nb;
+				_startChange = EGridChange::JPlus;
 			}
 		}
 		if (IntersectSidePatch(_r, V1, V2, N1, N2, m, t1, inter1))
@@ -255,10 +255,10 @@ namespace CRT
 				float3 nx = (V2 - V1).Normalize();
 				float  nb = (inter0 - V1).Dot(nx) / len;
 
-				bary0.x = 0.0f;
-				bary0.y = 1.0f - nb;
-				bary0.z = nb;
-				_startChange = EGridChange::IPlus;
+				bary0.x = 1.0f - nb;
+				bary0.y = nb;
+				bary0.z = 0.0f;
+				_startChange = EGridChange::KPlus;
 			}
 		}
         BilinearPatch patch3(V2 + N2 * m, V0 + N0 * m, V2 - N2 * m, V0 - N0 * m);
@@ -272,10 +272,10 @@ namespace CRT
 				float3 nx = (V0 - V2).Normalize();
 				float  nb = (inter0 - V2).Dot(nx) / len;
 
-				bary0.x = nb;
-				bary0.y = 0.0f;
-				bary0.z = 1.0f - nb;
-				_startChange = EGridChange::JPlus;
+				bary0.x = 0.0f;
+				bary0.y = 1.0f - nb;
+				bary0.z = nb;
+				_startChange = EGridChange::IPlus;
 			}
 		}
 
@@ -285,6 +285,7 @@ namespace CRT
 		Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
 		IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
 
+        _t = t0;
         if (t0 < FLT_MAX && t1 < FLT_MAX)
         {
             _start = Cell{ int32_t(bary0.x * tes), int32_t(bary0.y * tes), int32_t(bary0.z * tes) };
@@ -358,7 +359,11 @@ namespace CRT
         Cell currentCell;
         Cell stopCell;
         EGridChange change;
-        return InitializeDisplaced(_r, currentCell, stopCell, change);
+        float t;
+        bool b = InitializeDisplaced(_r, currentCell, stopCell, t, change);
+        _m.ShadingNormal = float3(change == EGridChange::IMin ? 0.5f : change == EGridChange::IPlus ? 1.0f : 0.0f, change == EGridChange::JMin ? 0.5f : change == EGridChange::JPlus ? 1.0f : 0.0f, change == EGridChange::KMin ? 0.5f : change == EGridChange::KPlus ? 1.0f : 0.0f);
+        _m.T = t;
+        return b;
         {
             return false;
         }
@@ -516,8 +521,8 @@ namespace CRT
         }
 
         AABB bounds;
-        bounds.Min = float3::ComponentMin({ displacedVerticesMin[0], displacedVerticesMin[1], displacedVerticesMin[2] });
-        bounds.Max = float3::ComponentMax({ displacedVerticesMax[0], displacedVerticesMax[1], displacedVerticesMax[2] });
+        bounds.Min = float3::ComponentMin({ displacedVerticesMin[0], displacedVerticesMin[1], displacedVerticesMin[2], displacedVerticesMax[0], displacedVerticesMax[1], displacedVerticesMax[2] });
+        bounds.Max = float3::ComponentMax({ displacedVerticesMax[0], displacedVerticesMax[1], displacedVerticesMax[2], displacedVerticesMin[0], displacedVerticesMin[1], displacedVerticesMin[2] });
         return bounds;
     }
 
