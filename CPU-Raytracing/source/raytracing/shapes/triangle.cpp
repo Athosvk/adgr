@@ -233,9 +233,9 @@ namespace CRT
 				float3 nx = (V1 - V0).Normalize();
 				float  nb = (inter0 - V0).Dot(nx) / len;
 
-				bary0.x = 1.0f - nb;
-				bary0.y = nb;
-				bary0.z = 0.0f;
+				bary0.x = nb;
+				bary0.y = 0.0f;
+				bary0.z = 1.0f - nb;
 				_startChange = EGridChange::KPlus;
 			}
 		}
@@ -253,9 +253,9 @@ namespace CRT
 				float3 nx = (V2 - V1).Normalize();
 				float  nb = (inter0 - V1).Dot(nx) / len;
 
-				bary0.x = 0.0f;
-				bary0.y = 1.0f - nb;
-				bary0.z = nb;
+				bary0.x = 1.0f - nb;
+				bary0.y = nb;
+				bary0.z = 0.0f;
 				_startChange = EGridChange::IPlus;
 			}
 		}
@@ -273,9 +273,9 @@ namespace CRT
 				float3 nx = (V0 - V2).Normalize();
 				float  nb = (inter0 - V2).Dot(nx) / len;
 
-				bary0.x = nb;
-				bary0.y = 0.0f;
-				bary0.z = 1.0f - nb;
+				bary0.x = 0.0f;
+				bary0.y = 1.0f - nb;
+				bary0.z = nb;
 				_startChange = EGridChange::JPlus;
 			}
 		}
