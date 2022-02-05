@@ -103,9 +103,9 @@ namespace CRT
                     }
                     if (uvV2.x + uvV2.y > 1) continue;
                     Triangle microTriangle;
-                    Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, float3(1.0 - uvV0.x - uvV0.y, uvV0.x, uvV0.y));
-                    Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, float3(1.0 - uvV1.x - uvV1.y, uvV1.x, uvV1.y));
-                    Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, float3(1.0 - uvV2.x - uvV2.y, uvV2.x, uvV2.y));
+                    Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, UVToBarycentric(uvV0));
+                    Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, UVToBarycentric(uvV1));
+                    Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, UVToBarycentric(uvV2));
 
                     microTriangle.V0 += _heightmap->GetValue(microTriangle.u0).x * microTriangle.N0;
                     microTriangle.V1 += _heightmap->GetValue(microTriangle.u1).x * microTriangle.N1;
@@ -227,7 +227,7 @@ namespace CRT
     bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, float& _t, EGridChange& _startChange) const
     {
         float m = 1.0f;
-        float tes = 4.0f;
+        float tes = 2.0f;
         float3 inter0, inter1, bary0, bary1;
         float t0 = FLT_MAX, t1 = FLT_MAX;
 
@@ -365,8 +365,12 @@ namespace CRT
         Cell currentCell;
         Cell stopCell;
         EGridChange change;
+        uint32_t tesselation = 2;
         float t;
-        bool b = InitializeDisplaced(_r, currentCell, stopCell, t, change);
+        if (!InitializeDisplaced(_r, currentCell, stopCell, t, change))
+        {
+            return false;
+        }
        // _m.ShadingNormal = float3(currentCell.i / 4.0f, currentCell.j / 4.0f, currentCell.k / 4.0f);
        // if (currentCell == stopCell)
        //     _m.ShadingNormal = float3(1.0f, 1.0f, 1.0f);
@@ -376,36 +380,44 @@ namespace CRT
        // //else
        // //    _m.ShadingNormal = float3::One();
        // _m.T = t;
-        return b;
-       {
-          return false;
-       }
-        Manifest nearest;
+       // return b;
+       //{
+       //   return false;
+       //}
 
-        uint32_t numSubdivisions = 2;
-        std::array<float2, 3> barycentricPositions;
+        std::array<float2, 3> uvPositions;
+
+        uvPositions[0] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+        uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+        if (!currentCell.IsUpperTriangle(tesselation))
+            uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
+        else
+            uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
 
         Triangle microTriangle;
-        float delta = 1.0f / numSubdivisions;
+        float delta = 1.0f / tesselation;
         bool exitedGrid = false;
 
-        Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, barycentricPositions[0]);
-        Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, barycentricPositions[1]);
+        Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, UVToBarycentric(uvPositions[0]));
+        Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, UVToBarycentric(uvPositions[1]));
 
-        microTriangle.V0 += _heightmap->GetValue(barycentricPositions[0]).x * microTriangle.N0;
-        microTriangle.V1 += _heightmap->GetValue(barycentricPositions[1]).x * microTriangle.N1;
+        //microTriangle.V0 += _heightmap->GetValue(barycentricPositions[0]).x * microTriangle.N0;
+        //microTriangle.V1 += _heightmap->GetValue(barycentricPositions[1]).x * microTriangle.N1;
         int iteration = 0;
-        int maxIterations = numSubdivisions * numSubdivisions;
 
-        while (!exitedGrid && ++iteration <= maxIterations)
+        std::array<Triangle, 16> triangles;
+        size_t numTriangles = 0;
+        while (!exitedGrid && numTriangles < tesselation * tesselation)
         {
-            Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, barycentricPositions[2]);
-            microTriangle.V2 += _heightmap->GetValue(barycentricPositions[2]).x * microTriangle.N2;
+            Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, UVToBarycentric(uvPositions[2]));
+            //microTriangle.V2 += _heightmap->GetValue(barycentricPositions[2]).x * microTriangle.N2;
 
+            triangles[numTriangles++] = microTriangle;
+            Manifest nearest;
             if (microTriangle.Intersect(_r, nearest))
             {
-                _m = nearest;
-                return true;
+                //_m = nearest;
+                //return true;
             }
             if (currentCell == stopCell)
             {
@@ -415,7 +427,7 @@ namespace CRT
             // First get the vector perpendicular to the V2 normal and the direction towards the ray origin.
             // If the incoming ray projects to the right of V2, which is where this cross product should be aimed to,
             // then we consider the ray to be the right of V2.
-            bool isToRightOfV2 = ((microTriangle.N2.Cross(_r.O - microTriangle.V2).Dot(_r.D) > 0));
+            bool isToRightOfV2 = microTriangle.N2.Cross(_r.O - microTriangle.V2).Dot(_r.D) > 0;
 
             // Our ray either passes through v0-v2 or v1-v2. If it passes through v0-v2,
             // then the current v1 is the only vertex that is not the same for the next triangle.
@@ -425,12 +437,12 @@ namespace CRT
             if (isToRightOfV2)
             {
                 microTriangle.V0 = microTriangle.V2;
-                barycentricPositions[0] = barycentricPositions[2];
+                uvPositions[0] = uvPositions[2];
             }
             else
             {
                 microTriangle.V1 = microTriangle.V2;
-                barycentricPositions[1] = barycentricPositions[2];
+                uvPositions[1] = uvPositions[2];
             }
 
             // +5 is the same as -1, but doesn't produce negative numbers when using modulo
@@ -438,34 +450,34 @@ namespace CRT
             switch (change)
             {
             case EGridChange::IPlus:
-                if (++currentCell.i > numSubdivisions)
+                if (++currentCell.i > tesselation)
                     exitedGrid = true;
-                barycentricPositions[2] = float2((currentCell.j + 1) * delta, (currentCell.k + 1) * delta);
+                uvPositions[2] = float2((currentCell.j + 1) * delta, (currentCell.k + 1) * delta);
                 break;
             case EGridChange::JMin:
                 if (--currentCell.j < 0)
                     exitedGrid = true;
-                barycentricPositions[2] = float2(currentCell.j * delta, currentCell.k * delta);
+                uvPositions[2] = float2(currentCell.j * delta, currentCell.k * delta);
                 break;
             case EGridChange::KPlus:
-                if (++currentCell.k > numSubdivisions)
+                if (++currentCell.k > tesselation)
                     exitedGrid = true;
-                barycentricPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
+                uvPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
                 break;
             case EGridChange::IMin:
                 if (--currentCell.i < 0)
                     exitedGrid = true;
-                barycentricPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
+                uvPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
                 break;
             case EGridChange::JPlus:
-                if (++currentCell.j > numSubdivisions)
+                if (++currentCell.j > tesselation)
                     exitedGrid = true;
-                barycentricPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
+                uvPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
                 break;
             case EGridChange::KMin:
                 if (--currentCell.k < 0)
                     exitedGrid = true;
-                barycentricPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
+                uvPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
                 break;
             }
         }
@@ -543,6 +555,11 @@ namespace CRT
     {
         // Calculated during intersection
         return float2{};
+    }
+
+    float3 Triangle::UVToBarycentric(float2 _uv) const
+    {
+        return float3 { 1.0f - _uv.x - _uv.y, _uv.x, _uv.y };
     }
 
     Cell Cell::FromBarycentric(float3 _baryCentric, float _tesselation)

@@ -27,6 +27,7 @@ namespace CRT
 		int32_t i, j, k;
 
 		static Cell FromBarycentric(float3 _baryCentric, float _tesselation);
+
 		bool IsUpperTriangle(uint32_t _tesselation) const;
 		bool operator==(const Cell& other) const;
 	};
@@ -53,6 +54,7 @@ namespace CRT
 		void Intersect(const RayPacket& ray, TraversalResultPacket& _result, int _first, int _id);
 
 		float2 GetUV(float3 _point, float3 _normal) const;
+		float3 UVToBarycentric(float2 _uv) const;
 
 		float3 V0;
 		float3 V1;
