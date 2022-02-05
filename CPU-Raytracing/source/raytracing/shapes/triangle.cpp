@@ -387,12 +387,51 @@ namespace CRT
 
         std::array<float2, 3> uvPositions;
 
-        uvPositions[0] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-        uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-        if (!currentCell.IsUpperTriangle(tesselation))
-            uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
-        else
-            uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+        switch (change)
+        {
+        case CRT::EGridChange::IPlus:
+			uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+			uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+			uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
+            break;
+        case CRT::EGridChange::JMin:
+			uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+			uvPositions[1] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+			uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            break;
+        case CRT::EGridChange::KPlus:
+			uvPositions[0] = float2(currentCell.j, currentCell.k) / tesselation;
+			uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+			uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            break;
+        case CRT::EGridChange::IMin:
+			uvPositions[0] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+			uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+			uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+            break;
+        case CRT::EGridChange::JPlus:
+			uvPositions[0] = float2(currentCell.j, currentCell.k) / tesselation;
+			uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+			uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            break;
+        case CRT::EGridChange::KMin:
+			uvPositions[0] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+			uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+			uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            break;
+        default:
+			uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+			uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            if (currentCell.IsUpperTriangle(tesselation))
+            {
+			    uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+            }
+            else
+            {
+			    uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
+            }
+            break;
+        }
 
         Triangle microTriangle;
         float delta = 1.0f / tesselation;
@@ -407,7 +446,7 @@ namespace CRT
 
         std::array<Triangle, 4> triangles;
         size_t numTriangles = 0;
-        while (!exitedGrid && numTriangles < tesselation * tesselation)
+        while (!exitedGrid)
         {
             Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, UVToBarycentric(uvPositions[2]));
             //microTriangle.V2 += _heightmap->GetValue(barycentricPositions[2]).x * microTriangle.N2;
@@ -427,7 +466,7 @@ namespace CRT
             // First get the vector perpendicular to the V2 normal and the direction towards the ray origin.
             // If the incoming ray projects to the right of V2, which is where this cross product should be aimed to,
             // then we consider the ray to be the right of V2.
-            bool isToRightOfV2 = microTriangle.N2.Cross(_r.O - microTriangle.V2).Dot(_r.D) > 0;
+            bool isToRightOfV2 = microTriangle.N2.Cross(_r.O - microTriangle.V2).Dot(_r.D) < 0;
 
             // Our ray either passes through v0-v2 or v1-v2. If it passes through v0-v2,
             // then the current v1 is the only vertex that is not the same for the next triangle.
