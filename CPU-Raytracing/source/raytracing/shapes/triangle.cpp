@@ -523,8 +523,8 @@ namespace CRT
         }
 
         AABB bounds;
-        bounds.Min = float3::ComponentMin({ displacedVerticesMin[0], displacedVerticesMin[1], displacedVerticesMin[2] });
-        bounds.Max = float3::ComponentMax({ displacedVerticesMax[0], displacedVerticesMax[1], displacedVerticesMax[2] });
+        bounds.Min = float3::ComponentMin({ displacedVerticesMin[0], displacedVerticesMin[1], displacedVerticesMin[2], displacedVerticesMax[0], displacedVerticesMax[1], displacedVerticesMax[2] });
+        bounds.Max = float3::ComponentMax({ displacedVerticesMax[0], displacedVerticesMax[1], displacedVerticesMax[2], displacedVerticesMin[0], displacedVerticesMin[1], displacedVerticesMin[2] });
         return bounds;
     }
     float2 Triangle::GetUV(float3 _point, float3 _normal) const
