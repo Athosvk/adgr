@@ -231,7 +231,6 @@ namespace CRT
         float3 inter0, inter1, bary0, bary1;
         float t0 = FLT_MAX, t1 = FLT_MAX;
         
-        BilinearPatch patch1(V0 + N0 * m, V1 + N1 * m, V0 - N0 * m, V1 - N1 * m);
 		if (IntersectSidePatch(_r, V0, V1, N0, N1, m, t1, inter1))
 		{
 			float len = (V1 - V0).Magnitude();
@@ -282,10 +281,10 @@ namespace CRT
 		}
 
 		Triangle tr0(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
-		IntersectTriangularSide(_r, tr0, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
+		//IntersectTriangularSide(_r, tr0, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes);
 
 		Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
-		IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
+		//IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes); 
 
         _t = t0;
         if (t0 < FLT_MAX && t1 < FLT_MAX)
@@ -301,7 +300,7 @@ namespace CRT
         return false;
     }
 
-    void Triangle::SwapIntersection(float3& _inter0, float& _t0, float3& _bary0, float3& _inter1, float& _t1, float3 _bary1) const
+    void Triangle::SwapIntersection(float3& _inter0, float& _t0, float3& _bary0, float3& _inter1, float& _t1, float3& _bary1) const
     {
         if (_t0 < FLT_MAX)
         {
@@ -321,7 +320,7 @@ namespace CRT
         }
     }
 
-    bool Triangle::IntersectSidePatch(Ray _r, float3 _p0, float3 _p1, float3 _n0, float3 _n1, float _m, float& _t, float3 _intersectionPoint) const
+    bool Triangle::IntersectSidePatch(Ray _r, float3 _p0, float3 _p1, float3 _n0, float3 _n1, float _m, float& _t, float3& _intersectionPoint) const
     {
         BilinearPatch patch(_p0 + _n0 * _m, _p1 + _n1 * _m,    
                              _p0 - _n0 * _m, _p1 - _n1 * _m);
