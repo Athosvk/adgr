@@ -360,7 +360,10 @@ namespace CRT
         Cell currentCell;
         Cell stopCell;
         EGridChange change;
-        return InitializeDisplaced(_r, currentCell, stopCell, change);
+        bool b = InitializeDisplaced(_r, currentCell, stopCell, t, change);
+        //_m.ShadingNormal = float3(currentCell.i / 4.0f, currentCell.j / 4.0f, currentCell.k / 4.0f);
+        //_m.T = t;
+        return b;
         {
             return false;
         }
