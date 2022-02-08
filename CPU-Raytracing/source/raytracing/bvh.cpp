@@ -122,7 +122,7 @@ namespace CRT
 				}
 			}
 			
-			constexpr auto TraversalCostFactor = .45f;
+			constexpr auto TraversalCostFactor = .5f;
 			const auto parentCost = _node.Bounds.GetSurfaceArea() * _range.size();
 			std::vector<PrimitiveIndex> leftPrimitives;
 			std::vector<PrimitiveIndex> rightPrimitives;

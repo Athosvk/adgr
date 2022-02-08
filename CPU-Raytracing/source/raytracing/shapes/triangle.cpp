@@ -52,7 +52,6 @@ namespace CRT
         float t = qvec.Dot(v0v2) * invDet;
         if (t > 0.0f && t < _m.T)
         {
-
             float3 barycentric{ 1.0f - u - v, u, v };
             _m.IntersectionPoint = _r.Sample(t);
             _m.T = t;
@@ -61,6 +60,7 @@ namespace CRT
             _m.ShadingNormal = (N0 * barycentric.x
                 + N1 * barycentric.y
                 + N2 * barycentric.z).Normalize();
+            _m.Barycentric = barycentric;
             return true;
         }
 
@@ -69,13 +69,12 @@ namespace CRT
 
     bool Triangle::IntersectDisplacedNaive(Ray _r, Manifest& _m, const Texture* _heightmap, Cell& _cell) const
     {
-        uint32_t numSubdivisions = 8;
+        uint32_t numSubdivisions = 2;
 
         float delta = 1.0f / numSubdivisions;
         bool exitedGrid = false;
 
-        Manifest nearest;
-        int numTriangles = 0;
+        bool intersected = false;
         for (int j = 0; j < numSubdivisions; j++)
         {
             for (int k = 0; k < numSubdivisions; k++)
@@ -83,24 +82,28 @@ namespace CRT
                 for (int i = 0; i < numSubdivisions; i++)
                 {
                     float2 uvV0, uvV1, uvV2;
-                    // Upper left
-                    uvV0 = float2(j * delta, (k + 1) * delta);
-                    if (uvV0.x + uvV0.y > 1) continue;
 
-                    // Lower right
-                    uvV1 = float2((j + 1) * delta, k * delta);
-                    if (uvV1.x + uvV1.y > 1) continue;
                     // Upper triangle test
                     if ((i + j + k) % 2 == 0)
                     {
+						// Upper left
+						uvV0 = float2(j * delta, (k + 1) * delta);
+						// Lower right
+						uvV1 = float2((j + 1) * delta, k * delta);
                         // Upper right
                         uvV2 = float2((j + 1) * delta, (k + 1) * delta);
                     }
                     else
                     {
+						// Lower right
+						uvV0 = float2((j + 1) * delta, k * delta);
+						// Upper left
+						uvV1 = float2(j * delta, (k + 1) * delta);
                         // Lower left
                         uvV2 = float2(j * delta, k * delta);
                     }
+                    if (uvV0.x + uvV0.y > 1) continue;
+                    if (uvV1.x + uvV1.y > 1) continue;
                     if (uvV2.x + uvV2.y > 1) continue;
                     Triangle microTriangle;
                     Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, UVToBarycentric(uvV0));
@@ -112,230 +115,211 @@ namespace CRT
                     microTriangle.V2 += _heightmap->GetValue(microTriangle.u2).x * microTriangle.N2;
 
                     Manifest manifest;
-                    if (microTriangle.Intersect(_r, manifest))
+                    if (microTriangle.Intersect(_r, manifest) && manifest.T < _m.T)
                     {
                         _cell = Cell{ i, j, k };
                         _m = manifest;
                         return true;
+                        intersected = true;
                     }
                 }
             }
         }
-        return false;
+        return intersected;
     }
 
-    bool Triangle::IntersectTriangularSide(Ray _r, Triangle _tr, float _m, float& t0, float& t1, float3& inter0, float3& inter1, float3& _bary0, float3& _bary1, EGridChange& _startChange, float _tesselation) const
+    bool Triangle::IntersectTriangularSide(Ray _r, Triangle _tr, float _m, Cell& _cell, EGridChange& _startChange, EGridChange& _startChange2, float& _t, float _tesselation) const
     {
+        // NOTE: This isn't always correct, sometimes we intersect no side patch of this cell, but still do not have
+        // the same start as stop cell. Currently unknown as to why
         Manifest ma;
         if (_tr.Intersect(_r, ma))
         {
-            inter1 = ma.IntersectionPoint;
-            t1 = ma.T;
-            ComputeBaryCentric(_bary1, inter1);
+            _t = ma.T;
+            float3 bary = ma.Barycentric;
 
-            if (t1 < t0)
-            {
-                SwapIntersection(inter0, t0, _bary0, inter1, t1, _bary1);
+			Triangle cellTriangle = GetCell(bary, _tesselation);
 
-                Triangle cellTriangle = GetCell(_bary0, _tesselation);
-                // Get the normals
-                float3 baryt;
-                ComputeBaryCentric(baryt, cellTriangle.V0);
-                cellTriangle.N0 = ((_tr.N0 * baryt.x) + (_tr.N1 * baryt.y) + (_tr.N2 * baryt.z)).Normalize();
-                ComputeBaryCentric(baryt, cellTriangle.V1);
-                cellTriangle.N1 = ((_tr.N0 * baryt.x) + (_tr.N1 * baryt.y) + (_tr.N2 * baryt.z)).Normalize();
-                ComputeBaryCentric(baryt, cellTriangle.V2);
-                cellTriangle.N2 = ((_tr.N0 * baryt.x) + (_tr.N1 * baryt.y) + (_tr.N2 * baryt.z)).Normalize();
+			float t = FLT_MAX, t00 = FLT_MAX;
 
-                // Determine the sideplane from which we entered the cell.
-                // The side-plane is specific to upper triangles and lower triangles
-                // If upper triangle, V0-V1 = imin, V0-V2 = kmin, V1-V2 = jmin
-                // If lower triangle, V0-V1 = iplus, V0-V2 = kplus, V1-V2 = jplus
-                float3 cellIntersectionPoint;
-                float t, t00 = FLT_MAX;
+			// Simulate a wedge, as we want to know if the ray intersected the cell planes in the upper and lower extents as it may
+			// be near orthogonal to the cell, in which case it intersected the cell plane at some far far away point
+			float prismWedgeExtents = 3.f;
+            float3 inter1;
+            float3 epsilon = float3(0.0001f);
+			if (IntersectSidePatch(_r, cellTriangle.V0 - epsilon, cellTriangle.V1 + epsilon, cellTriangle.N0, cellTriangle.N1, prismWedgeExtents, t, inter1))
+			{
+				if (t < t00)
+				{
+					t00 = t;
+					_startChange = EGridChange::JPlus;
+					_startChange2 = EGridChange::IPlus;
+				}
+			}
+			if (IntersectSidePatch(_r, cellTriangle.V1 - epsilon, cellTriangle.V2 + epsilon, cellTriangle.N1, cellTriangle.N2, prismWedgeExtents, t, inter1))
+			{
+				if (t < t00)
+				{
+					t00 = t;
+					_startChange = EGridChange::KPlus;
+					_startChange2 = EGridChange::JPlus;
+				}
+			}
 
-                // Simulate a wedge, as we want to know if the ray intersected the cell planes in the upper and lower extents as it may
-                // be near orthogonal to the cell, in which case it intersected the cell plane at some far far away point
-                float prismWedgeExtents = 100.f;
-                if (IntersectSidePatch(_r, cellTriangle.V0, cellTriangle.V1, cellTriangle.N0, cellTriangle.N1, prismWedgeExtents, t, inter1))
-                {
-                    if (t < t00)
-                    {
-                        t00 = t;
-                        _startChange = EGridChange::KPlus;
-                    }
-                }
-                if (IntersectSidePatch(_r, cellTriangle.V1, cellTriangle.V2, cellTriangle.N1, cellTriangle.N2, prismWedgeExtents, t, inter1))
-                {
-                    if (t < t00)
-                    {
-                        t00 = t;
-                        _startChange = EGridChange::JPlus;
-                    }
-                }
+			if (IntersectSidePatch(_r, cellTriangle.V2 - epsilon, cellTriangle.V0 + epsilon, cellTriangle.N2, cellTriangle.N0, prismWedgeExtents, t, inter1))
+			{
+				if (t < t00)
+				{
+					t00 = t;
+					_startChange = EGridChange::IPlus;
+					_startChange2 = EGridChange::KPlus;
+				}
+			}
 
-                if (IntersectSidePatch(_r, cellTriangle.V2, cellTriangle.V0, cellTriangle.N2, cellTriangle.N0, prismWedgeExtents, t, inter1))
-                {
-                    if (t < t00)
-                    {
-                        t00 = t;
-                        _startChange = EGridChange::IPlus;
-                    }
-                }
-                Cell startCell = Cell::FromBarycentric(_bary0, _tesselation);
+			_cell = Cell::FromBarycentric(bary, _tesselation);
 
-                // Upper triangles always move into a "negative" direction for i, j, k
-                if (startCell.IsUpperTriangle(_tesselation))
-                {
-                    _startChange = InvertGridchange(_startChange);
-                }
-            }
+			// Upper triangles always move into a "negative" direction for i, j, k
+			if (_cell.IsUpperTriangle(_tesselation))
+			{
+				_startChange = InvertGridchange(_startChange);
+				_startChange2 = InvertGridchange(_startChange2);
+			}
             return true;
-        }
-        return false;
-    }
+		}
+		return false;
+	}
 
     Triangle Triangle::GetCell(float3 _bary, unsigned _tesselation) const
     {
         // _bary contains indices in order i, j, k
-        _bary = float3(floor(_bary.x * _tesselation), floor(_bary.y * _tesselation),
-            floor(_bary.z * _tesselation));
+        Cell cell = Cell{ int32_t(_bary.x * _tesselation), int32_t(_bary.y * _tesselation),
+            int32_t(_bary.z * _tesselation) };
 
         Triangle triangle;
         // if lower triangle
-        // The "upperleft" vertex of the microtriangle
-        float3 uvV0 = float3(_bary.x, _bary.y, _bary.z + 1) / _tesselation;
-        triangle.V0 = uvV0.x * V0 + uvV0.y * V1 + uvV0.z * V2;
+        // The "upperleft" vertex of the microtriangl2
+        float2 uvV0 = float2(cell.j, cell.k) / _tesselation;
+        float3 baryV0 = UVToBarycentric(uvV0);
+        triangle.V0 = baryV0.x * V0 + baryV0.y * V1 + baryV0.z * V2;
+        triangle.N0 = baryV0.x * N0 + baryV0.y * N1 + baryV0.z * N2;
 
         // The "lowerright" vertex of the microtriangle
-        float3 uvV1 = float3(_bary.x, _bary.y + 1, _bary.z) / _tesselation;
-        triangle.V1 = uvV1.x * V0 + uvV1.y * V1 + uvV1.z * V2;
+        float2 uvV1 = float2(cell.j, cell.k + 1) / _tesselation;
+        float3 baryV1 = UVToBarycentric(uvV1);
+        triangle.V1 = baryV1.x * V1 + baryV1.y * V1 + baryV1.z * V2;
+        triangle.N1 = baryV1.x * N0 + baryV1.y * N1 + baryV1.z * N2;
 
-        // Every upper triangle is adjacent to lower triangles only. Therefore, every other
-        // triangle is an upper triangle. (0,0,0) is an upper triangle in every tesselation
-        // dividable by 2
-        bool isUpperTriangle = unsigned(_bary.x + _bary.y + _bary.z) % 2 == 0 && _tesselation % 2 == 0;
         // The "lowerleft" or "upperright" vertex of the microtriangle, depending on wehther
         // this is the lower or upper triangle
-        float3 uvV2 = (isUpperTriangle ? float3(_bary.x, _bary.y + 1, _bary.z + 1) :
-            float3(_bary.x, _bary.y, _bary.z))
-            / _tesselation;
-        triangle.V2 = uvV2.x * V0 + uvV2.y * V1 + uvV2.z * V2;
-
+        float2 uvV2 = (cell.IsUpperTriangle(_tesselation) ? float2(cell.j + 1, cell.k + 1) :
+                                                            float2(cell.j, cell.k)) / _tesselation;
+        float3 baryV2 = UVToBarycentric(uvV2);
+        triangle.V2 = baryV2.x * V0 + baryV2.y * V1 + baryV2.z * V2;
+        triangle.N2 = baryV2.x * N0 + baryV2.y * N1 + baryV2.z * N2;
         return triangle;
     }
 
-    bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, float& _t, EGridChange& _startChange, EIntersection& _intersection) const
+    bool Triangle::InitializeDisplaced(Ray _r, Cell& _start, Cell& _stop, EGridChange& _startChange, EGridChange& _startChange2, float& t, uint32_t _tesselation) const
     {
         float m = 1.0f;
-        float tes = 2.0f;
-        float3 inter0, inter1, bary0, bary1;
         float t0 = FLT_MAX, t1 = FLT_MAX;
 
         Triangle tr0(V0 + N0 * m, V1 + N1 * m, V2 + N2 * m, u0, u1, u2, N0, N1, N2);
-        if (IntersectTriangularSide(_r, tr0, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes))
+        EGridChange possibleStartChange = EGridChange::Uninit;
+        EGridChange possibleStartChange2 = EGridChange::Uninit;
+        bool enteredTop = false;
+        if (IntersectTriangularSide(_r, tr0, m, _stop, possibleStartChange, possibleStartChange2, t1, _tesselation) && t1 < t0)
         {
-            _intersection = EIntersection::Upper;
+            SwapIntersection(t0, _start, t1, _stop);
+            _startChange = possibleStartChange;
+            _startChange2 = possibleStartChange2;
         }
 
-        float oldT0 = t0;
         Triangle tr1(V0 + N0 * -m, V1 + N1 * -m, V2 + N2 * -m, u0, u1, u2, -N0, -N1, -N2);
-        if (IntersectTriangularSide(_r, tr1, m, t0, t1, inter0, inter1, bary0, bary1, _startChange, tes)
-            && t0 != oldT0)
+        if (IntersectTriangularSide(_r, tr1, m, _stop, possibleStartChange, possibleStartChange2, t1, _tesselation) && t1 < t0)
         {
-            _intersection = EIntersection::Lower;
+            SwapIntersection(t0, _start, t1, _stop);
+            _startChange = possibleStartChange;
+            _startChange2 = possibleStartChange2;
         }
 
+        float3 inter1;
         if (IntersectSidePatch(_r, V0, V1, N0, N1, m, t1, inter1))
         {
             float len = (V1 - V0).Magnitude();
             float3 nx = (V1 - V0).Normalize();
             float  nb = (inter1 - V0).Dot(nx) / len;
 
-            bary1.x = 1.0f - nb;
-            bary1.y = nb;
-            bary1.z = 0.0f;
-
+            _stop = Cell::FromBarycentric(float3(1.0f - nb, nb, 0.0f), _tesselation);
             if (t1 < t0)
             {
-                _intersection = EIntersection::Patch1;
-                SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
+                SwapIntersection(t0, _start, t1, _stop);
                 _startChange = EGridChange::KPlus;
+                _startChange2 = EGridChange::KPlus;
             }
         }
-        if (IntersectSidePatch(_r, V1, V2, N1, N2, m, t1, inter1))
+        if ( IntersectSidePatch(_r, V1, V2, N1, N2, m, t1, inter1))
         {
             float len = (V2 - V1).Magnitude();
             float3 nx = (V2 - V1).Normalize();
             float  nb = (inter1 - V1).Dot(nx) / len;
 
-            bary1.x = 0.0f;
-            bary1.y = nb;
-            bary1.z = 1.0f - nb;
-
+            _stop = Cell::FromBarycentric(float3(0.0f, 1.0f - nb, nb), _tesselation);
             if (t1 < t0)
             {
-                _intersection = EIntersection::Patch2;
-                SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
+                SwapIntersection(t0, _start, t1, _stop);
                 _startChange = EGridChange::IPlus;
+                _startChange2 = EGridChange::IPlus;
             }
         }
-        if (IntersectSidePatch(_r, V2, V0, N2, N0, m, t1, inter1))
+        if ( IntersectSidePatch(_r, V2, V0, N2, N0, m, t1, inter1))
         {
             float len = (V0 - V2).Magnitude();
             float3 nx = (V0 - V2).Normalize();
             float  nb = (inter1 - V2).Dot(nx) / len;
 
-            bary1.x = nb;
-            bary1.y = 0.0f;
-            bary1.z = 1.0f - nb;
-
+            _stop = Cell::FromBarycentric(float3(nb, 0.0f, 1.0f - nb), _tesselation);
             if (t1 < t0)
             {
-                _intersection = EIntersection::Patch3;
-                SwapIntersection(inter0, t0, bary0, inter1, t1, bary1);
+                SwapIntersection(t0, _start, t1, _stop);
                 _startChange = EGridChange::JPlus;
+                _startChange2 = EGridChange::JPlus;
             }
         }
 
-        _t = t0;
         if (t0 < FLT_MAX && t1 < FLT_MAX)
         {
-            _start = Cell{ int32_t(bary0.x * tes), int32_t(bary0.y * tes), int32_t(bary0.z * tes) };
-            _stop = Cell{ int32_t(bary1.x * tes), int32_t(bary1.y * tes), int32_t(bary1.z * tes) };
             if (_start == _stop)
             {
                 _startChange = EGridChange::None;
+                possibleStartChange2 = EGridChange::None;
             }
+            t = t0;
             return true;
         }
         return false;
     }
 
-    void Triangle::SwapIntersection(float3& _inter0, float& _t0, float3& _bary0, float3& _inter1, float& _t1, float3& _bary1) const
+    void Triangle::SwapIntersection(float& _t0, Cell& _cell0, float& _t1, Cell& _cell1) const
     {
         if (_t0 < FLT_MAX)
         {
             std::swap(_t0, _t1);
-            std::swap(_inter0.x, _inter1.x);
-            std::swap(_inter0.y, _inter1.y);
-            std::swap(_inter0.z, _inter1.z);
-            std::swap(_bary0.x, _bary1.x);
-            std::swap(_bary0.y, _bary1.y);
-            std::swap(_bary0.z, _bary1.z);
+            std::swap(_cell0.i, _cell1.i);
+            std::swap(_cell0.j, _cell1.j);
+            std::swap(_cell0.k, _cell1.k);
         }
         else
         {
             _t0 = _t1;
-            _inter0 = _inter1;
-            _bary0 = _bary1;
+            _cell0 = _cell1;
         }
     }
 
     bool Triangle::IntersectSidePatch(Ray _r, float3 _p0, float3 _p1, float3 _n0, float3 _n1, float _m, float& _t, float3& _intersectionPoint) const
     {
-        BilinearPatch patch(_p0 + _n0 * _m, _p1 + _n1 * _m,
-            _p0 - _n0 * _m, _p1 - _n1 * _m);
+        BilinearPatch patch(_p0 - _n0 * _m, _p1 - _n1 * _m,
+            _p0 + _n0 * _m, _p1 + _n1 * _m);
         Manifest manifest;
         if (patch.Intersect(_r, manifest))
         {
@@ -348,65 +332,75 @@ namespace CRT
 
     void Triangle::Barycentric(float3& _vertex, float3& _normal, float2& _uv, float3 _bary) const
     {
-        _vertex = V0 * _bary.x + V1 * _bary.y + V2 * _bary.z;
+		_vertex = V0 * _bary.x + V1 * _bary.y + V2 * _bary.z;
         _normal = (N0 * _bary.x + N1 * _bary.y + N2 * _bary.z).Normalize();
         _uv = u0 * _bary.x + u1 * _bary.y + u2 * _bary.z;
     }
 
-    void Triangle::ComputeBaryCentric(float3& _bary, float3 _p) const
+    bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, const Texture* heightMap) const
     {
-        float3 v0 = V1 - V0;
-        float3 v1 = V2 - V0;
-        float3 v2 = _p - V0;
-
-        float d00 = v0.Dot(v0);
-        float d01 = v0.Dot(v1);
-        float d11 = v1.Dot(v1);
-        float d20 = v2.Dot(v0);
-        float d21 = v2.Dot(v1);
-
-        float denom = d00 * d11 - d01 * d01;
-        _bary.x = (d11 * d20 - d01 * d21) / denom;
-        _bary.y = (d00 * d21 - d01 * d20) / denom;
-        _bary.z = 1.0f - _bary.x - _bary.y;
-    }
-
-    bool Triangle::IntersectDisplaced(Ray _r, Manifest& _m, const Texture* _heightmap) const
-    {
-        Cell c;
-        return IntersectDisplacedNaive(_r, _m, _heightmap, c);
-
-        Cell currentCell;
+        Cell startCell;
         Cell stopCell;
-        EGridChange change;
-        uint32_t tesselation = 2;
+        EGridChange startChange;
+        EGridChange startChange2;
+        
+        float3 triangleCenter;
+        float3 n;
+        float2 uv;
+        Barycentric(triangleCenter, n, uv, UVToBarycentric(float2{ 0.5f, 0.5f }));
+
+        float distance = (_r.O - triangleCenter).Magnitude();
         float t;
-        EIntersection intersection;
-        if (!InitializeDisplaced(_r, currentCell, stopCell, t, change, intersection))
+        uint32_t tesselation = std::min(std::max(2.f, 300 * (1 / distance)), 512.f);
+        if (!InitializeDisplaced(_r, startCell, stopCell, startChange, startChange2, t, tesselation))
         {
             return false;
         }
-        // _m.ShadingNormal = float3(currentCell.i / 4.0f, currentCell.j / 4.0f, currentCell.k / 4.0f);
-        // if (currentCell == stopCell)
-        //     _m.ShadingNormal = float3(1.0f, 1.0f, 1.0f);
-        // //_m.ShadingNormal = float3(stopCell.i / 4.0f, stopCell.j / 4.0f, stopCell.k / 4.0f);
-        // //if (change != EGridChange::None)
-        // //    _m.ShadingNormal = float3(change == EGridChange::IMin ? 0.5f : change == EGridChange::IPlus ? 1.0f : 0.0f, change == EGridChange::JMin ? 0.5f : change == EGridChange::JPlus ? 1.0f : 0.0f, change == EGridChange::KMin ? 0.5f : change == EGridChange::KPlus ? 1.0f : 0.0f);
-        // //else
-        // //    _m.ShadingNormal = float3::One();
-        // _m.T = t;
-        // return b;
+        bool intersected = WalkIntersection(_r, _m, heightMap, startCell, stopCell, startChange, tesselation);
+        if (startChange != startChange2)
+        {
+           intersected |= WalkIntersection(_r, _m, heightMap, startCell, stopCell, startChange2, tesselation);
+        }
+        //Cell realCell;
+        //Manifest manifest;
+   //     if (!intersected && startChange != EGridChange::None)
+   //     {
+   //         if (false && IntersectDisplacedNaive(_r, manifest, heightMap, realCell))
+   //         {
+   //             Cell newStart;
+   //             Cell newStop;
+   //             EGridChange change;
+   //             EGridChange change2;
+   //             float t;
+   //             //__debugbreak();
+   //             if (InitializeDisplaced(_r, newStart, newStop, change, change2, t, tesselation))
+   //             {
+   //             }
+			//	intersected = WalkIntersection(_r, _m, heightMap, startCell, stopCell, startChange, tesselation);
+			//	if (startChange != startChange2)
+			//	{
+			//		intersected |= WalkIntersection(_r, _m, heightMap, startCell, stopCell, startChange2, tesselation);
+			//	}
+			//}
+   //     }
+        return intersected;
+    }
+
+    bool Triangle::WalkIntersection(Ray _r, Manifest& _m, const Texture* _heightmap, Cell _startCell, Cell _stopCell, EGridChange _startChange, float _tesselation) const
+    {
+        Cell currentCell = _startCell;
+        EGridChange change = _startChange;
+         //_m.ShadingNormal = float3(stopCell.i / 2.0f, stopCell.j / 2.0f, stopCell.k / 2.0f);
+         //if (startCell == stopCell)
+         //    _m.ShadingNormal = float3(1.0f, 1.0f, 1.0f);
+         ////_m.ShadingNormal = float3(stopCell.i / 2.0f, stopCell.j / 2.0f, stopCell.k / 2.0f);
+         ////if (change != EGridChange::None)
+         ////    _m.ShadingNormal = float3(change == EGridChange::IMin ? 0.5f : change == EGridChange::IPlus ? 1.0f : 0.0f, change == EGridChange::JMin ? 0.5f : change == EGridChange::JPlus ? 1.0f : 0.0f, change == EGridChange::KMin ? 0.5f : change == EGridChange::KPlus ? 1.0f : 0.0f);
+         ////else
+         ////    _m.ShadingNormal = float3::One();
+         //return true;
         //{
         //   return false;
-        //}
-
-        Cell cell;
-        //if (IntersectDisplacedNaive(_r, _m, _heightmap, cell))
-        //{
-        //}
-        //else
-        //{
-        //    return false;
         //}
 
         std::array<float2, 3> uvPositions;
@@ -414,75 +408,74 @@ namespace CRT
         switch (change)
         {
         case CRT::EGridChange::IPlus:
-            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-            uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
+            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / _tesselation;
+            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / _tesselation;
+            uvPositions[2] = float2(currentCell.j, currentCell.k) / _tesselation;
             break;
         case CRT::EGridChange::JMin:
-            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-            uvPositions[1] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
-            uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / _tesselation;
+            uvPositions[1] = float2(currentCell.j + 1, currentCell.k + 1) / _tesselation;
+            uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / _tesselation;
             break;
         case CRT::EGridChange::KPlus:
-            uvPositions[0] = float2(currentCell.j, currentCell.k) / tesselation;
-            uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-            uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / tesselation;
+            uvPositions[0] = float2(currentCell.j, currentCell.k) / _tesselation;
+            uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / _tesselation;
+            uvPositions[2] = float2(currentCell.j, currentCell.k + 1) / _tesselation;
             break;
         case CRT::EGridChange::IMin:
-            uvPositions[0] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-            uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-            uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+            uvPositions[0] = float2(currentCell.j, currentCell.k + 1) / _tesselation;
+            uvPositions[1] = float2(currentCell.j + 1, currentCell.k) / _tesselation;
+            uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / _tesselation;
             break;
         case CRT::EGridChange::JPlus:
-            uvPositions[0] = float2(currentCell.j, currentCell.k) / tesselation;
-            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-            uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[0] = float2(currentCell.j, currentCell.k) / _tesselation;
+            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / _tesselation;
+            uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / _tesselation;
             break;
         case CRT::EGridChange::KMin:
-            uvPositions[0] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
-            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-            uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / tesselation;
+            uvPositions[0] = float2(currentCell.j + 1, currentCell.k + 1) / _tesselation;
+            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / _tesselation;
+            uvPositions[2] = float2(currentCell.j + 1, currentCell.k) / _tesselation;
             break;
         default:
-            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / tesselation;
-            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / tesselation;
-            if (currentCell.IsUpperTriangle(tesselation))
+            uvPositions[0] = float2(currentCell.j + 1, currentCell.k) / _tesselation;
+            uvPositions[1] = float2(currentCell.j, currentCell.k + 1) / _tesselation;
+            if (currentCell.IsUpperTriangle(_tesselation))
             {
-                uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / tesselation;
+                uvPositions[2] = float2(currentCell.j + 1, currentCell.k + 1) / _tesselation;
             }
             else
             {
-                uvPositions[2] = float2(currentCell.j, currentCell.k) / tesselation;
+                uvPositions[2] = float2(currentCell.j, currentCell.k) / _tesselation;
             }
             break;
         }
 
         Triangle microTriangle;
-        float delta = 1.0f / tesselation;
+        float delta = 1.0f / _tesselation;
         bool exitedGrid = false;
 
         Barycentric(microTriangle.V0, microTriangle.N0, microTriangle.u0, UVToBarycentric(uvPositions[0]));
         Barycentric(microTriangle.V1, microTriangle.N1, microTriangle.u1, UVToBarycentric(uvPositions[1]));
 
-        //microTriangle.V0 += _heightmap->GetValue(barycentricPositions[0]).x * microTriangle.N0;
-        //microTriangle.V1 += _heightmap->GetValue(barycentricPositions[1]).x * microTriangle.N1;
+        microTriangle.V0 += _heightmap->GetValue(microTriangle.u0).x * microTriangle.N0;
+        microTriangle.V1 += _heightmap->GetValue(microTriangle.u1).x * microTriangle.N1;
         int iteration = 0;
 
-        std::array<Triangle, 4> triangles;
         size_t numTriangles = 0;
         while (!exitedGrid)
         {
+            numTriangles++;
             Barycentric(microTriangle.V2, microTriangle.N2, microTriangle.u2, UVToBarycentric(uvPositions[2]));
-            //microTriangle.V2 += _heightmap->GetValue(barycentricPositions[2]).x * microTriangle.N2;
+            microTriangle.V2 += _heightmap->GetValue(microTriangle.u2).x * microTriangle.N2;
 
-            triangles[numTriangles++] = microTriangle;
             Manifest nearest;
             if (microTriangle.Intersect(_r, nearest))
             {
                 _m = nearest;
                 return true;
             }
-            if (currentCell == stopCell)
+            if (currentCell == _stopCell)
             {
                 break;
             }
@@ -522,7 +515,7 @@ namespace CRT
                 uvPositions[2] = float2((currentCell.j + 1) * delta, (currentCell.k + 1) * delta);
                 break;
             case EGridChange::IPlus:
-                if (++currentCell.i >= tesselation)
+                if (++currentCell.i >= _tesselation)
                     exitedGrid = true;
                 uvPositions[2] = float2(currentCell.j * delta, currentCell.k * delta);
                 break;
@@ -532,7 +525,7 @@ namespace CRT
                 uvPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
                 break;
             case EGridChange::JPlus:
-                if (++currentCell.j >= tesselation)
+                if (++currentCell.j >= _tesselation)
                     exitedGrid = true;
                 uvPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
                 break;
@@ -542,7 +535,7 @@ namespace CRT
                 uvPositions[2] = float2((currentCell.j + 1) * delta, currentCell.k * delta);
                 break;
             case EGridChange::KPlus:
-                if (++currentCell.k >= tesselation)
+                if (++currentCell.k >= _tesselation)
                     exitedGrid = true;
                 uvPositions[2] = float2(currentCell.j * delta, (currentCell.k + 1) * delta);
                 break;
@@ -631,14 +624,32 @@ namespace CRT
 
     Cell Cell::FromBarycentric(float3 _baryCentric, float _tesselation)
     {
-        return Cell{ int32_t(_baryCentric.x * _tesselation), int32_t(_baryCentric.y * _tesselation),
+        Cell cell { int32_t(_baryCentric.x * _tesselation), int32_t(_baryCentric.y * _tesselation),
             int32_t(_baryCentric.z * _tesselation) };
+        // Edge case, literally. We are the edge of a cell but shoot slightly over it, out of the triangle
+        // Fix by re-adjusting the highest coordinate slightly back into the cell that it belongs to
+        if (cell.i + cell.j + cell.k >= _tesselation)
+        {
+            if (_baryCentric.x > _baryCentric.y && _baryCentric.x > _baryCentric.z)
+            {
+                cell.i--;
+            }
+            else if (_baryCentric.y > _baryCentric.z)
+            {
+                cell.j--;
+            }
+            else
+            {
+                cell.k--;
+            }
+        }
+        return cell;
     }
 
     bool Cell::IsUpperTriangle(uint32_t _tesselation) const
     {
         // Indicies for upper triangles sum to N - 2
-        return (i + j + k) == _tesselation - 1;
+        return (i + j + k) == _tesselation - 2;
     }
 
     bool Cell::operator==(const Cell& other) const

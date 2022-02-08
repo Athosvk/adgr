@@ -2,6 +2,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <./stb_image.h>
+#include <./core/math/float3.h>
 
 namespace CRT
 {
@@ -27,6 +28,8 @@ namespace CRT
 
 	float4 Texture::GetValue(float2 _uv) const
 	{
+		_uv = float3::ComponentMax({ float3(_uv), float3::Zero() });
+		_uv = float3::ComponentMin({ float3(_uv), float3::One() });
 		int x = int(float(m_Width - 1) * _uv.x);
 		int y = int(float(m_Height - 1) * _uv.y);
 

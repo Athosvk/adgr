@@ -16,5 +16,6 @@ namespace CRT
 		float2    UV;
 		Material* M;
 		float3 IntersectionPoint;
+		float3 Barycentric;
 	};
 }
